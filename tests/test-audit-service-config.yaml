@@ -1,0 +1,38 @@
+DEBUG: true
+TEST_KEEP_DB: false
+DOCS_URL_PREFIX: /
+
+# These are required for automated testing (see .github/workflows/ci.yaml)
+DB_DRIVER: postgresql
+DB_HOST: localhost
+DB_PORT: 5432
+DB_USER: postgres
+DB_PASSWORD: postgres
+DB_DATABASE: audit_test
+
+ALLOWED_REQUEST_STATUSES:
+  - CREATED
+  - INTERMEDIATE_STATUS
+  - APPROVED
+  - CANCELLED
+DEFAULT_INITIAL_STATUS: CREATED
+DRAFT_STATUSES:
+  - CREATED
+UPDATE_ACCESS_STATUSES:
+  - APPROVED
+FINAL_STATUSES:
+  - CANCELLED
+
+REDIRECT_CONFIGS:
+  my_redirect:
+    redirect_url: http://localhost?something
+    params:
+      - request_id
+      - resource_id
+      - resource_display_name
+
+ACTION_ON_UPDATE:
+  /resource-with-redirect:
+    CREATED:
+      redirect_configs:
+        - my_redirect

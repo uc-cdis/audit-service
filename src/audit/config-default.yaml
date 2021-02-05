@@ -1,0 +1,26 @@
+####################
+# SERVER           #
+####################
+
+DEBUG: true
+TEST_KEEP_DB: false
+DOCS_URL_PREFIX: /audit
+
+####################
+# DATABASE         #
+####################
+
+DB_DRIVER: postgresql
+DB_HOST:
+DB_PORT:
+DB_USER:
+DB_PASSWORD:
+DB_DATABASE: audit
+
+DB_POOL_MIN_SIZE: 1
+DB_POOL_MAX_SIZE: 16
+DB_ECHO: False
+DB_SSL:
+DB_USE_CONNECTION_FOR_REQUEST: true
+DB_RETRY_LIMIT: 1
+DB_RETRY_INTERVAL: 1
