@@ -24,3 +24,9 @@ DB_SSL:
 DB_USE_CONNECTION_FOR_REQUEST: true
 DB_RETRY_LIMIT: 1
 DB_RETRY_INTERVAL: 1
+
+####################
+# API              #
+####################
+
+QUERY_TIMEBOX_MAX_DAYS: 30

@@ -8,12 +8,16 @@ components:
         guid:
           title: Guid
           type: string
+        protocol:
+          title: Protocol
+          type: string
         request_url:
           title: Request Url
           type: string
-        resource_path:
-          title: Resource Path
-          type: string
+        resource_paths:
+          items: {}
+          title: Resource Paths
+          type: array
         status_code:
           title: Status Code
           type: integer
@@ -32,7 +36,7 @@ components:
       - username
       - sub
       - guid
-      - resource_path
+      - resource_paths
       - action
       title: CreatePresignedUrlLogInput
       type: object
@@ -99,17 +103,38 @@ paths:
       - System
   /log/presigned_url:
     get:
-      description: Queries the logs the current user has access to see.
+      description: "Queries the logs the current user has access to see.\n\nFilters\
+        \ can be added as query strings. Accepted filters include all fields\nfor\
+        \ the queried category, as well as the following special filters:\n- \"groupby\"\
+        \ to get counts\n- # TODO count?\n- \"start\" to specify a starting timestamp.\
+        \ Default: the configured maximum\n- \"stop\" to specify an end timestamp.\
+        \ Default: now\n\nQueries are time-boxed: (\"stop\" - \"start\") must be lower\
+        \ than the\nconfigured maximum.\n\nWithout filters, this will return all data\
+        \ within the time-box. Add filters as query strings like this:\n\n    GET\
+        \ /log/presigned_url?a=1&b=2\n\nThis will match all records that have values\
+        \ containing all of:\n\n    {\"a\": 1, \"b\": 2}\n\nProviding the same key\
+        \ with more than one value filters records whose\nvalue of the given key matches\
+        \ any of the given values. But values of\ndifferent keys must all match. For\
+        \ example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\nMatches these:\n\n\
+        \    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\nBut won't match these:\n\
+        \n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\": 3}"
       operationId: query_presigned_url_logs_log_presigned_url_get
       parameters:
-      - description: Return results at this given offset.
+      - description: Start timestamp
         in: query
-        name: offset
+        name: start
         required: false
         schema:
-          default: 0
-          description: Return results at this given offset.
-          title: Offset
+          description: Start timestamp
+          title: Start
+          type: integer
+      - description: Stop timestamp
+        in: query
+        name: stop
+        required: false
+        schema:
+          description: Stop timestamp
+          title: Stop
           type: integer
       responses:
         '200':
@@ -129,7 +154,22 @@ paths:
       tags:
       - Query
     post:
-      description: Create a new presigned_url audit log.
+      description: 'Create a new presigned_url audit log.
+
+        This endpoint does not include any authorization checks, but it is not
+
+        exposed and is only meant for internal use.
+
+        The response is returned _before_ inserting the new audit log in the
+
+        database, so that POSTing audit logs does not impact the performance of
+
+        the caller and audit-service failures are not visible to users.
+
+        # TODO maybe rename endpoint with "internal" or something, in case we need
+        an external endpoint with authz later
+
+        # TODO maybe return something'
       operationId: create_presigned_url_log_log_presigned_url_post
       requestBody:
         content:

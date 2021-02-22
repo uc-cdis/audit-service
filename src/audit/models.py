@@ -3,8 +3,8 @@ import enum
 from datetime import datetime
 from gino.ext.starlette import Gino
 import sqlalchemy
-from sqlalchemy import ARRAY, Column, DateTime, Enum, Integer, String, UniqueConstraint
-from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy import Column, DateTime, Enum, Integer, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import ARRAY, TIMESTAMP
 
 # import time
 

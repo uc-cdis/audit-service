@@ -40,6 +40,7 @@ class CreatePresignedUrlLogInput(CreateLogInput):
     protocol: str = None  # can be null if action=="upload"
 
 
+# TODO generalize
 # @router.post("/log/{category}", status_code=HTTP_201_CREATED)
 # async def create_log(
 #     category: str,
@@ -99,6 +100,7 @@ async def create_presigned_url_log(
     # TODO maybe return something
     """
     data = body.dict()
+    # TODO fix logging
     logger.debug(f"Creating audit log. Received body: {data}")
 
     allowed_actions = ["download", "upload"]
