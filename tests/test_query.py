@@ -4,12 +4,12 @@ import pytest  # TODO remove once unused
 from audit.config import config
 
 
-def timestamp_for_date(date_string):
+def timestamp_for_date(date_string, format="%Y/%m/%d"):
     """
     Input: date in format YYYY-MM-DD (str)
     Output: timestamp (int)
     """
-    dt = datetime.strptime(date_string, "%Y/%m/%d")
+    dt = datetime.strptime(date_string, format)
     return int(datetime.timestamp(dt))
 
 
@@ -78,6 +78,13 @@ def test_query_field_filter(client):
     assert res.status_code == 200, res.text
     response_data = res.json()["data"]
     assert len(response_data) == len(PRESIGNED_URL_TEST_DATA)  # all test logs
+    # make sure logs are ordered by increasing timestamp:
+    previous_timestamp = 0
+    for log in response_data:
+        date = log["timestamp"].split("T")[0]
+        timestamp = timestamp_for_date(date, format="%Y-%m-%d")
+        assert timestamp > previous_timestamp
+        previous_timestamp = timestamp
 
     # query logs for 1 user
     res = client.get(
@@ -151,7 +158,6 @@ def test_query_field_filter(client):
     assert res.status_code == 200, res.text
     response_data = res.json()["data"]
     assert len(response_data) == 3  # test logs A2, A3, B1
-    print(response_data)
     for i, item in enumerate(response_data):
         test_data = PRESIGNED_URL_TEST_DATA[
             "B1" if i == 0 else ("A2" if i == 1 else "A3")
@@ -201,10 +207,11 @@ def test_query_groupby(client):
 
 
 def test_query_timestamps(client, monkeypatch):
+    """
+    Queries are time-boxed: if (stop-timestamp - start-timestamp) is greater
+    than the configured MAX (`QUERY_TIMEBOX_MAX_DAYS`), we return an error.
+    """
     submit_test_data(client)
-
-    # queries are time-boxed: if (stop-timestamp - start-timestamp) is greater
-    # than MAX, we return an error.
 
     # query logs with a start timestamp, no stop
     # (stop-timestamp - start-timestamp) < MAX (OK)
@@ -285,10 +292,33 @@ def test_query_timestamps(client, monkeypatch):
     assert res.status_code == 400, res.text
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_query_pagination(client):
-    # TODO
-    pass
+def test_query_pagination(client, monkeypatch):
+    submit_test_data(client)
+
+    page_size = 2
+    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", page_size)
+
+    total_logs = 0
+    next_timestamp = None
+    done = False
+    while not done:
+        url = "/log/presigned_url"
+        if next_timestamp:
+            url += f"?start={next_timestamp}"
+        res = client.get(url, headers={"Authorization": f"bearer {fake_jwt}"})
+        assert res.status_code == 200, res.text
+        response_data = res.json()["data"]
+        next_timestamp = res.json()["nextTimeStamp"]
+        total_logs += len(response_data)
+        if total_logs == len(PRESIGNED_URL_TEST_DATA):
+            done = True
+            assert not next_timestamp
+            assert len(response_data) == len(PRESIGNED_URL_TEST_DATA) % page_size
+        else:
+            assert next_timestamp
+            assert len(response_data) == page_size
+
+    # TODO next_timestamp + start/stop test case
 
 
 @pytest.mark.skip(reason="Not implemented yet")

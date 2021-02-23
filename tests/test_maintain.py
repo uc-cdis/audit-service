@@ -63,8 +63,10 @@ def test_create_presigned_url_log_without_timestamp(client):
     )
     assert res.status_code == 201, res.text
 
+    # sleep to avoid a race condition with `stop` timestamp default (now)
+    time.sleep(1)
+
     # the POST endpoint does not return data since it's async, so query
-    time.sleep(1)  # avoid a race condition with `stop` timestamp default (now)
     res = client.get(
         "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
     )

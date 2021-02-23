@@ -119,6 +119,8 @@ async def query_presigned_url_logs(
     # ]
     # return [r.to_dict() for r in authorized_requests]
 
+    limit = config["QUERY_PAGE_SIZE"]
+
     query_params = {}
     for key, value in request.query_params.multi_items():
         if key not in {"groupby", "start", "stop"}:
@@ -139,11 +141,18 @@ async def query_presigned_url_logs(
                 query = query.where(
                     db.or_(getattr(PresignedUrl, field) == v for v in values)
                 )
-        return query
+        query = query.order_by(PresignedUrl.timestamp)
+        # get 1 more log than the limit, so we can return `nextTimeStamp`:
+        return query.limit(limit + 1)
 
     logs = [logs for logs in await add_filter(PresignedUrl.query).gino.all()]
+    if len(logs) > limit:
+        next_timestamp = int(datetime.timestamp(logs[-1].timestamp))
+        logs = logs[:-1]
+    else:
+        next_timestamp = None
     return {
-        "nextTimeStamp": None,  # TODO pagination
+        "nextTimeStamp": next_timestamp,
         "data": [e.to_dict() for e in logs],
     }
 

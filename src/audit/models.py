@@ -25,6 +25,7 @@ db = Gino(
 class AuditLog(db.Model):
     request_url = Column(String, nullable=False)
     status_code = Column(Integer, nullable=False)
+    # TODO try storing timestamps to simplify code. how to partition?
     # timestamp = Column(DateTime, nullable=False, default=datetime.utcnow) #Column(TIMESTAMP, nullable=False, default=sqlalchemy.func.now())
     timestamp = Column(DateTime, nullable=False, default=sqlalchemy.func.now())
     username = Column(String, nullable=False)

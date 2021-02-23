@@ -10,4 +10,7 @@ DB_USER: postgres
 DB_PASSWORD: postgres
 DB_DATABASE: audit_test
 
+# big default values so that these parameters don't impact unit tests
+# that are not meant to test them:
 QUERY_TIMEBOX_MAX_DAYS: 999999999
+QUERY_PAGE_SIZE: 999999999
