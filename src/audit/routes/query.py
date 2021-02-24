@@ -1,5 +1,4 @@
-import uuid
-
+from collections import defaultdict
 from datetime import datetime
 from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel
@@ -24,13 +23,25 @@ router = APIRouter()
 @router.get("/log/presigned_url")
 async def query_presigned_url_logs(
     request: Request,
-    # groupby: str = Query(None, description="TODO"),
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),
 ) -> list:
     """
-    Queries the logs the current user has access to see.
+    Queries the logs the current user has access to see. Returned data:
+
+        {
+            "data": [<entry>, <entry>, ...],
+            "nextTimeStamp": <timestamp or null>
+        }
+
+    This endpoint only returns up to a configured maximum number of entries
+    at a time. If there are more entries to query, it returns a non-null
+    "nextTimeStamp" which can be used to get the next page.
+
+    The returned entries are ordered by increasing timestamp (least recent to
+    most recent), so that new entries are at the end and there is no risk of
+    skipping entries when getting the next page.
 
     Filters can be added as query strings. Accepted filters include all fields
     for the queried category, as well as the following special filters:
@@ -42,7 +53,8 @@ async def query_presigned_url_logs(
     Queries are time-boxed: ("stop" - "start") must be lower than the
     configured maximum.
 
-    Without filters, this will return all data within the time-box. Add filters as query strings like this:
+    Without filters, this will return all data within the time-box. Add
+    filters as query strings like this:
 
         GET /log/presigned_url?a=1&b=2
 
@@ -65,19 +77,19 @@ async def query_presigned_url_logs(
 
         {"a": 1, "b": 10}
         {"a": 10, "b": 3}
+
+    groupby example:
+
+        GET /log/presigned_url?a=1&groupby=b&groupby=c
+
+        {"b": 1, "c": 2, "count": 5}
+        {"b": 1, "c": 3, "count": 8}
     """
     timebox_max_seconds = config["QUERY_TIMEBOX_MAX_DAYS"] * 86400
     if not stop:
         stop = int(time.time())
     if not start:
-        # default "start" = ("stop" - timebox maximum in seconds)
         start = max(stop - timebox_max_seconds, 0)
-
-    if start > stop:
-        raise HTTPException(
-            HTTP_400_BAD_REQUEST,
-            f"The start timestamp '{start}' should be before the stop timestamp '{stop}'",
-        )
 
     try:
         start_date = datetime.fromtimestamp(start)
@@ -86,6 +98,12 @@ async def query_presigned_url_logs(
         msg = f"Unable to convert timestamps '{start}' and '{stop}' to datetimes"
         logger.error(f"{msg}:\n{e}")
         raise HTTPException(HTTP_400_BAD_REQUEST, msg)
+
+    if start > stop:
+        raise HTTPException(
+            HTTP_400_BAD_REQUEST,
+            f"The start timestamp '{start}' ({start_date}) should be before the stop timestamp '{stop}' ({stop_date})",
+        )
 
     if stop - start > timebox_max_seconds:
         raise HTTPException(
@@ -119,42 +137,71 @@ async def query_presigned_url_logs(
     # ]
     # return [r.to_dict() for r in authorized_requests]
 
-    limit = config["QUERY_PAGE_SIZE"]
-
-    query_params = {}
+    query_params = defaultdict(set)
+    groupby = set()
     for key, value in request.query_params.multi_items():
-        if key not in {"groupby", "start", "stop"}:
+        if key == "groupby":
+            groupby.add(value)
+        elif key not in {"start", "stop"}:
             # if key in <allowed>:  # TODO
-            query_params.setdefault(key, []).append(value)
+            query_params[key].add(value)
             # else:
             #     return 400
 
-    # TODO only filters that are in DB model
-    def add_filter(query):
-        query = query.where(PresignedUrl.timestamp >= start_date).where(
-            PresignedUrl.timestamp < stop_date
-        )
-        for field, values in query_params.items():
-            if field == "resource_paths":  # TODO check type instead
-                query = query.where(getattr(PresignedUrl, field).overlap(values))
-            else:
-                query = query.where(
-                    db.or_(getattr(PresignedUrl, field) == v for v in values)
-                )
-        query = query.order_by(PresignedUrl.timestamp)
-        # get 1 more log than the limit, so we can return `nextTimeStamp`:
-        return query.limit(limit + 1)
+    if groupby:
+        logs = await query_logs_groupby(start_date, stop_date, query_params, groupby)
+        next_timestamp = None
+    else:
+        logs, next_timestamp = await query_logs(start_date, stop_date, query_params)
 
-    logs = [logs for logs in await add_filter(PresignedUrl.query).gino.all()]
+    return {
+        "nextTimeStamp": next_timestamp,
+        "data": logs,
+    }
+
+
+# TODO only filters that are in DB model
+def add_filters(query, start_date, stop_date, query_params):
+    query = query.where(PresignedUrl.timestamp >= start_date).where(
+        PresignedUrl.timestamp < stop_date
+    )
+    for field, values in query_params.items():
+        if field == "resource_paths":  # TODO check type instead
+            query = query.where(getattr(PresignedUrl, field).overlap(values))
+        else:
+            query = query.where(
+                db.or_(getattr(PresignedUrl, field) == v for v in values)
+            )
+    return query
+
+
+async def query_logs(start_date, stop_date, query_params):
+    query = PresignedUrl.query
+    query = add_filters(query, start_date, stop_date, query_params)
+    query = query.order_by(PresignedUrl.timestamp)
+    limit = config["QUERY_PAGE_SIZE"]
+    # get 1 more log than the limit, so we can return `nextTimeStamp`:
+    query = query.limit(limit + 1)
+    logs = await query.gino.all()
     if len(logs) > limit:
         next_timestamp = int(datetime.timestamp(logs[-1].timestamp))
         logs = logs[:-1]
     else:
         next_timestamp = None
-    return {
-        "nextTimeStamp": next_timestamp,
-        "data": [e.to_dict() for e in logs],
-    }
+    logs = [e.to_dict() for e in logs]
+    return logs, next_timestamp
+
+
+async def query_logs_groupby(start_date, stop_date, query_params, groupby):
+    # TODO test for groupby not in allowed fields
+    select_list = [getattr(PresignedUrl, field) for field in groupby]
+    select_list.append(db.func.count(PresignedUrl.username).label("count"))
+    query = db.select(select_list)
+    for field in groupby:
+        query = query.group_by(getattr(PresignedUrl, field))
+    query = add_filters(query, start_date, stop_date, query_params)
+    logs = await query.gino.all()
+    return logs
 
 
 def init_app(app: FastAPI):

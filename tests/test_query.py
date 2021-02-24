@@ -167,8 +167,7 @@ def test_query_field_filter(client):
         assert item["resource_paths"] == test_data["resource_paths"]
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_query_groupby(client):
+def test_query_groupby(client, monkeypatch):
     submit_test_data(client)
 
     # query logs grouped by username
@@ -176,24 +175,52 @@ def test_query_groupby(client):
         "/log/presigned_url?groupby=username",
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
+    assert res.status_code == 200, res.text
     response_data = res.json()["data"]
-    # TODO
+    expected = [
+        {"username": "userA", "count": 4},
+        {"username": "userB", "count": 1},
+    ]
+    assert sorted(response_data, key=lambda e: e["username"]) == expected
 
     # query logs grouped by username and guid
     res = client.get(
         "/log/presigned_url?groupby=username&groupby=guid",
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
+    assert res.status_code == 200, res.text
     response_data = res.json()["data"]
-    # TODO
+    expected = [
+        {"username": "userA", "guid": "guid1", "count": 2},
+        {"username": "userA", "guid": "guid2", "count": 1},
+        {"username": "userA", "guid": "guid3", "count": 1},
+        {"username": "userB", "guid": "guid1", "count": 1},
+    ]
+    assert sorted(response_data, key=lambda e: (e["username"], e["guid"])) == expected
 
-    # query logs grouped by username with filter
+    # query logs grouped by username with username filter
     res = client.get(
         "/log/presigned_url?groupby=username&username=userA",
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
+    assert res.status_code == 200, res.text
     response_data = res.json()["data"]
-    # TODO
+    expected = [{"username": "userA", "count": 4}]
+    assert response_data == expected
+
+    # query logs grouped by guid with username filter
+    res = client.get(
+        "/log/presigned_url?groupby=guid&username=userA",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    expected = [
+        {"guid": "guid1", "count": 2},
+        {"guid": "guid2", "count": 1},
+        {"guid": "guid3", "count": 1},
+    ]
+    assert sorted(response_data, key=lambda e: (e["guid"])) == expected
 
     # query logs grouped by username with start and stop timestamps
     start = timestamp_for_date("2020/02/01")
@@ -202,8 +229,35 @@ def test_query_groupby(client):
         f"/log/presigned_url?groupby=username&start={start}&stop={stop}",
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
+    assert res.status_code == 200, res.text
     response_data = res.json()["data"]
-    # TODO
+    expected = [{"username": "userA", "count": 2}]
+    assert response_data == expected
+
+    # query logs grouped by timestamp
+    res = client.get(
+        "/log/presigned_url?groupby=timestamp&guid=guid1",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 3
+    assert all(log["count"] == 1 for log in response_data)
+
+    # make sure the page limit is ignored for groupby queries:
+    # set the page limit to 1 and query logs grouped by username
+    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", 1)
+    res = client.get(
+        "/log/presigned_url?groupby=username",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    expected = [
+        {"username": "userA", "count": 4},
+        {"username": "userB", "count": 1},
+    ]
+    assert sorted(response_data, key=lambda e: e["username"]) == expected
 
 
 def test_query_timestamps(client, monkeypatch):
@@ -317,8 +371,6 @@ def test_query_pagination(client, monkeypatch):
         else:
             assert next_timestamp
             assert len(response_data) == page_size
-
-    # TODO next_timestamp + start/stop test case
 
 
 @pytest.mark.skip(reason="Not implemented yet")

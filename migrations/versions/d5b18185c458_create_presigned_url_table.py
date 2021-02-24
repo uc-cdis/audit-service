@@ -79,8 +79,6 @@ def upgrade():
         TABLE_NAME,
         sa.Column("request_url", sa.String(), nullable=False),
         sa.Column("status_code", sa.Integer(), nullable=False),
-        # sa.Column("timestamp", nullable=False, sa.dialects.postgresql.TIMESTAMP, server_default=sa.func.now()),
-        # sa.Column("timestamp", sa.DateTime, nullable=False, server_default=datetime.utcnow()),
         sa.Column(
             "timestamp", sa.DateTime, nullable=False, server_default=sa.func.now()
         ),
@@ -90,7 +88,6 @@ def upgrade():
         sa.Column("resource_paths", sa.ARRAY(sa.String()), nullable=False),
         sa.Column("action", sa.String(), nullable=False),
         sa.Column("protocol", sa.String(), nullable=True),
-        # postgresql_partition_by='RANGE (timestamp)',
     )
     setup_table_partitioning(TABLE_NAME)
 

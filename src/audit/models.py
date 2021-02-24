@@ -1,14 +1,11 @@
-import enum
-
 from datetime import datetime
 from gino.ext.starlette import Gino
 import sqlalchemy
-from sqlalchemy import Column, DateTime, Enum, Integer, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, TIMESTAMP
 
-# import time
-
 from .config import config
+
 
 db = Gino(
     dsn=config["DB_URL"],
@@ -25,13 +22,9 @@ db = Gino(
 class AuditLog(db.Model):
     request_url = Column(String, nullable=False)
     status_code = Column(Integer, nullable=False)
-    # TODO try storing timestamps to simplify code. how to partition?
-    # timestamp = Column(DateTime, nullable=False, default=datetime.utcnow) #Column(TIMESTAMP, nullable=False, default=sqlalchemy.func.now())
     timestamp = Column(DateTime, nullable=False, default=sqlalchemy.func.now())
     username = Column(String, nullable=False)
     sub = Column(String, nullable=False)
-
-    # __table_args__ = ({"postgresql_partition_by": "timestamp"})
 
 
 class PresignedUrl(AuditLog):
