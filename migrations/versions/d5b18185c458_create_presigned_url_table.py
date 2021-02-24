@@ -83,7 +83,7 @@ def upgrade():
             "timestamp", sa.DateTime, nullable=False, server_default=sa.func.now()
         ),
         sa.Column("username", sa.String(), nullable=False),
-        sa.Column("sub", sa.String(), nullable=False),
+        sa.Column("sub", sa.Integer(), nullable=True),
         sa.Column("guid", sa.String(), nullable=False),
         sa.Column("resource_paths", sa.ARRAY(sa.String()), nullable=False),
         sa.Column("action", sa.String(), nullable=False),

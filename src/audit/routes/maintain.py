@@ -5,7 +5,6 @@ from datetime import datetime
 from enum import Enum
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, FastAPI, HTTPException
 from gino.exceptions import NoSuchRowError
-from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.status import (
     HTTP_200_OK,
@@ -19,39 +18,10 @@ from starlette.status import (
 from .. import logger
 from ..auth import Auth
 from ..config import config
-from ..models import db, PresignedUrl
+from ..models import db, PresignedUrl, CreatePresignedUrlLogInput
 
 
 router = APIRouter()
-
-
-class CreateLogInput(BaseModel):
-    request_url: str
-    status_code: int
-    timestamp: int = None
-    username: str
-    sub: str  # it's an int in Fence, but can be "anonymous" for public data
-
-
-class CreatePresignedUrlLogInput(CreateLogInput):
-    guid: str
-    resource_paths: list
-    action: str
-    protocol: str = None  # can be null if action=="upload"
-
-
-# TODO generalize
-# @router.post("/log/{category}", status_code=HTTP_201_CREATED)
-# async def create_log(
-#     category: str,
-#     body: CreateLogInput,
-#     auth=Depends(Auth),
-# ) -> dict:
-#     """
-#     Create a new audit log.
-#     """
-#     if category != "presigned_url":
-#         raise NotImplementedError(category)
 
 
 async def insert_row(data):

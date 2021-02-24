@@ -16,7 +16,7 @@ def test_create_presigned_url_log_with_timestamp(client):
         # `-10` to avoid a race condition with `stop` timestamp default (now)
         "timestamp": int(time.time() - 10),
         "username": "audit-service_user",
-        "sub": "10",
+        "sub": 10,
         "guid": guid,
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
@@ -50,7 +50,7 @@ def test_create_presigned_url_log_without_timestamp(client):
         "request_url": f"/request_data/download/{guid}",
         "status_code": 200,
         "username": "audit-service_user",
-        "sub": "10",
+        "sub": 10,
         "guid": guid,
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
@@ -89,7 +89,7 @@ def test_create_presigned_url_log_wrong_body(client):
     # create a log with missing fields
     request_data = {
         "status_code": 200,
-        "sub": "10",
+        "sub": 10,
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
     }
@@ -105,7 +105,7 @@ def test_create_presigned_url_log_wrong_body(client):
         "request_url": f"/request_data/download/{guid}",
         "status_code": 200,
         "username": "audit-service_user",
-        "sub": "10",
+        "sub": 10,
         "guid": guid,
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "not-an-action",
@@ -123,7 +123,7 @@ def test_create_presigned_url_log_wrong_body(client):
         "request_url": f"/request_data/download/{guid}",
         "status_code": 200,
         "username": "audit-service_user",
-        "sub": "10",
+        "sub": 10,
         "guid": guid,
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",

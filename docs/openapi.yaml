@@ -23,7 +23,7 @@ components:
           type: integer
         sub:
           title: Sub
-          type: string
+          type: integer
         timestamp:
           title: Timestamp
           type: integer
@@ -103,21 +103,30 @@ paths:
       - System
   /log/presigned_url:
     get:
-      description: "Queries the logs the current user has access to see.\n\nFilters\
-        \ can be added as query strings. Accepted filters include all fields\nfor\
-        \ the queried category, as well as the following special filters:\n- \"groupby\"\
+      description: "Queries the logs the current user has access to see. Returned\
+        \ data:\n\n    {\n        \"data\": [<entry>, <entry>, ...],\n        \"nextTimeStamp\"\
+        : <timestamp or null>\n    }\n\nThis endpoint only returns up to a configured\
+        \ maximum number of entries\nat a time. If there are more entries to query,\
+        \ it returns a non-null\n\"nextTimeStamp\" which can be used to get the next\
+        \ page.\n\nThe returned entries are ordered by increasing timestamp (least\
+        \ recent to\nmost recent), so that new entries are at the end and there is\
+        \ no risk of\nskipping entries when getting the next page.\n\nFilters can\
+        \ be added as query strings. Accepted filters include all fields\nfor the\
+        \ queried category, as well as the following special filters:\n- \"groupby\"\
         \ to get counts\n- # TODO count?\n- \"start\" to specify a starting timestamp.\
         \ Default: the configured maximum\n- \"stop\" to specify an end timestamp.\
         \ Default: now\n\nQueries are time-boxed: (\"stop\" - \"start\") must be lower\
         \ than the\nconfigured maximum.\n\nWithout filters, this will return all data\
-        \ within the time-box. Add filters as query strings like this:\n\n    GET\
+        \ within the time-box. Add\nfilters as query strings like this:\n\n    GET\
         \ /log/presigned_url?a=1&b=2\n\nThis will match all records that have values\
         \ containing all of:\n\n    {\"a\": 1, \"b\": 2}\n\nProviding the same key\
         \ with more than one value filters records whose\nvalue of the given key matches\
         \ any of the given values. But values of\ndifferent keys must all match. For\
         \ example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\nMatches these:\n\n\
         \    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\nBut won't match these:\n\
-        \n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\": 3}"
+        \n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\": 3}\n\ngroupby example:\n\
+        \n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\n    {\"b\": 1, \"\
+        c\": 2, \"count\": 5}\n    {\"b\": 1, \"c\": 3, \"count\": 8}"
       operationId: query_presigned_url_logs_log_presigned_url_get
       parameters:
       - description: Start timestamp

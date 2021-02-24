@@ -34,7 +34,7 @@ async def test_table_partitioning():
         )
         return [table_data[0] for table_data in tables_data]
 
-    insert_stmt = "insert into {}(\"request_url\", \"status_code\", \"timestamp\", \"username\", \"sub\", \"guid\", \"resource_paths\", \"action\") values ('request_url', 200, '{}', 'user1', '10', 'guid', ARRAY['/my/resource/path1', '/path2'], 'action')"
+    insert_stmt = 'insert into {}("request_url", "status_code", "timestamp", "username", "sub", "guid", "resource_paths", "action") values (\'request_url\', 200, \'{}\', \'user1\', 10, \'guid\', ARRAY[\'/my/resource/path1\', \'/path2\'], \'action\')'
 
     # initially, we should only have 1 table, no partitions
     assert await get_table_names() == [category]

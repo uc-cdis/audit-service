@@ -54,7 +54,7 @@ def submit_test_data(client):
             "request_url": f"/request_data/download/{guid}",
             "status_code": 200,
             "username": "audit-service_user",
-            "sub": "10",
+            "sub": 10,
             "guid": guid,
             "resource_paths": ["/my/resource/path1", "/path2"],
             "action": "download",
@@ -258,6 +258,19 @@ def test_query_groupby(client, monkeypatch):
         {"username": "userB", "count": 1},
     ]
     assert sorted(response_data, key=lambda e: e["username"]) == expected
+
+    # TODO query with a groupby field that doesn't exist for this category
+    # res = client.get(
+    #     "/log/presigned_url?groupby=whatisthis",
+    #     headers={"Authorization": f"bearer {fake_jwt}"},
+    # )
+    # assert res.status_code == 400, res.text
+    # response_data = res.json()["data"]
+    # expected = [
+    #     {"username": "userA", "count": 4},
+    #     {"username": "userB", "count": 1},
+    # ]
+    # assert sorted(response_data, key=lambda e: e["username"]) == expected
 
 
 def test_query_timestamps(client, monkeypatch):
