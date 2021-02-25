@@ -17,7 +17,7 @@ branch_labels = None
 depends_on = None
 
 
-def setup_table_partitioning(table_name):
+def create_partition_function():
     """
     Creates partitions with inheritance so we can create them automatically
     with a trigger.
@@ -45,6 +45,8 @@ def setup_table_partitioning(table_name):
     COST 100;"""
     op.execute(procedure_stmt)
 
+
+def setup_table_partitioning(table_name):
     trigger_name = f"{table_name}_partition_trigger"
     print(f"  Creating `{trigger_name}` trigger")
     trigger_stmt = f"""CREATE TRIGGER {trigger_name}
@@ -69,10 +71,12 @@ def delete_table_partitioning(table_name):
 
 def delete_partition_function():
     print("  Deleting `create_partition_and_insert` function")
-    op.execute("DROP FUNCTION create_partition_and_insert")
+    op.execute("DROP FUNCTION create_partition_and_insert()")
 
 
 def upgrade():
+    create_partition_function()
+
     table_name = "presigned_url"
     print(f"  Creating `{table_name}` table")
     op.create_table(

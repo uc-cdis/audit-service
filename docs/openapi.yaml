@@ -1,5 +1,42 @@
 components:
   schemas:
+    CreateLoginLogInput:
+      properties:
+        client_id:
+          title: Client Id
+          type: string
+        fence_idp:
+          title: Fence Idp
+          type: string
+        idp:
+          title: Idp
+          type: string
+        request_url:
+          title: Request Url
+          type: string
+        shib_idp:
+          title: Shib Idp
+          type: string
+        status_code:
+          title: Status Code
+          type: integer
+        sub:
+          title: Sub
+          type: integer
+        timestamp:
+          title: Timestamp
+          type: integer
+        username:
+          title: Username
+          type: string
+      required:
+      - request_url
+      - status_code
+      - username
+      - sub
+      - idp
+      title: CreateLoginLogInput
+      type: object
     CreatePresignedUrlLogInput:
       properties:
         action:
@@ -101,52 +138,28 @@ paths:
       summary: Get Version
       tags:
       - System
-  /log/presigned_url:
-    get:
-      description: "Queries the logs the current user has access to see. Returned\
-        \ data:\n\n    {\n        \"data\": [<entry>, <entry>, ...],\n        \"nextTimeStamp\"\
-        : <timestamp or null>\n    }\n\nThis endpoint only returns up to a configured\
-        \ maximum number of entries\nat a time. If there are more entries to query,\
-        \ it returns a non-null\n\"nextTimeStamp\" which can be used to get the next\
-        \ page.\n\nThe returned entries are ordered by increasing timestamp (least\
-        \ recent to\nmost recent), so that new entries are at the end and there is\
-        \ no risk of\nskipping entries when getting the next page.\n\nFilters can\
-        \ be added as query strings. Accepted filters include all fields\nfor the\
-        \ queried category, as well as the following special filters:\n- \"groupby\"\
-        \ to get counts\n- # TODO count?\n- \"start\" to specify a starting timestamp.\
-        \ Default: the configured maximum\n- \"stop\" to specify an end timestamp.\
-        \ Default: now\n\nQueries are time-boxed: (\"stop\" - \"start\") must be lower\
-        \ than the\nconfigured maximum.\n\nWithout filters, this will return all data\
-        \ within the time-box. Add\nfilters as query strings like this:\n\n    GET\
-        \ /log/presigned_url?a=1&b=2\n\nThis will match all records that have values\
-        \ containing all of:\n\n    {\"a\": 1, \"b\": 2}\n\nProviding the same key\
-        \ with more than one value filters records whose\nvalue of the given key matches\
-        \ any of the given values. But values of\ndifferent keys must all match. For\
-        \ example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\nMatches these:\n\n\
-        \    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\nBut won't match these:\n\
-        \n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\": 3}\n\ngroupby example:\n\
-        \n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\n    {\"b\": 1, \"\
-        c\": 2, \"count\": 5}\n    {\"b\": 1, \"c\": 3, \"count\": 8}"
-      operationId: query_presigned_url_logs_log_presigned_url_get
-      parameters:
-      - description: Start timestamp
-        in: query
-        name: start
-        required: false
-        schema:
-          description: Start timestamp
-          title: Start
-          type: integer
-      - description: Stop timestamp
-        in: query
-        name: stop
-        required: false
-        schema:
-          description: Stop timestamp
-          title: Stop
-          type: integer
+  /log/login:
+    post:
+      description: 'Create a new `login` audit log.
+
+        This endpoint does not include any authorization checks, but it is not
+
+        exposed and is only meant for internal use.
+
+        The response is returned _before_ inserting the new audit log in the
+
+        database, so that POSTing audit logs does not impact the performance of
+
+        the caller and audit-service failures are not visible to users.'
+      operationId: create_login_log_log_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoginLogInput'
+        required: true
       responses:
-        '200':
+        '201':
           content:
             application/json:
               schema: {}
@@ -159,11 +172,12 @@ paths:
           description: Validation Error
       security:
       - HTTPBearer: []
-      summary: Query Presigned Url Logs
+      summary: Create Login Log
       tags:
-      - Query
+      - Maintain
+  /log/presigned_url:
     post:
-      description: 'Create a new presigned_url audit log.
+      description: 'Create a new `presigned_url` audit log.
 
         This endpoint does not include any authorization checks, but it is not
 
@@ -203,3 +217,70 @@ paths:
       summary: Create Presigned Url Log
       tags:
       - Maintain
+  /log/{category}:
+    get:
+      description: "Queries the logs the current user has access to see. Returned\
+        \ data:\n\n    {\n        \"data\": [<entry>, <entry>, ...],\n        \"nextTimeStamp\"\
+        : <timestamp or null>\n    }\n\nThis endpoint only returns up to a configured\
+        \ maximum number of entries\nat a time. If there are more entries to query,\
+        \ it returns a non-null\n\"nextTimeStamp\" which can be used to get the next\
+        \ page.\n\nThe returned entries are ordered by increasing timestamp (least\
+        \ recent to\nmost recent), so that new entries are at the end and there is\
+        \ no risk of\nskipping entries when getting the next page.\n\nFilters can\
+        \ be added as query strings. Accepted filters include all fields\nfor the\
+        \ queried category, as well as the following special filters:\n- \"groupby\"\
+        \ to get counts\n- # TODO count?\n- \"start\" to specify a starting timestamp.\
+        \ Default: the configured maximum\n- \"stop\" to specify an end timestamp.\
+        \ Default: now\n\nQueries are time-boxed: (\"stop\" - \"start\") must be lower\
+        \ than the\nconfigured maximum.\n\nWithout filters, this will return all data\
+        \ within the time-box. Add\nfilters as query strings like this:\n\n    GET\
+        \ /log/presigned_url?a=1&b=2\n\nThis will match all records that have values\
+        \ containing all of:\n\n    {\"a\": 1, \"b\": 2}\n\nProviding the same key\
+        \ with more than one value filters records whose\nvalue of the given key matches\
+        \ any of the given values. But values of\ndifferent keys must all match. For\
+        \ example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\nMatches these:\n\n\
+        \    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\nBut won't match these:\n\
+        \n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\": 3}\n\ngroupby example:\n\
+        \n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\n    {\"b\": 1, \"\
+        c\": 2, \"count\": 5}\n    {\"b\": 1, \"c\": 3, \"count\": 8}"
+      operationId: query_logs_log__category__get
+      parameters:
+      - in: path
+        name: category
+        required: true
+        schema:
+          title: Category
+          type: string
+      - description: Start timestamp
+        in: query
+        name: start
+        required: false
+        schema:
+          description: Start timestamp
+          title: Start
+          type: integer
+      - description: Stop timestamp
+        in: query
+        name: stop
+        required: false
+        schema:
+          description: Stop timestamp
+          title: Stop
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Query Logs
+      tags:
+      - Query
