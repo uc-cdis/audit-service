@@ -47,8 +47,13 @@ PRESIGNED_URL_TEST_DATA = {
 fake_jwt = "1.2.3"
 
 
-def submit_test_data(client):
-    for test_data in PRESIGNED_URL_TEST_DATA.values():
+def submit_test_data(client, n=len(PRESIGNED_URL_TEST_DATA)):
+    """
+    Submit a set of presigned URL audit logs
+    """
+    for i, test_data in enumerate(PRESIGNED_URL_TEST_DATA.values()):
+        if i == n:
+            break
         guid = "dg.hello/abc"
         request_data = {
             "request_url": f"/request_data/download/{guid}",
@@ -385,6 +390,48 @@ def test_query_pagination(client, monkeypatch):
         else:
             assert next_timestamp
             assert len(response_data) == page_size
+
+
+def test_query_category(client):
+    submit_test_data(client, 1)
+
+    # submit a login audit log
+    request_data = {
+        "request_url": "/login",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "timestamp": timestamp_for_date("2020/01/01"),
+        "idp": "google",
+    }
+    res = client.post(
+        "/log/login",
+        json=request_data,
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 201, res.text
+
+    # query presigned_url logs
+    res = client.get(
+        "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 1
+    assert "guid" in response_data[0]
+    assert "idp" not in response_data[0]
+
+    # query login logs
+    res = client.get("/log/login", headers={"Authorization": f"bearer {fake_jwt}"})
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 1
+    assert "idp" in response_data[0]
+    assert "guid" not in response_data[0]
+
+    # query a category that doesn't exist
+    res = client.get("/log/whatisthis", headers={"Authorization": f"bearer {fake_jwt}"})
+    assert res.status_code == 400, res.text
 
 
 @pytest.mark.skip(reason="Not implemented yet")

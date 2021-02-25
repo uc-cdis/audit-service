@@ -18,13 +18,18 @@ from starlette.status import (
 from .. import logger
 from ..auth import Auth
 from ..config import config
-from ..models import db, PresignedUrl, CreatePresignedUrlLogInput
+from ..models import (
+    CATEGORY_TO_MODEL_CLASS,
+    db,
+    CreateLoginLogInput,
+    CreatePresignedUrlLogInput,
+)
 
 
 router = APIRouter()
 
 
-async def insert_row(data):
+async def insert_row(category, data):
     """
     GINO returns the row after inserting it:
     `insert into (...) values (...) returning (all the columns)`
@@ -48,7 +53,7 @@ async def insert_row(data):
     `NoSuchRowError` instead of `AttributeError`.
     """
     try:
-        await PresignedUrl.create(**data)
+        await CATEGORY_TO_MODEL_CLASS[category].create(**data)
     except AttributeError:
         pass
 
@@ -60,7 +65,7 @@ async def create_presigned_url_log(
     auth=Depends(Auth),
 ) -> dict:
     """
-    Create a new presigned_url audit log.
+    Create a new `presigned_url` audit log.
     This endpoint does not include any authorization checks, but it is not
     exposed and is only meant for internal use.
     The response is returned _before_ inserting the new audit log in the
@@ -71,7 +76,7 @@ async def create_presigned_url_log(
     """
     data = body.dict()
     # TODO fix logging
-    logger.debug(f"Creating audit log. Received body: {data}")
+    logger.debug(f"Creating `presigned_url` audit log. Received body: {data}")
 
     allowed_actions = ["download", "upload"]
     if data["action"] not in allowed_actions:
@@ -88,7 +93,35 @@ async def create_presigned_url_log(
         # but we have to remove the key from the data dict
         del data["timestamp"]
 
-    background_tasks.add_task(insert_row, data)
+    background_tasks.add_task(insert_row, "presigned_url", data)
+
+
+@router.post("/log/login", status_code=HTTP_201_CREATED)
+async def create_login_log(
+    body: CreateLoginLogInput,
+    background_tasks: BackgroundTasks,
+    auth=Depends(Auth),
+) -> dict:
+    """
+    Create a new `login` audit log.
+    This endpoint does not include any authorization checks, but it is not
+    exposed and is only meant for internal use.
+    The response is returned _before_ inserting the new audit log in the
+    database, so that POSTing audit logs does not impact the performance of
+    the caller and audit-service failures are not visible to users.
+    """
+    data = body.dict()
+    logger.debug(f"Creating `login` audit log. Received body: {data}")
+
+    # take a timestamp as input, store a datetime in the database
+    if data["timestamp"]:
+        data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
+    else:
+        # timestamp=now is automatically added to rows without timestamp,
+        # but we have to remove the key from the data dict
+        del data["timestamp"]
+
+    background_tasks.add_task(insert_row, "login", data)
 
 
 def init_app(app: FastAPI):

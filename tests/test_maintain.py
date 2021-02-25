@@ -135,3 +135,18 @@ def test_create_presigned_url_log_wrong_body(client):
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
     assert res.status_code == 201, res.text
+
+
+def test_create_wrong_category(client):
+    request_data = {
+        "request_url": "/whatisthis",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+    }
+    res = client.post(
+        "/log/whatisthis",
+        json=request_data,
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 405, res.text

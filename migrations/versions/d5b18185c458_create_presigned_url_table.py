@@ -17,9 +17,6 @@ branch_labels = None
 depends_on = None
 
 
-TABLE_NAME = "presigned_url"
-
-
 def setup_table_partitioning(table_name):
     """
     Creates partitions with inheritance so we can create them automatically
@@ -61,9 +58,6 @@ def delete_table_partitioning(table_name):
     print(f"  Deleting `{trigger_name}` trigger")
     op.execute(f"DROP TRIGGER {trigger_name} on {table_name}")
 
-    print("  Deleting `create_partition_and_insert` function")
-    op.execute("DROP FUNCTION create_partition_and_insert")
-
     stmt = f"""SELECT child.relname FROM pg_inherits JOIN pg_class AS child ON (inhrelid=child.oid) JOIN pg_class as parent ON (inhparent=parent.oid) where parent.relname='{table_name}'"""
     conn = op.get_bind()
     res = conn.execute(stmt)
@@ -73,10 +67,16 @@ def delete_table_partitioning(table_name):
         op.drop_table(partition)
 
 
+def delete_partition_function():
+    print("  Deleting `create_partition_and_insert` function")
+    op.execute("DROP FUNCTION create_partition_and_insert")
+
+
 def upgrade():
-    print(f"  Creating `{TABLE_NAME}` table")
+    table_name = "presigned_url"
+    print(f"  Creating `{table_name}` table")
     op.create_table(
-        TABLE_NAME,
+        table_name,
         sa.Column("request_url", sa.String(), nullable=False),
         sa.Column("status_code", sa.Integer(), nullable=False),
         sa.Column(
@@ -89,10 +89,36 @@ def upgrade():
         sa.Column("action", sa.String(), nullable=False),
         sa.Column("protocol", sa.String(), nullable=True),
     )
-    setup_table_partitioning(TABLE_NAME)
+    setup_table_partitioning(table_name)
+
+    table_name = "login"
+    print(f"  Creating `{table_name}` table")
+    op.create_table(
+        table_name,
+        sa.Column("request_url", sa.String(), nullable=False),
+        sa.Column("status_code", sa.Integer(), nullable=False),
+        sa.Column(
+            "timestamp", sa.DateTime, nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column("username", sa.String(), nullable=False),
+        sa.Column("sub", sa.Integer(), nullable=True),
+        sa.Column("idp", sa.String(), nullable=False),
+        sa.Column("fence_idp", sa.String(), nullable=True),
+        sa.Column("shib_idp", sa.String(), nullable=True),
+        sa.Column("client_id", sa.String(), nullable=True),
+    )
+    setup_table_partitioning(table_name)
 
 
 def downgrade():
-    delete_table_partitioning(TABLE_NAME)
-    print(f"  Deleting `{TABLE_NAME}` table")
-    op.drop_table(TABLE_NAME)
+    table_name = "presigned_url"
+    delete_table_partitioning(table_name)
+    print(f"  Deleting `{table_name}` table")
+    op.drop_table(table_name)
+
+    table_name = "login"
+    delete_table_partitioning(table_name)
+    print(f"  Deleting `{table_name}` table")
+    op.drop_table(table_name)
+
+    delete_partition_function()

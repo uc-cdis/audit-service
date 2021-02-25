@@ -34,10 +34,10 @@ class AuditLog(db.Model):
 class CreateLogInput(BaseModel):
     request_url: str
     status_code: int
-    username: str
     # timestamp: we store DateTimes in the DB but the API takes
     # int timestamps as input
     timestamp: int = None
+    username: str
     sub: int
 
 
@@ -66,11 +66,18 @@ class Login(AuditLog):
     idp = Column(String, nullable=False)
     fence_idp = Column(String, nullable=True)
     shib_idp = Column(String, nullable=True)
-    client_id = Column(String, nullable=False)
+    client_id = Column(String, nullable=True)
 
 
 class CreateLoginLogInput(CreateLogInput):
     idp: str
     fence_idp: str = None
     shib_idp: str = None
-    client_id: str
+    client_id: str = None
+
+
+# mapping for use by API endpoints
+CATEGORY_TO_MODEL_CLASS = {
+    "login": Login,
+    "presigned_url": PresignedUrl,
+}

@@ -13,17 +13,17 @@ import time
 from .. import logger
 from ..auth import Auth
 from ..config import config
-from ..models import db, PresignedUrl
+from ..models import CATEGORY_TO_MODEL_CLASS, db
 
 
 router = APIRouter()
 
 
 # TODO config to return usernames or not
-@router.get("/log/presigned_url")
-async def query_presigned_url_logs(
+@router.get("/log/{category}")
+async def query_logs(
     request: Request,
-    # category: str,  # TODO
+    category: str,  # TODO
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),
@@ -86,6 +86,13 @@ async def query_presigned_url_logs(
         {"b": 1, "c": 2, "count": 5}
         {"b": 1, "c": 3, "count": 8}
     """
+    if category not in CATEGORY_TO_MODEL_CLASS:
+        raise HTTPException(
+            HTTP_400_BAD_REQUEST,
+            f"Category '{category}' is not one of {list(CATEGORY_TO_MODEL_CLASS.keys())}",
+        )
+    model = CATEGORY_TO_MODEL_CLASS[category]
+
     timebox_max_seconds = config["QUERY_TIMEBOX_MAX_DAYS"] * 86400
     if not stop:
         stop = int(time.time())
@@ -152,18 +159,22 @@ async def query_presigned_url_logs(
             field = key
 
         try:
-            getattr(PresignedUrl, field)
+            getattr(model, field)
         except AttributeError as e:
             raise HTTPException(
                 HTTP_400_BAD_REQUEST,
-                f"'{field}' is not allowed on category 'presigned_url'",
+                f"'{field}' is not allowed on category '{category}'",
             )
 
     if groupby:
-        logs = await query_logs_groupby(start_date, stop_date, query_params, groupby)
+        logs = await query_logs_groupby(
+            model, start_date, stop_date, query_params, groupby
+        )
         next_timestamp = None
     else:
-        logs, next_timestamp = await query_logs(start_date, stop_date, query_params)
+        logs, next_timestamp = await query_logs(
+            model, start_date, stop_date, query_params
+        )
 
     return {
         "nextTimeStamp": next_timestamp,
@@ -171,24 +182,22 @@ async def query_presigned_url_logs(
     }
 
 
-def add_filters(query, start_date, stop_date, query_params):
-    query = query.where(PresignedUrl.timestamp >= start_date).where(
-        PresignedUrl.timestamp < stop_date
+def add_filters(model, query, start_date, stop_date, query_params):
+    query = query.where(model.timestamp >= start_date).where(
+        model.timestamp < stop_date
     )
     for field, values in query_params.items():
-        if hasattr(getattr(PresignedUrl, field).type, "item_type"):  # ARRAY
-            query = query.where(getattr(PresignedUrl, field).overlap(values))
+        if hasattr(getattr(model, field).type, "item_type"):  # ARRAY
+            query = query.where(getattr(model, field).overlap(values))
         else:
-            query = query.where(
-                db.or_(getattr(PresignedUrl, field) == v for v in values)
-            )
+            query = query.where(db.or_(getattr(model, field) == v for v in values))
     return query
 
 
-async def query_logs(start_date, stop_date, query_params):
-    query = PresignedUrl.query
-    query = add_filters(query, start_date, stop_date, query_params)
-    query = query.order_by(PresignedUrl.timestamp)
+async def query_logs(model, start_date, stop_date, query_params):
+    query = model.query
+    query = add_filters(model, query, start_date, stop_date, query_params)
+    query = query.order_by(model.timestamp)
     limit = config["QUERY_PAGE_SIZE"]
     # get 1 more log than the limit, so we can return `nextTimeStamp`:
     query = query.limit(limit + 1)
@@ -202,13 +211,13 @@ async def query_logs(start_date, stop_date, query_params):
     return logs, next_timestamp
 
 
-async def query_logs_groupby(start_date, stop_date, query_params, groupby):
-    select_list = [getattr(PresignedUrl, field) for field in groupby]
-    select_list.append(db.func.count(PresignedUrl.username).label("count"))
+async def query_logs_groupby(model, start_date, stop_date, query_params, groupby):
+    select_list = [getattr(model, field) for field in groupby]
+    select_list.append(db.func.count(model.username).label("count"))
     query = db.select(select_list)
     for field in groupby:
-        query = query.group_by(getattr(PresignedUrl, field))
-    query = add_filters(query, start_date, stop_date, query_params)
+        query = query.group_by(getattr(model, field))
+    query = add_filters(model, query, start_date, stop_date, query_params)
     logs = await query.gino.all()
     return logs
 
