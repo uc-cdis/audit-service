@@ -1,5 +1,7 @@
 from datetime import datetime
-import pytest  # TODO remove once unused
+import pytest
+from random import randint
+import time
 
 from audit.config import config
 
@@ -17,7 +19,7 @@ PRESIGNED_URL_TEST_DATA = {
     "A1_1": {
         "username": "userA",
         "guid": "guid1",
-        "timestamp": timestamp_for_date("2020/01/15"),
+        "timestamp": timestamp_for_date("2020/01/16"),
     },
     "A1_2": {
         "username": "userA",
@@ -39,7 +41,7 @@ PRESIGNED_URL_TEST_DATA = {
     "B1": {
         "username": "userB",
         "guid": "guid1",
-        "timestamp": timestamp_for_date("2020/01/16"),
+        "timestamp": timestamp_for_date("2020/01/15"),
         "resource_paths": ["/other/resource/path"],
     },
 }
@@ -47,30 +49,38 @@ PRESIGNED_URL_TEST_DATA = {
 fake_jwt = "1.2.3"
 
 
-def submit_test_data(client, n=len(PRESIGNED_URL_TEST_DATA)):
+def submit_test_data(client, n=len(PRESIGNED_URL_TEST_DATA), rand_dates=False):
     """
     Submit a set of presigned URL audit logs
     """
-    for i, test_data in enumerate(PRESIGNED_URL_TEST_DATA.values()):
-        if i == n:
-            break
-        guid = "dg.hello/abc"
-        request_data = {
-            "request_url": f"/request_data/download/{guid}",
-            "status_code": 200,
-            "username": "audit-service_user",
-            "sub": 10,
-            "guid": guid,
-            "resource_paths": ["/my/resource/path1", "/path2"],
-            "action": "download",
-        }
-        request_data.update(test_data)
-        res = client.post(
-            "/log/presigned_url",
-            json=request_data,
-            headers={"Authorization": f"bearer {fake_jwt}"},
-        )
-        assert res.status_code == 201, res.text
+    i = 0
+    while i < n:
+        for test_data in PRESIGNED_URL_TEST_DATA.values():
+            if n > 500 and i % 500 == 0:
+                print(f"Submitting test data: {i}/{n}")
+            if i == n:
+                break
+            guid = "dg.hello/abc"
+            request_data = {
+                "request_url": f"/request_data/download/{guid}",
+                "status_code": 200,
+                "username": "audit-service_user",
+                "sub": 10,
+                "guid": guid,
+                "resource_paths": ["/my/resource/path1", "/path2"],
+                "action": "download",
+            }
+            request_data.update(test_data)
+            if rand_dates:
+                date = f"{randint(2000, 2025)}/{randint(1, 12)}/{randint(1, 28)}"
+                request_data["timestamp"] = timestamp_for_date(date)
+            res = client.post(
+                "/log/presigned_url",
+                json=request_data,
+                headers={"Authorization": f"bearer {fake_jwt}"},
+            )
+            assert res.status_code == 201, res.text
+            i += 1
 
 
 def test_query_field_filter(client):
@@ -383,9 +393,9 @@ def test_query_pagination(client, monkeypatch):
         response_data = res.json()["data"]
         next_timestamp = res.json()["nextTimeStamp"]
         total_logs += len(response_data)
-        if total_logs == len(PRESIGNED_URL_TEST_DATA):
+        if not next_timestamp:
             done = True
-            assert not next_timestamp
+            assert total_logs == len(PRESIGNED_URL_TEST_DATA)
             assert len(response_data) == len(PRESIGNED_URL_TEST_DATA) % page_size
         else:
             assert next_timestamp
@@ -440,4 +450,36 @@ def test_query_count(client):
     pass
 
 
-# TODO load test
+@pytest.mark.skip(reason="Only run this if you need to :-)")
+def test_load_test(client, monkeypatch):
+    """
+    According to this test, submitting 5k logs takes ~42s, querying
+    them takes ~1s.
+    """
+    start = time.time()
+    n = 5000
+    submit_test_data(client, n, rand_dates=True)
+    print(f"Submitted {n} audit logs in {time.time() - start}s")
+
+    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", 100)
+
+    total_logs = 0
+    next_timestamp = None
+    done = False
+    i = 0
+    start = time.time()
+    while not done:
+        print(f"Querying page {i}")
+        url = "/log/presigned_url"
+        if next_timestamp:
+            url += f"?start={next_timestamp}"
+        res = client.get(url, headers={"Authorization": f"bearer {fake_jwt}"})
+        assert res.status_code == 200, res.text
+        response_data = res.json()["data"]
+        next_timestamp = res.json()["nextTimeStamp"]
+        total_logs += len(response_data)
+        print(next_timestamp)
+        if not next_timestamp:
+            done = True
+        i += 1
+    print(f"Queried {n} audit logs in {time.time() - start}s")

@@ -23,7 +23,7 @@ router = APIRouter()
 @router.get("/log/{category}")
 async def query_logs(
     request: Request,
-    category: str,  # TODO
+    category: str,
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),

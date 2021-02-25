@@ -1,4 +1,4 @@
-"""create presigned_url table
+"""create presigned_url and login tables
 
 Revision ID: d5b18185c458
 Revises:
@@ -34,8 +34,8 @@ def setup_table_partitioning(table_name):
             partition_timestamp := to_char(NEW.timestamp,'YYYY_MM');
             partition := TG_RELNAME || '_' || partition_timestamp;
             IF NOT EXISTS(SELECT relname FROM pg_class WHERE relname=partition) THEN
-                RAISE NOTICE 'A partition has been created %',partition;
-                EXECUTE 'CREATE TABLE ' || partition || ' (check (timestamp >= ''' || NEW.timestamp || ''')) INHERITS (' || TG_RELNAME || ');';
+                RAISE NOTICE 'Partition % has been created',partition;
+                EXECUTE 'CREATE TABLE ' || partition || ' () INHERITS (' || TG_RELNAME || ');';
             END IF;
             EXECUTE 'INSERT INTO ' || partition || ' SELECT(' || TG_RELNAME || ' ' || quote_literal(NEW) || ').* RETURNING username;';
             RETURN NULL;
