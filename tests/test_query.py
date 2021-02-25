@@ -166,6 +166,13 @@ def test_query_field_filter(client):
         assert item["guid"] == test_data["guid"]
         assert item["resource_paths"] == test_data["resource_paths"]
 
+    # query with a field that doesn't exist for this category
+    res = client.get(
+        "/log/presigned_url?whatisthis=yes",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 400, res.text
+
 
 def test_query_groupby(client, monkeypatch):
     submit_test_data(client)
@@ -259,18 +266,12 @@ def test_query_groupby(client, monkeypatch):
     ]
     assert sorted(response_data, key=lambda e: e["username"]) == expected
 
-    # TODO query with a groupby field that doesn't exist for this category
-    # res = client.get(
-    #     "/log/presigned_url?groupby=whatisthis",
-    #     headers={"Authorization": f"bearer {fake_jwt}"},
-    # )
-    # assert res.status_code == 400, res.text
-    # response_data = res.json()["data"]
-    # expected = [
-    #     {"username": "userA", "count": 4},
-    #     {"username": "userB", "count": 1},
-    # ]
-    # assert sorted(response_data, key=lambda e: e["username"]) == expected
+    # query with a groupby field that doesn't exist for this category
+    res = client.get(
+        "/log/presigned_url?groupby=whatisthis",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 400, res.text
 
 
 def test_query_timestamps(client, monkeypatch):

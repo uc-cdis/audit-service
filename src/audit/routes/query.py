@@ -23,6 +23,7 @@ router = APIRouter()
 @router.get("/log/presigned_url")
 async def query_presigned_url_logs(
     request: Request,
+    # category: str,  # TODO
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),
@@ -140,13 +141,23 @@ async def query_presigned_url_logs(
     query_params = defaultdict(set)
     groupby = set()
     for key, value in request.query_params.multi_items():
+        if key in {"start", "stop"}:
+            continue
+
         if key == "groupby":
             groupby.add(value)
-        elif key not in {"start", "stop"}:
-            # if key in <allowed>:  # TODO
+            field = value
+        else:
             query_params[key].add(value)
-            # else:
-            #     return 400
+            field = key
+
+        try:
+            getattr(PresignedUrl, field)
+        except AttributeError as e:
+            raise HTTPException(
+                HTTP_400_BAD_REQUEST,
+                f"'{field}' is not allowed on category 'presigned_url'",
+            )
 
     if groupby:
         logs = await query_logs_groupby(start_date, stop_date, query_params, groupby)
@@ -160,13 +171,12 @@ async def query_presigned_url_logs(
     }
 
 
-# TODO only filters that are in DB model
 def add_filters(query, start_date, stop_date, query_params):
     query = query.where(PresignedUrl.timestamp >= start_date).where(
         PresignedUrl.timestamp < stop_date
     )
     for field, values in query_params.items():
-        if field == "resource_paths":  # TODO check type instead
+        if hasattr(getattr(PresignedUrl, field).type, "item_type"):  # ARRAY
             query = query.where(getattr(PresignedUrl, field).overlap(values))
         else:
             query = query.where(
@@ -193,7 +203,6 @@ async def query_logs(start_date, stop_date, query_params):
 
 
 async def query_logs_groupby(start_date, stop_date, query_params, groupby):
-    # TODO test for groupby not in allowed fields
     select_list = [getattr(PresignedUrl, field) for field in groupby]
     select_list.append(db.func.count(PresignedUrl.username).label("count"))
     query = db.select(select_list)
