@@ -6,6 +6,9 @@ DEBUG: true
 TEST_KEEP_DB: false
 DOCS_URL_PREFIX: /audit
 
+# defaults to "http://arborist-service/"
+ARBORIST_URL:
+
 ####################
 # DATABASE         #
 ####################

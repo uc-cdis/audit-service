@@ -47,7 +47,6 @@ async def query_logs(
     Filters can be added as query strings. Accepted filters include all fields
     for the queried category, as well as the following special filters:
     - "groupby" to get counts
-    - # TODO count?
     - "start" to specify a starting timestamp. Default: the configured maximum
     - "stop" to specify an end timestamp. Default: now
 
@@ -86,6 +85,12 @@ async def query_logs(
         {"b": 1, "c": 2, "count": 5}
         {"b": 1, "c": 3, "count": 8}
     """
+    logger.debug(f"Querying category {category}")
+
+    # TODO if the category is `presigned_url`, we could implement more granular authz using the audit logs' `resource_paths`.
+    resource_path = f"/audit/{category}"
+    await auth.authorize("read", [resource_path])
+
     if category not in CATEGORY_TO_MODEL_CLASS:
         raise HTTPException(
             HTTP_400_BAD_REQUEST,
@@ -118,32 +123,6 @@ async def query_logs(
             HTTP_400_BAD_REQUEST,
             f"The difference between the start timestamp '{start}' ({start_date}) and the stop timestamp '{stop}' ({stop_date}) is greater than the configured maximum of {config['QUERY_TIMEBOX_MAX_DAYS']} days",
         )
-
-    # TODO authz
-    # # get the resources the current user has access to see
-    # token_claims = await auth.get_token_claims()
-    # username = token_claims["context"]["user"]["name"]
-    # authz_mapping = await api_request.app.arborist_client.auth_mapping(username)
-    # authorized_resource_paths = [
-    #     resource_path
-    #     for resource_path, access in authz_mapping.items()
-    #     if any(
-    #         e["service"] in ["audit", "*"] and e["method"] in ["read", "*"]
-    #         for e in access
-    #     )
-    # ]
-
-    # # filter requests with read access
-    # requests = await RequestModel.query.gino.all()
-    # authorized_requests = [
-    #     r
-    #     for r in requests
-    #     if any(
-    #         is_path_prefix_of_path(authorized_resource_path, r.resource_path)
-    #         for authorized_resource_path in authorized_resource_paths
-    #     )
-    # ]
-    # return [r.to_dict() for r in authorized_requests]
 
     query_params = defaultdict(set)
     groupby = set()
@@ -187,6 +166,8 @@ def add_filters(model, query, start_date, stop_date, query_params):
         model.timestamp < stop_date
     )
     for field, values in query_params.items():
+        # TODO for resource_paths, implement filtering in a way that
+        # would return "/A/B" when querying "/A".
         if hasattr(getattr(model, field).type, "item_type"):  # ARRAY
             query = query.where(getattr(model, field).overlap(values))
         else:

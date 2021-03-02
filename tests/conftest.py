@@ -124,14 +124,11 @@ def mock_arborist_requests(request):
     to False, it raises a 401 error.
     """
 
-    def do_patch(authorized=True):
+    def do_patch(authorized=True, urls_to_responses={}):
         # URLs to reponses: { URL: { METHOD: ( content, code ) } }
         urls_to_responses = {
             "http://arborist-service/auth/request": {
                 "POST": ({"auth": authorized}, 200)
-            },
-            "http://arborist-service/user/audit-service_user/policy": {
-                "POST": ({}, 204 if authorized else 403)
             },
             "http://arborist-service/auth/mapping": {
                 "POST": (
@@ -139,6 +136,7 @@ def mock_arborist_requests(request):
                     200,
                 )
             },
+            **urls_to_responses,
         }
 
         def make_mock_response(method, url, *args, **kwargs):
@@ -177,6 +175,6 @@ def arborist_authorized(mock_arborist_requests):
     """
     By default, mocked arborist calls return Authorized.
     To mock an unauthorized response, use fixture
-    "mock_arborist_requests(authorized=False)" in the test itself
+    "mock_arborist_requests(authorized=False)" in the test itself.
     """
     mock_arborist_requests()

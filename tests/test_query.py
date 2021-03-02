@@ -450,6 +450,24 @@ def test_query_count(client):
     pass
 
 
+def test_query_authz(client, mock_arborist_requests):
+    submit_test_data(client)
+
+    # unauthorized requests should get a 403
+    mock_arborist_requests(authorized=False)
+    res = client.get(
+        "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 403, res.text
+
+    # authorized requests should get a 200
+    mock_arborist_requests()
+    res = client.get(
+        "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 200, res.text
+
+
 @pytest.mark.skip(reason="Only run this if you need to :-)")
 def test_load_test(client, monkeypatch):
     """
