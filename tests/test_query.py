@@ -74,11 +74,7 @@ def submit_test_data(client, n=len(PRESIGNED_URL_TEST_DATA), rand_dates=False):
             if rand_dates:
                 date = f"{randint(2000, 2025)}/{randint(1, 12)}/{randint(1, 28)}"
                 request_data["timestamp"] = timestamp_for_date(date)
-            res = client.post(
-                "/log/presigned_url",
-                json=request_data,
-                headers={"Authorization": f"bearer {fake_jwt}"},
-            )
+            res = client.post("/log/presigned_url", json=request_data)
             assert res.status_code == 201, res.text
             i += 1
 
@@ -414,11 +410,7 @@ def test_query_category(client):
         "timestamp": timestamp_for_date("2020/01/01"),
         "idp": "google",
     }
-    res = client.post(
-        "/log/login",
-        json=request_data,
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
+    res = client.post("/log/login", json=request_data)
     assert res.status_code == 201, res.text
 
     # query presigned_url logs

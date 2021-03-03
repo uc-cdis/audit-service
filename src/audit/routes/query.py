@@ -87,7 +87,7 @@ async def query_logs(
     logger.debug(f"Querying category {category}")
 
     # TODO if the category is `presigned_url`, we could implement more granular authz using the audit logs' `resource_paths`.
-    resource_path = f"/audit/{category}"
+    resource_path = f"/services/audit/{category}"
     await auth.authorize("read", [resource_path])
 
     if category not in CATEGORY_TO_MODEL_CLASS:
@@ -163,7 +163,7 @@ async def query_logs(
         )
 
     if not config["QUERY_USERNAMES"]:
-        # TODO: excluding usernames from the query might be a more efficient
+        # TODO: excluding usernames from the query might be more efficient
         for log in logs:
             if "username" in log:
                 del log["username"]

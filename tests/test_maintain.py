@@ -22,11 +22,7 @@ def test_create_presigned_url_log_with_timestamp(client):
         "action": "download",
         "protocol": "s3",
     }
-    res = client.post(
-        "/log/presigned_url",
-        json=request_data,
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
+    res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
 
     # the POST endpoint does not return data since it's async, so query
@@ -56,11 +52,7 @@ def test_create_presigned_url_log_without_timestamp(client):
         "action": "download",
         "protocol": "s3",
     }
-    res = client.post(
-        "/log/presigned_url",
-        json=request_data,
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
+    res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
 
     # sleep to avoid a race condition with `stop` timestamp default (now)
@@ -93,11 +85,7 @@ def test_create_presigned_url_log_wrong_body(client):
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
     }
-    res = client.post(
-        "/log/presigned_url",
-        json=request_data,
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
+    res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 422, res.text
 
     # create a log with unknown action
@@ -110,11 +98,7 @@ def test_create_presigned_url_log_wrong_body(client):
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "not-an-action",
     }
-    res = client.post(
-        "/log/presigned_url",
-        json=request_data,
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
+    res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 400, res.text
 
     # create a log with extra fields - should ignore the extra
@@ -129,11 +113,7 @@ def test_create_presigned_url_log_wrong_body(client):
         "action": "download",
         "extra_field": "hello",
     }
-    res = client.post(
-        "/log/presigned_url",
-        json=request_data,
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
+    res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
 
 
@@ -144,9 +124,5 @@ def test_create_wrong_category(client):
         "username": "audit-service_user",
         "sub": 10,
     }
-    res = client.post(
-        "/log/whatisthis",
-        json=request_data,
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
+    res = client.post("/log/whatisthis", json=request_data)
     assert res.status_code == 405, res.text
