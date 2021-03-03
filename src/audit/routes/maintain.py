@@ -75,7 +75,6 @@ async def create_presigned_url_log(
     the caller and audit-service failures are not visible to users.
     """
     data = body.dict()
-    # TODO fix logging
     logger.debug(f"Creating `presigned_url` audit log. Received body: {data}")
 
     allowed_actions = ["download", "upload"]

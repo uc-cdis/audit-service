@@ -70,7 +70,7 @@ class Auth:
 
         if not authorized:
             logger.error(
-                f"Authorization error: user must have '{method}' access on '{resources}' for service 'audit'."
+                f"Authorization error: user must have '{method}' access on {resources} for service 'audit'."
             )
             if throw:
                 raise HTTPException(

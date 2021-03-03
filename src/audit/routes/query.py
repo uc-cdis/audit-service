@@ -19,7 +19,6 @@ from ..models import CATEGORY_TO_MODEL_CLASS, db
 router = APIRouter()
 
 
-# TODO config to return usernames or not
 @router.get("/log/{category}")
 async def query_logs(
     request: Request,
@@ -145,6 +144,14 @@ async def query_logs(
                 f"'{field}' is not allowed on category '{category}'",
             )
 
+    if not config["QUERY_USERNAMES"] and (
+        "username" in query_params or "username" in groupby
+    ):
+        raise HTTPException(
+            HTTP_400_BAD_REQUEST,
+            f"Querying by username is not allowed",
+        )
+
     if groupby:
         logs = await query_logs_groupby(
             model, start_date, stop_date, query_params, groupby
@@ -154,6 +161,12 @@ async def query_logs(
         logs, next_timestamp = await query_logs(
             model, start_date, stop_date, query_params
         )
+
+    if not config["QUERY_USERNAMES"]:
+        # TODO: excluding usernames from the query might be a more efficient
+        for log in logs:
+            if "username" in log:
+                del log["username"]
 
     return {
         "nextTimeStamp": next_timestamp,

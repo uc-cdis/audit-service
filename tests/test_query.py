@@ -444,6 +444,34 @@ def test_query_category(client):
     assert res.status_code == 400, res.text
 
 
+def test_query_no_usernames(client, monkeypatch):
+    submit_test_data(client)
+
+    monkeypatch.setitem(config, "QUERY_USERNAMES", False)
+
+    # do not return usernames
+    res = client.get(
+        "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert all("username" not in log for log in response_data), response_data
+
+    # do not allow filtering by username
+    res = client.get(
+        "/log/presigned_url?username=userA",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 400, res.text
+
+    # do not allow grouping by username
+    res = client.get(
+        "/log/presigned_url?groupby=username",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 400, res.text
+
+
 @pytest.mark.skip(reason="Not implemented yet")
 def test_query_count(client):
     # TODO

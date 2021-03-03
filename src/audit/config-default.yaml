@@ -2,8 +2,11 @@
 # SERVER           #
 ####################
 
+# whether to enable debug logs
 DEBUG: true
+
 TEST_KEEP_DB: false
+
 DOCS_URL_PREFIX: /audit
 
 # defaults to "http://arborist-service/"
@@ -34,3 +37,7 @@ DB_RETRY_INTERVAL: 1
 
 QUERY_TIMEBOX_MAX_DAYS: 30
 QUERY_PAGE_SIZE: 100
+
+# whether to return usernames in query responses,
+# and to allow querying by username
+QUERY_USERNAMES: true
