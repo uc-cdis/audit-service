@@ -35,10 +35,9 @@ jobs:
     - name: Test with pytest
       run: |
         $HOME/.poetry/bin/poetry run pytest tests/ -vv --cov=src --cov=migrations/versions --cov-report xml
-    # - name: Submit coverage report
-    #   if: github.ref == 'refs/heads/master'
-    #   env:
-    #     CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_TOKEN }}
-    #   run: |
-    #     pip install codacy-coverage
-    #     python-codacy-coverage -r coverage.xml
+    - name: Submit coverage report
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+      run: |
+        pip install coveralls
+        coveralls

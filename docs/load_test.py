@@ -77,16 +77,15 @@ def query_a_lot(headers):
     query_url = f"{base_url}/audit/log/presigned_url"
     start = time.time()
     while not done:
-        print(f"Querying page {i}")
         url = query_url
         if next_timestamp:
             url = f"{query_url}?start={next_timestamp}"
         res = requests.get(url, headers=headers)
         assert res.status_code == 200, f"{res.text}\n{url}"
         response_data = res.json()["data"]
-        return
         next_timestamp = res.json()["nextTimeStamp"]
         total_logs += len(response_data)
+        print(f"Page {i}: {len(response_data)} logs")
         if not next_timestamp:
             done = True
         i += 1

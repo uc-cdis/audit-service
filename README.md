@@ -1,5 +1,7 @@
 # Audit-Service
 
+![version](https://img.shields.io/github/release/uc-cdis/audit-service.svg) [![Apache license](http://img.shields.io/badge/license-Apache-blue.svg?style=flat)](LICENSE) [![Coverage Status](https://coveralls.io/repos/github/uc-cdis/audit-service/badge.svg?branch=master)](https://coveralls.io/github/uc-cdis/audit-service?branch=master)
+
 Audit-Service exposes an API to manage access requests.
 
 [View API Documentation](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/audit-service/master/docs/openapi.yaml)
