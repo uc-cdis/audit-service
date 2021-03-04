@@ -13,8 +13,7 @@ def test_create_presigned_url_log_with_timestamp(client):
     request_data = {
         "request_url": f"/request_data/download/{guid}",
         "status_code": 200,
-        # `-10` to avoid a race condition with `stop` timestamp default (now)
-        "timestamp": int(time.time() - 10),
+        "timestamp": int(time.time()),
         "username": "audit-service_user",
         "sub": 10,
         "guid": guid,
@@ -54,9 +53,6 @@ def test_create_presigned_url_log_without_timestamp(client):
     }
     res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
-
-    # sleep to avoid a race condition with `stop` timestamp default (now)
-    time.sleep(1)
 
     # the POST endpoint does not return data since it's async, so query
     res = client.get(

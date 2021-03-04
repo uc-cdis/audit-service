@@ -46,11 +46,11 @@ async def query_logs(
     Filters can be added as query strings. Accepted filters include all fields
     for the queried category, as well as the following special filters:
     - "groupby" to get counts
-    - "start" to specify a starting timestamp. Default: the configured maximum
-    - "stop" to specify an end timestamp. Default: now
+    - "start" to specify a starting timestamp. Default: none
+    - "stop" to specify an end timestamp. Default: none
 
-    Queries are time-boxed: ("stop" - "start") must be lower than the
-    configured maximum.
+    If queries are time-boxed (depends on the configuration),
+    ("stop" - "start") must be lower than the configured maximum.
 
     Without filters, this will return all data within the time-box. Add
     filters as query strings like this:
@@ -97,27 +97,36 @@ async def query_logs(
         )
     model = CATEGORY_TO_MODEL_CLASS[category]
 
-    timebox_max_seconds = config["QUERY_TIMEBOX_MAX_DAYS"] * 86400
-    if not stop:
-        stop = int(time.time())
-    if not start:
-        start = max(stop - timebox_max_seconds, 0)
+    timebox_max_seconds = None
+    if config["QUERY_TIMEBOX_MAX_DAYS"]:
+        timebox_max_seconds = config["QUERY_TIMEBOX_MAX_DAYS"] * 86400
 
+    effective_stop = stop or int(time.time())
+
+    # if the query is time-boxed and `start` was not specified,
+    # set `start` to the oldest allowed timestamp
+    if not start and timebox_max_seconds:
+        start = max(effective_stop - timebox_max_seconds, 0)
+
+    start_date = None
+    stop_date = None
     try:
-        start_date = datetime.fromtimestamp(start)
-        stop_date = datetime.fromtimestamp(stop)
+        if start:
+            start_date = datetime.fromtimestamp(start)
+        if stop:
+            stop_date = datetime.fromtimestamp(stop)
     except Exception as e:
-        msg = f"Unable to convert timestamps '{start}' and '{stop}' to datetimes"
+        msg = f"Unable to convert timestamps '{start}' and/or '{stop}' to datetimes"
         logger.error(f"{msg}:\n{e}")
         raise HTTPException(HTTP_400_BAD_REQUEST, msg)
 
-    if start > stop:
+    if start and stop and start > stop:
         raise HTTPException(
             HTTP_400_BAD_REQUEST,
             f"The start timestamp '{start}' ({start_date}) should be before the stop timestamp '{stop}' ({stop_date})",
         )
 
-    if stop - start > timebox_max_seconds:
+    if timebox_max_seconds and effective_stop - start > timebox_max_seconds:
         raise HTTPException(
             HTTP_400_BAD_REQUEST,
             f"The difference between the start timestamp '{start}' ({start_date}) and the stop timestamp '{stop}' ({stop_date}) is greater than the configured maximum of {config['QUERY_TIMEBOX_MAX_DAYS']} days",
@@ -175,9 +184,10 @@ async def query_logs(
 
 
 def add_filters(model, query, start_date, stop_date, query_params):
-    query = query.where(model.timestamp >= start_date).where(
-        model.timestamp < stop_date
-    )
+    if start_date:
+        query = query.where(model.timestamp >= start_date)
+    if stop_date:
+        query = query.where(model.timestamp < stop_date)
     for field, values in query_params.items():
         # TODO for resource_paths, implement filtering in a way that
         # would return "/A/B" when querying "/A".

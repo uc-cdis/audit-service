@@ -35,7 +35,7 @@ DB_RETRY_INTERVAL: 1
 # API              #
 ####################
 
-QUERY_TIMEBOX_MAX_DAYS: 30
+QUERY_TIMEBOX_MAX_DAYS:
 QUERY_PAGE_SIZE: 100
 
 # whether to return usernames in query responses,

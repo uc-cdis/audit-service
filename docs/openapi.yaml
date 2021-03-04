@@ -224,11 +224,11 @@ paths:
         \ no risk of\nskipping entries when getting the next page.\n\nFilters can\
         \ be added as query strings. Accepted filters include all fields\nfor the\
         \ queried category, as well as the following special filters:\n- \"groupby\"\
-        \ to get counts\n- \"start\" to specify a starting timestamp. Default: the\
-        \ configured maximum\n- \"stop\" to specify an end timestamp. Default: now\n\
-        \nQueries are time-boxed: (\"stop\" - \"start\") must be lower than the\n\
-        configured maximum.\n\nWithout filters, this will return all data within the\
-        \ time-box. Add\nfilters as query strings like this:\n\n    GET /log/presigned_url?a=1&b=2\n\
+        \ to get counts\n- \"start\" to specify a starting timestamp. Default: none\n\
+        - \"stop\" to specify an end timestamp. Default: none\n\nIf queries are time-boxed\
+        \ (depends on the configuration),\n(\"stop\" - \"start\") must be lower than\
+        \ the configured maximum.\n\nWithout filters, this will return all data within\
+        \ the time-box. Add\nfilters as query strings like this:\n\n    GET /log/presigned_url?a=1&b=2\n\
         \nThis will match all records that have values containing all of:\n\n    {\"\
         a\": 1, \"b\": 2}\n\nProviding the same key with more than one value filters\
         \ records whose\nvalue of the given key matches any of the given values. But\
