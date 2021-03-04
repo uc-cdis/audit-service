@@ -34,7 +34,7 @@ jobs:
         $HOME/.poetry/bin/poetry install
     - name: Test with pytest
       run: |
-        $HOME/.poetry/bin/poetry run pytest -vv --cov=src --cov=migrations/versions --cov-report xml
+        $HOME/.poetry/bin/poetry run pytest tests/ -vv --cov=src --cov=migrations/versions --cov-report xml
     # - name: Submit coverage report
     #   if: github.ref == 'refs/heads/master'
     #   env:

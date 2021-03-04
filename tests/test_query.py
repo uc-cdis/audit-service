@@ -49,15 +49,13 @@ PRESIGNED_URL_TEST_DATA = {
 fake_jwt = "1.2.3"
 
 
-def submit_test_data(client, n=len(PRESIGNED_URL_TEST_DATA), rand_dates=False):
+def submit_test_data(client, n=len(PRESIGNED_URL_TEST_DATA)):
     """
     Submit a set of presigned URL audit logs
     """
     i = 0
     while i < n:
         for test_data in PRESIGNED_URL_TEST_DATA.values():
-            if n > 500 and i % 500 == 0:
-                print(f"Submitting test data: {i}/{n}")
             if i == n:
                 break
             guid = "dg.hello/abc"
@@ -71,9 +69,6 @@ def submit_test_data(client, n=len(PRESIGNED_URL_TEST_DATA), rand_dates=False):
                 "action": "download",
             }
             request_data.update(test_data)
-            if rand_dates:
-                date = f"{randint(2000, 2025)}/{randint(1, 12)}/{randint(1, 28)}"
-                request_data["timestamp"] = timestamp_for_date(date)
             res = client.post("/log/presigned_url", json=request_data)
             assert res.status_code == 201, res.text
             i += 1
@@ -183,6 +178,25 @@ def test_query_field_filter(client):
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
     assert res.status_code == 400, res.text
+
+
+def test_query_no_logs(client):
+    # query all logs
+    res = client.get(
+        "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 0
+
+    # query logs grouped by username
+    res = client.get(
+        "/log/presigned_url?groupby=username",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == []
 
 
 def test_query_groupby(client, monkeypatch):
@@ -398,6 +412,61 @@ def test_query_pagination(client, monkeypatch):
             assert len(response_data) == page_size
 
 
+def test_query_pagination_edge_case(client, monkeypatch):
+    """
+    TODO
+    """
+    # submit audit logs
+    guid = "dg.hello/abc"
+    request_data = {
+        "request_url": f"/request_data/download/{guid}",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "guid": guid,
+        "resource_paths": ["/my/resource/path1", "/path2"],
+        "action": "download",
+    }
+    dates = ["1999/01/01", "2000/01/01", "2009/01/01"]
+    for date in dates:
+        timestamp = timestamp_for_date(date)
+        for _ in range(2):
+            res = client.post(
+                "/log/presigned_url", json={"timestamp": timestamp, **request_data}
+            )
+            assert res.status_code == 201, res.text
+
+    # now we should have 6 logs: [1999, 1999, 2000, 2000, 2009, 2009]
+
+    page_size = 3
+    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", page_size)
+
+    # query the 1st page
+    url = "/log/presigned_url"
+    res = client.get(url, headers={"Authorization": f"bearer {fake_jwt}"})
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    next_timestamp = res.json()["nextTimeStamp"]
+    assert len(response_data) == 4  # not page_size!
+    assert response_data[0]["timestamp"] == "1999-01-01T00:00:00"
+    assert response_data[1]["timestamp"] == "1999-01-01T00:00:00"
+    assert response_data[2]["timestamp"] == "2000-01-01T00:00:00"
+    assert response_data[3]["timestamp"] == "2000-01-01T00:00:00"
+    assert next_timestamp
+
+    # query the 2nd page
+    res = client.get(
+        f"{url}?start={next_timestamp}", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    next_timestamp = res.json()["nextTimeStamp"]
+    assert len(response_data) == 2
+    assert response_data[0]["timestamp"] == "2009-01-01T00:00:00"
+    assert response_data[1]["timestamp"] == "2009-01-01T00:00:00"
+    assert not next_timestamp
+
+
 def test_query_category(client):
     submit_test_data(client, 1)
 
@@ -486,38 +555,3 @@ def test_query_authz(client, mock_arborist_requests):
         "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
     )
     assert res.status_code == 200, res.text
-
-
-@pytest.mark.skip(reason="Only run this if you need to :-)")
-def test_load_test(client, monkeypatch):
-    """
-    According to this test, submitting 5k logs takes ~42s, querying
-    them takes ~1s.
-    """
-    start = time.time()
-    n = 5000
-    submit_test_data(client, n, rand_dates=True)
-    print(f"Submitted {n} audit logs in {time.time() - start}s")
-
-    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", 100)
-
-    total_logs = 0
-    next_timestamp = None
-    done = False
-    i = 0
-    start = time.time()
-    while not done:
-        print(f"Querying page {i}")
-        url = "/log/presigned_url"
-        if next_timestamp:
-            url += f"?start={next_timestamp}"
-        res = client.get(url, headers={"Authorization": f"bearer {fake_jwt}"})
-        assert res.status_code == 200, res.text
-        response_data = res.json()["data"]
-        next_timestamp = res.json()["nextTimeStamp"]
-        total_logs += len(response_data)
-        print(next_timestamp)
-        if not next_timestamp:
-            done = True
-        i += 1
-    print(f"Queried {n} audit logs in {time.time() - start}s")

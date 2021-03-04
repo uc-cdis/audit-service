@@ -183,7 +183,7 @@ async def query_logs(
     }
 
 
-def add_filters(model, query, start_date, stop_date, query_params):
+def add_filters(model, query, query_params, start_date=None, stop_date=None):
     if start_date:
         query = query.where(model.timestamp >= start_date)
     if stop_date:
@@ -199,18 +199,39 @@ def add_filters(model, query, start_date, stop_date, query_params):
 
 
 async def query_logs(model, start_date, stop_date, query_params):
-    query = model.query
-    query = add_filters(model, query, start_date, stop_date, query_params)
+    # get all logs matching the filters and apply the page size limit
+    query = add_filters(model, model.query, query_params, start_date, stop_date)
     query = query.order_by(model.timestamp)
     limit = config["QUERY_PAGE_SIZE"]
-    # get 1 more log than the limit, so we can return `nextTimeStamp`:
-    query = query.limit(limit + 1)
-    logs = await query.gino.all()
-    if len(logs) > limit:
-        next_timestamp = int(datetime.timestamp(logs[-1].timestamp))
-        logs = logs[:-1]
+    query = query.limit(limit)
+    logs = await query.order_by(model.timestamp).gino.all()
+
+    if not logs:
+        return [], None
+
+    # if there are more logs with the same timestamp as the last queried
+    # log, also return them
+    last_timestamp = logs[-1].timestamp
+    all_timestamps_query = add_filters(model, model.query, query_params)
+    all_timestamps_query = all_timestamps_query.order_by(model.timestamp)
+    extra_logs = await all_timestamps_query.where(
+        model.timestamp == last_timestamp
+    ).gino.all()
+
+    # don't return duplicate logs: remove from `logs` items that are
+    # in `extra_logs` before merging the 2
+    logs = [l for l in logs if l.timestamp != last_timestamp]
+    logs.extend(extra_logs)
+
+    # get the next timestamp
+    next_log = await all_timestamps_query.where(
+        model.timestamp > last_timestamp
+    ).gino.first()
+    if next_log:
+        next_timestamp = int(datetime.timestamp(next_log.timestamp))
     else:
         next_timestamp = None
+
     logs = [e.to_dict() for e in logs]
     return logs, next_timestamp
 
@@ -221,7 +242,7 @@ async def query_logs_groupby(model, start_date, stop_date, query_params, groupby
     query = db.select(select_list)
     for field in groupby:
         query = query.group_by(getattr(model, field))
-    query = add_filters(model, query, start_date, stop_date, query_params)
+    query = add_filters(model, query, query_params, start_date, stop_date)
     logs = await query.gino.all()
     return logs
 
