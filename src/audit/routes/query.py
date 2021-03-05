@@ -46,8 +46,8 @@ async def query_logs(
     Filters can be added as query strings. Accepted filters include all fields
     for the queried category, as well as the following special filters:
     - "groupby" to get counts
-    - "start" to specify a starting timestamp. Default: none
-    - "stop" to specify an end timestamp. Default: none
+    - "start" to specify a starting timestamp (inclusive). Default: none
+    - "stop" to specify an end timestamp (exclusive). Default: none
 
     If queries are time-boxed (depends on the configuration),
     ("stop" - "start") must be lower than the configured maximum.
@@ -97,16 +97,24 @@ async def query_logs(
         )
     model = CATEGORY_TO_MODEL_CLASS[category]
 
+    # don't just overwrite `stop` with the current timestamp, because the
+    # `stop` param is exclusive and when we don't specify it, we want to
+    # be able to query logs we just created
+    effective_stop = stop or int(time.time())
+
     timebox_max_seconds = None
     if config["QUERY_TIMEBOX_MAX_DAYS"]:
         timebox_max_seconds = config["QUERY_TIMEBOX_MAX_DAYS"] * 86400
 
-    effective_stop = stop or int(time.time())
+        # if the query is time-boxed and `stop` was not specified,
+        # set `stop` to the newest allowed timestamp
+        if start and not stop:
+            stop = start + timebox_max_seconds
 
-    # if the query is time-boxed and `start` was not specified,
-    # set `start` to the oldest allowed timestamp
-    if not start and timebox_max_seconds:
-        start = max(effective_stop - timebox_max_seconds, 0)
+        # if the query is time-boxed and `start` was not specified,
+        # set `start` to the oldest allowed timestamp
+        if not start:
+            start = max(effective_stop - timebox_max_seconds, 0)
 
     start_date = None
     stop_date = None
@@ -212,16 +220,19 @@ async def query_logs(model, start_date, stop_date, query_params):
     # if there are more logs with the same timestamp as the last queried
     # log, also return them
     last_timestamp = logs[-1].timestamp
-    all_timestamps_query = add_filters(model, model.query, query_params)
+    all_timestamps_query = add_filters(
+        model, model.query, query_params, start_date, stop_date
+    )
     all_timestamps_query = all_timestamps_query.order_by(model.timestamp)
     extra_logs = await all_timestamps_query.where(
         model.timestamp == last_timestamp
     ).gino.all()
 
-    # don't return duplicate logs: remove from `logs` items that are
-    # in `extra_logs` before merging the 2
-    logs = [l for l in logs if l.timestamp != last_timestamp]
-    logs.extend(extra_logs)
+    if len(extra_logs) > 1:
+        # don't return duplicate logs: remove from `logs` items that are
+        # in `extra_logs` before merging the 2
+        logs = [l for l in logs if l.timestamp != last_timestamp]
+        logs.extend(extra_logs)
 
     # get the next timestamp
     next_log = await all_timestamps_query.where(
