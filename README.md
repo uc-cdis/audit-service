@@ -1,75 +1,26 @@
-# Audit-Service
+# Audit Service
 
 ![version](https://img.shields.io/github/release/uc-cdis/audit-service.svg) [![Apache license](http://img.shields.io/badge/license-Apache-blue.svg?style=flat)](LICENSE) [![Coverage Status](https://coveralls.io/repos/github/uc-cdis/audit-service/badge.svg?branch=master)](https://coveralls.io/github/uc-cdis/audit-service?branch=master)
 
-Audit-Service exposes an API to manage access requests.
-
-[View API Documentation](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/audit-service/master/docs/openapi.yaml)
+The Audit Service exposes an API to create and query audit logs. It allows us to answer questions such as:
+- How many times did `userA` download `file1` this month?
+- When did `userA` download `file1`?
+- Which files from dataset `D` were downloaded yesterday?
+- How many times were files from dataset `D` downloaded yesterday?
+- How many users downloaded data last year?
+- How many unique user logged in since the creation of the Data Commons?
+- How many users logged in via identity provider `X` last year?
 
 The server is built with [FastAPI](https://fastapi.tiangolo.com/) and packaged with [Poetry](https://poetry.eustace.io/).
 
-## Local installation
+## Key documentation
 
-### Install Audit-Service
+[This blog](https://documentation.divio.com/introduction/) introduces the different types of documentation (explanation, how-to, tutorials, reference). The documentation can be browsed in the [docs](docs) folder, and key documents are linked below.
 
-Install required software:
-
-*   [PostgreSQL](PostgreSQL) 9.6 or above
-*   [Python](https://www.python.org/downloads/) 3.7 or above
-*   [Poetry](https://poetry.eustace.io/docs/#installation)
-
-Then use `poetry install` to install the dependencies. Before that,
-a [virtualenv](https://virtualenv.pypa.io/) is recommended.
-If you don't manage your own, Poetry will create one for you
-during `poetry install`, and you must activate it with `poetry shell`.
-
-### Create configuration file
-
-Audit-Service requires a configuration file to run. We have a command line
-utility to help you create one based on a default configuration.
-
-The configuration file itself will live outside of this repo (to
-prevent accidentally checking in sensitive information like database passwords).
-
-To create a new configuration file from the default configuration:
-
-```bash
-python cfg_help.py create
-```
-
-This file will be placed in one of the default search directories for Audit-Service.
-
-To get the exact path where the new configuration file was created, use:
-
-```bash
-python cfg_help.py get
-```
-
-The file should have detailed information about each of the configuration
-variables. **Remember to fill out the new configuration file!**
-
-To use a configuration file in a custom location, you can set the `AUDIT_SERVICE_CONFIG_PATH` environment variable.
-
-### Quick start: run Audit-Service
-
-Create a custom configuration file at `~/.gen3/audit-service/audit-service-config.yaml`. Add `DB_DATABASE: audit_test` to your configuration file, and create the database:
-
-```bash
-psql -U postgres -c "create database audit_test"
-```
-
-Run the database schema migration:
-
-```bash
-alembic upgrade head
-```
-
-Run the server with auto-reloading:
-
-```bash
-python run.py
-OR
-uvicorn audit.asgi:app --reload
-```
-
-Try out the API at: <http://localhost:8000/docs>.
+* [Detailed API Documentation](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/audit-service/master/docs/openapi.yaml)
+* [Quick start](docs/tutorials/quick_start.md)
+* [Local installation](docs/how-to/local_installation.md)
+* [Architecture](docs/reference/architecture.md)
+* [Query response page size](docs/explanation/query_page_size.md)
+* [Async POST endpoint](docs/explanation/async_post.md)
+* [How to add a new audit log category?](docs/how-to/add_log_category.md)

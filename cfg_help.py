@@ -9,7 +9,7 @@ Quickstart:
 
   1. Create configuration file by copying example in this repo
   2. Edit the new configuration file
-  3. Run Audit-Service as you normally would
+  3. Run the Audit Service as you normally would
 
 Support for Multiple Configs:
 
@@ -21,14 +21,14 @@ Support for Multiple Configs:
   1. Create another configuration file and specify new name
   2. Easily obtain the path of your new configuration
   3. Open config file in your editor with a command like
-  4. Run Audit-Service and point it to the right configuration file
+  4. Run the Audit Service and point it to the right configuration file
 
 
-Audit-Service searches specific folders for configuration files. Check Audit-Service's
+the Audit Service searches specific folders for configuration files. Check the Audit Service's
 settings for those paths. The LOCAL_CONFIG_FOLDER var here should be included
 in the search paths.
 
-NOTE: If using in production with wsgi.py, Audit-Service will still look for
+NOTE: If using in production with wsgi.py, the Audit Service will still look for
       configuration files in the defined search paths, but will not be able
       to take in a custom configuration name by default.
 

@@ -35,9 +35,9 @@ DB_RETRY_INTERVAL: 1
 # API              #
 ####################
 
+# if left empty, queries are not time-boxed
 QUERY_TIMEBOX_MAX_DAYS:
 
-# TODO caveat
 QUERY_PAGE_SIZE: 100
 
 # whether to return usernames in query responses,

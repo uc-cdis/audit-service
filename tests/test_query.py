@@ -414,7 +414,7 @@ def test_query_pagination(client, monkeypatch):
 
 def test_query_pagination_edge_case(client, monkeypatch):
     """
-    TODO
+    See documentation at docs/explanation/query_page_size.md
     """
     # submit audit logs
     guid = "dg.hello/abc"

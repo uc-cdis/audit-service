@@ -68,8 +68,13 @@ async def create_presigned_url_log(
 ) -> dict:
     """
     Create a new `presigned_url` audit log.
+
     This endpoint does not include any authorization checks, but it is not
     exposed and is only meant for internal use.
+
+    If the timestamp is omitted from the request body, the current date and
+    time will be used.
+
     The response is returned _before_ inserting the new audit log in the
     database, so that POSTing audit logs does not impact the performance of
     the caller and audit-service failures are not visible to users.
@@ -103,8 +108,13 @@ async def create_login_log(
 ) -> dict:
     """
     Create a new `login` audit log.
+
     This endpoint does not include any authorization checks, but it is not
     exposed and is only meant for internal use.
+
+    If the timestamp is omitted from the request body, the current date and
+    time will be used.
+
     The response is returned _before_ inserting the new audit log in the
     database, so that POSTing audit logs does not impact the performance of
     the caller and audit-service failures are not visible to users.

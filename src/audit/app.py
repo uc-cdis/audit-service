@@ -47,7 +47,7 @@ def app_init() -> FastAPI:
 
     debug = config["DEBUG"]
     app = FastAPI(
-        title="Audit-Service",
+        title="Audit Service",
         version=version("audit"),
         debug=debug,
         root_path=config["DOCS_URL_PREFIX"],

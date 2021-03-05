@@ -31,8 +31,8 @@ async def query_logs(
     Queries the logs the current user has access to see. Returned data:
 
         {
+            "nextTimeStamp": <timestamp or null>,
             "data": [<entry>, <entry>, ...],
-            "nextTimeStamp": <timestamp or null>
         }
 
     This endpoint only returns up to a configured maximum number of entries
@@ -52,8 +52,8 @@ async def query_logs(
     If queries are time-boxed (depends on the configuration),
     ("stop" - "start") must be lower than the configured maximum.
 
-    Without filters, this will return all data within the time-box. Add
-    filters as query strings like this:
+    Without filters, this endpoint will return all data within the time-box.
+    Add filters as query strings like this:
 
         GET /log/presigned_url?a=1&b=2
 
