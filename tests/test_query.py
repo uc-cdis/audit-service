@@ -533,10 +533,56 @@ def test_query_no_usernames(client, monkeypatch):
     assert res.status_code == 400, res.text
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_query_count(client):
-    # TODO
-    pass
+    submit_test_data(client)
+
+    # query all logs
+    res = client.get(
+        "/log/presigned_url?count", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == len(PRESIGNED_URL_TEST_DATA)  # all test logs
+
+    # query logs for 1 user
+    res = client.get(
+        "/log/presigned_url?username=userA&count",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == 4  # test logs A1_1, A2_2, A2, A3
+
+    # query logs for 1 user, 1 guid
+    res = client.get(
+        "/log/presigned_url?username=userA&guid=guid1&count",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == 2  # test logs A1_1, A1_2
+
+    # query logs for 2 resource paths
+    res = client.get(
+        "/log/presigned_url?resource_paths=/resource/path/to/query&resource_paths=/other/resource/path&count",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == 3  # test logs A2, A3, B1
+
+    # query logs grouped by username
+    res = client.get(
+        "/log/presigned_url?groupby=username&count",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    # length of: [
+    #     {"username": "userA", "count": 4},
+    #     {"username": "userB", "count": 1},
+    # ]
+    assert response_data == 2
 
 
 def test_query_authz(client, mock_arborist_requests):

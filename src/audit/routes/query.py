@@ -32,7 +32,7 @@ async def query_logs(
 
         {
             "nextTimeStamp": <timestamp or null>,
-            "data": [<entry>, <entry>, ...],
+            "data": [<entry>, <entry>, ...] OR int if using `count` param,
         }
 
     This endpoint only returns up to a configured maximum number of entries
@@ -46,6 +46,7 @@ async def query_logs(
     Filters can be added as query strings. Accepted filters include all fields
     for the queried category, as well as the following special filters:
     - "groupby" to get counts
+    - "count" to get the number of rows instead of a list
     - "start" to specify a starting timestamp (inclusive). Default: none
     - "stop" to specify an end timestamp (exclusive). Default: none
 
@@ -77,12 +78,18 @@ async def query_logs(
         {"a": 1, "b": 10}
         {"a": 10, "b": 3}
 
-    groupby example:
+    `groupby` example:
 
         GET /log/presigned_url?a=1&groupby=b&groupby=c
 
         {"b": 1, "c": 2, "count": 5}
         {"b": 1, "c": 3, "count": 8}
+
+    `count` example:
+
+        GET /log/presigned_url?a=1&groupby=b&groupby=c&count
+
+        Returns: 2 (see previous example returning 2 rows)
     """
     logger.debug(f"Querying category {category}")
 
@@ -142,8 +149,12 @@ async def query_logs(
 
     query_params = defaultdict(set)
     groupby = set()
+    count = False
     for key, value in request.query_params.multi_items():
-        if key in {"start", "stop"}:
+        if key == "count":
+            count = True
+
+        if key in {"start", "stop", "count"}:
             continue
 
         if key == "groupby":
@@ -187,7 +198,7 @@ async def query_logs(
 
     return {
         "nextTimeStamp": next_timestamp,
-        "data": logs,
+        "data": len(logs) if count else logs,
     }
 
 

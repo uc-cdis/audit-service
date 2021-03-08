@@ -58,8 +58,6 @@ async def insert_row(category, data):
         pass
 
 
-# TODO maybe rename endpoint with "internal" or something, in case we need an external endpoint with authz later
-# TODO maybe return something?
 @router.post("/log/presigned_url", status_code=HTTP_201_CREATED)
 async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,

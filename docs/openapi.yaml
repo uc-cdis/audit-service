@@ -230,29 +230,31 @@ paths:
     get:
       description: "Queries the logs the current user has access to see. Returned\
         \ data:\n\n    {\n        \"nextTimeStamp\": <timestamp or null>,\n      \
-        \  \"data\": [<entry>, <entry>, ...],\n    }\n\nThis endpoint only returns\
-        \ up to a configured maximum number of entries\nat a time. If there are more\
-        \ entries to query, it returns a non-null\n\"nextTimeStamp\" which can be\
-        \ used to get the next page.\n\nThe returned entries are ordered by increasing\
-        \ timestamp (least recent to\nmost recent), so that new entries are at the\
-        \ end and there is no risk of\nskipping entries when getting the next page.\n\
-        \nFilters can be added as query strings. Accepted filters include all fields\n\
-        for the queried category, as well as the following special filters:\n- \"\
-        groupby\" to get counts\n- \"start\" to specify a starting timestamp (inclusive).\
-        \ Default: none\n- \"stop\" to specify an end timestamp (exclusive). Default:\
-        \ none\n\nIf queries are time-boxed (depends on the configuration),\n(\"stop\"\
-        \ - \"start\") must be lower than the configured maximum.\n\nWithout filters,\
-        \ this endpoint will return all data within the time-box.\nAdd filters as\
-        \ query strings like this:\n\n    GET /log/presigned_url?a=1&b=2\n\nThis will\
-        \ match all records that have values containing all of:\n\n    {\"a\": 1,\
-        \ \"b\": 2}\n\nProviding the same key with more than one value filters records\
-        \ whose\nvalue of the given key matches any of the given values. But values\
-        \ of\ndifferent keys must all match. For example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\
+        \  \"data\": [<entry>, <entry>, ...] OR int if using `count` param,\n    }\n\
+        \nThis endpoint only returns up to a configured maximum number of entries\n\
+        at a time. If there are more entries to query, it returns a non-null\n\"nextTimeStamp\"\
+        \ which can be used to get the next page.\n\nThe returned entries are ordered\
+        \ by increasing timestamp (least recent to\nmost recent), so that new entries\
+        \ are at the end and there is no risk of\nskipping entries when getting the\
+        \ next page.\n\nFilters can be added as query strings. Accepted filters include\
+        \ all fields\nfor the queried category, as well as the following special filters:\n\
+        - \"groupby\" to get counts\n- \"count\" to get the number of rows instead\
+        \ of a list\n- \"start\" to specify a starting timestamp (inclusive). Default:\
+        \ none\n- \"stop\" to specify an end timestamp (exclusive). Default: none\n\
+        \nIf queries are time-boxed (depends on the configuration),\n(\"stop\" - \"\
+        start\") must be lower than the configured maximum.\n\nWithout filters, this\
+        \ endpoint will return all data within the time-box.\nAdd filters as query\
+        \ strings like this:\n\n    GET /log/presigned_url?a=1&b=2\n\nThis will match\
+        \ all records that have values containing all of:\n\n    {\"a\": 1, \"b\"\
+        : 2}\n\nProviding the same key with more than one value filters records whose\n\
+        value of the given key matches any of the given values. But values of\ndifferent\
+        \ keys must all match. For example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\
         \nMatches these:\n\n    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\n\
         But won't match these:\n\n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\"\
-        : 3}\n\ngroupby example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\
+        : 3}\n\n`groupby` example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\
         \n    {\"b\": 1, \"c\": 2, \"count\": 5}\n    {\"b\": 1, \"c\": 3, \"count\"\
-        : 8}"
+        : 8}\n\n`count` example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c&count\n\
+        \n    Returns: 2 (see previous example returning 2 rows)"
       operationId: query_logs_log__category__get
       parameters:
       - in: path

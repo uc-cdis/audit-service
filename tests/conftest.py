@@ -14,7 +14,7 @@ environ["AUDIT_SERVICE_CONFIG_PATH"] = os.path.join(
     CURRENT_DIR, "test-audit-service-config.yaml"
 )
 from audit.config import config
-from audit.app import app_init  # , db as ddb
+from audit.app import app_init
 
 
 @pytest.fixture(scope="session")
@@ -23,8 +23,7 @@ def app():
     return app
 
 
-# TODO if deleting all data between the tests, put session scope back
-@pytest.fixture(autouse=True)  # , scope="session")
+@pytest.fixture(autouse=True)
 def setup_test_database():
     """
     At teardown, restore original config and reset test DB.
@@ -40,41 +39,6 @@ def setup_test_database():
 
     if not config["TEST_KEEP_DB"]:
         alembic_main(["--raiseerr", "downgrade", "base"])
-
-
-# @pytest.fixture(scope="session")
-# def db(app, request):
-#     """
-#     Define pytest fixture for database engine (session-scoped).
-#     When the tests are over, drop everything from the test database.
-#     """
-
-#     # def drop_all():
-#     #     models.Base.metadata.drop_all(app.db.engine)
-
-#     # request.addfinalizer(drop_all)
-#     # TODO
-
-#     return ddb
-
-
-# @pytest.fixture(scope="function")
-# def db_session(db):
-#     """
-#     Define fixture for database session (function-scoped).
-#     At the end of the function, roll back the session to its initial state.
-#     """
-#     connection = db.engine.connect()
-#     transaction = connection.begin()
-#     session = db.Session(bind=connection)
-
-#     # patch_app_db_session(session)
-
-#     yield session
-
-#     session.close()
-#     transaction.rollback()
-#     connection.close()
 
 
 @pytest.fixture()
@@ -97,22 +61,6 @@ def access_token_patcher(client, request):
     yield access_token_mock
 
     access_token_patch.stop()
-
-
-# TODO
-# @pytest.fixture(autouse=True)
-# def clean_db(client):
-#     before each test, delete all existing requests from the DB
-#     fake_jwt = "1.2.3"
-#     res = client.get("/request", headers={"Authorization": f"bearer {fake_jwt}"})
-#     assert res.status_code == 200
-#     for r in res.json():
-#         res = client.delete(
-#             "/request/" + r["request_id"],
-#             headers={"Authorization": f"bearer {fake_jwt}"},
-#         )
-
-#     yield
 
 
 @pytest.fixture(scope="function")
