@@ -299,6 +299,38 @@ def test_query_groupby(client, monkeypatch):
     assert res.status_code == 400, res.text
 
 
+def test_query_groupby_timebox(client, monkeypatch):
+    submit_test_data(client)
+
+    # update the config to set the timebox max to 2 months
+    monkeypatch.setitem(config, "QUERY_TIMEBOX_MAX_DAYS", 60)
+
+    # query logs grouped by username
+    start = timestamp_for_date("2020/01/01")
+    res = client.get(
+        f"/log/presigned_url?start={start}&groupby=username",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    expected = [
+        {"username": "userA", "count": 2},
+        {"username": "userB", "count": 1},
+    ]
+    assert sorted(response_data, key=lambda e: e["username"]) == expected
+
+    # make sure the page limit is ignored for timeboxed groupby queries:
+    # set the page limit to 1 and query logs grouped by username
+    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", 1)
+    res = client.get(
+        f"/log/presigned_url?start={start}&groupby=username",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert sorted(response_data, key=lambda e: e["username"]) == expected
+
+
 def test_query_timestamps(client, monkeypatch):
     """
     Queries are time-boxed: if (stop-timestamp - start-timestamp) is greater
@@ -323,13 +355,18 @@ def test_query_timestamps(client, monkeypatch):
     monkeypatch.setitem(config, "QUERY_TIMEBOX_MAX_DAYS", 30)
 
     # query logs with a start timestamp, no stop
-    # (stop-timestamp - start-timestamp) > MAX (Error)
+    # with (now - start-timestamp) > MAX
+    # the server should automatically set stop (OK)
     start = timestamp_for_date("2020/03/01")
     res = client.get(
         f"/log/presigned_url?start={start}",
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
-    assert res.status_code == 400, res.text
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 1  # test logs A3
+    assert response_data[0]["username"] == PRESIGNED_URL_TEST_DATA["A3"]["username"]
+    assert response_data[0]["guid"] == PRESIGNED_URL_TEST_DATA["A3"]["guid"]
 
     # query logs with a stop timestamp, no start
     # (stop-timestamp - start-timestamp) < MAX (OK)
@@ -533,7 +570,7 @@ def test_query_no_usernames(client, monkeypatch):
     assert res.status_code == 400, res.text
 
 
-def test_query_count(client):
+def test_query_count(client, monkeypatch):
     submit_test_data(client)
 
     # query all logs
@@ -583,6 +620,45 @@ def test_query_count(client):
     #     {"username": "userB", "count": 1},
     # ]
     assert response_data == 2
+
+    # make sure the page limit is ignored for count queries:
+    # set the page limit to 1 and query logs for 1 user
+    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", 1)
+    res = client.get(
+        "/log/presigned_url?username=userA&count",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == 4  # test logs A1_1, A2_2, A2, A3
+
+
+def test_query_count_timebox(client, monkeypatch):
+    submit_test_data(client)
+
+    # update the config to set the timebox max to 1 month
+    monkeypatch.setitem(config, "QUERY_TIMEBOX_MAX_DAYS", 30)
+
+    # query logs
+    start = timestamp_for_date("2020/01/01")
+    res = client.get(
+        f"/log/presigned_url?start={start}&count",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == 2  # test logs A1_1, B1
+
+    # make sure the page limit is ignored for timeboxed count queries:
+    # set the page limit to 1 and query logs
+    monkeypatch.setitem(config, "QUERY_PAGE_SIZE", 1)
+    res = client.get(
+        f"/log/presigned_url?start={start}&count",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == 2  # test logs A1_1, B1
 
 
 def test_query_authz(client, mock_arborist_requests):

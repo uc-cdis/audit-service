@@ -117,6 +117,7 @@ async def query_logs(
         # set `stop` to the newest allowed timestamp
         if start and not stop:
             stop = start + timebox_max_seconds
+            effective_stop = stop
 
         # if the query is time-boxed and `start` was not specified,
         # set `start` to the oldest allowed timestamp
@@ -186,8 +187,8 @@ async def query_logs(
         )
         next_timestamp = None
     else:
-        logs, next_timestamp = await query_logs(
-            model, start_date, stop_date, query_params
+        logs, next_timestamp = await _query_logs(
+            model, start_date, stop_date, query_params, count
         )
 
     if not config["QUERY_USERNAMES"]:
@@ -217,16 +218,18 @@ def add_filters(model, query, query_params, start_date=None, stop_date=None):
     return query
 
 
-async def query_logs(model, start_date, stop_date, query_params):
+async def _query_logs(model, start_date, stop_date, query_params, count):
     # get all logs matching the filters and apply the page size limit
     query = add_filters(model, model.query, query_params, start_date, stop_date)
     query = query.order_by(model.timestamp)
-    limit = config["QUERY_PAGE_SIZE"]
-    query = query.limit(limit)
+    if not count:
+        limit = config["QUERY_PAGE_SIZE"]
+        query = query.limit(limit)
     logs = await query.order_by(model.timestamp).gino.all()
 
-    if not logs:
-        return [], None
+    if not logs or count:
+        # `count` queries are not paginated: no next timestamp
+        return logs, None
 
     # if there are more logs with the same timestamp as the last queried
     # log, also return them

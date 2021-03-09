@@ -80,21 +80,16 @@ def query_a_lot(headers):
         url = query_url
         if next_timestamp:
             url = f"{query_url}?start={next_timestamp}"
+        print(f"Querying {url}")
         res = requests.get(url, headers=headers)
         assert res.status_code == 200, f"{res.text}\n{url}"
         response_data = res.json()["data"]
         next_timestamp = res.json()["nextTimeStamp"]
         total_logs += len(response_data)
-        print(f"Page {i}: {len(response_data)} logs")
+        print(f"Page {i}: {len(response_data)} logs. Next timestamp: {next_timestamp}")
         if not next_timestamp:
             done = True
         i += 1
-    if total_logs < n_logs:
-        print(
-            f"Something went wrong - we submitted {n_logs} logs and only queried {total_logs}"
-        )
-    if total_logs > n_logs:
-        print("FYI the database already contained audit logs")
     print(f"Queried {total_logs} audit logs in {time.time() - start:.1f}s (no filters)")
 
 
@@ -107,14 +102,28 @@ def query_a_lot_groupby(headers):
     res = requests.get(url, headers=headers)
     assert res.status_code == 200, f"{res.text}\n{url}"
     response_data = res.json()["data"]
-    next_timestamp = res.json()["nextTimeStamp"]
     end = time.time() - start
     count = sum(r["count"] for r in response_data)
     print(f"Queried {count} audit logs in {end:.1f}s (groupby)")
 
 
+def query_a_lot_count(headers):
+    next_timestamp = None
+    done = False
+    i = 0
+    url = f"{base_url}/audit/log/presigned_url?count"
+    start = time.time()
+    res = requests.get(url, headers=headers)
+    assert res.status_code == 200, f"{res.text}\n{url}"
+    response_data = res.json()["data"]
+    end = time.time() - start
+    print(f"Queried {response_data} audit logs in {end:.1f}s (count)")
+
+
 if __name__ == "__main__":
-    submit_a_lot()
+    # submit_a_lot()
+
     headers = {"Authorization": "bearer " + get_token()}
     query_a_lot(headers)
-    query_a_lot_groupby(headers)
+    # query_a_lot_groupby(headers)
+    # query_a_lot_count(headers)

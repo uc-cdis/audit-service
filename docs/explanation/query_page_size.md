@@ -9,6 +9,8 @@ The query endpoint only returns up to a configured maximum number of entries at 
 }
 ```
 
+Note that this is only the case for queries with NO `groupby` or `count` parameters.
+
 ## Page size edge case
 
 However, if the `QUERY_PAGE_SIZE`th audit log has the same timestamp as the `QUERY_PAGE_SIZE+1`th audit log, the response could contain more than the configured `QUERY_PAGE_SIZE`.
