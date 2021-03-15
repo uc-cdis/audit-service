@@ -18,10 +18,10 @@ bearer = HTTPBearer(auto_error=False)
 class Auth:
     def __init__(
         self,
-        api_request: Request,
+        request: Request,
         bearer_token: HTTPAuthorizationCredentials = Security(bearer),
     ):
-        self.arborist_client = api_request.app.arborist_client
+        self.arborist_client = request.app.arborist_client
         self.bearer_token = bearer_token
 
     async def get_token_claims(self) -> dict:

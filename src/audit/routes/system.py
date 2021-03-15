@@ -11,6 +11,7 @@ def get_version(request: Request) -> dict:
     return dict(version=request.app.version)
 
 
+@router.get("/")
 @router.get("/_status")
 async def get_status() -> dict:
     await PresignedUrl.query.gino.first()
