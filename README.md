@@ -20,6 +20,7 @@ The server is built with [FastAPI](https://fastapi.tiangolo.com/) and packaged w
 * [Detailed API Documentation](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/audit-service/master/docs/openapi.yaml)
 * [Quick start](docs/tutorials/quick_start.md)
 * [Local installation](docs/how-to/local_installation.md)
+* [Deploying the Audit Service to a Gen3 Data Commons](docs/how-to/deployment.md)
 * [Architecture](docs/reference/architecture.md)
 * [Query response page size](docs/explanation/query_page_size.md)
 * [Async POST endpoint](docs/explanation/async_post.md)
