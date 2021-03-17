@@ -58,6 +58,25 @@ async def insert_row(category, data):
         pass
 
 
+def handle_timestamp(data):
+    """
+    If the timestamp is omitted from the request body, we use the current date
+    and time. In most cases, services should NOT provide a timestamp when
+    creating audit logs. The timestamp is only accepted in log creation
+    requests to allow populating the audit database with historical data, for
+    example by parsing historical logs from before the Audit Service was
+    deployed to a Data Commons.
+    """
+    # "timestamp" key always exists because it's defined in `CreateLogInput`
+    if data["timestamp"]:
+        # we take a timestamp as input, but store a datetime in the database
+        data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
+    else:
+        # timestamp=now is automatically added to rows without timestamp,
+        # but we have to remove the key from the data dict
+        del data["timestamp"]
+
+
 @router.post("/log/presigned_url", status_code=HTTP_201_CREATED)
 async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,
@@ -87,14 +106,7 @@ async def create_presigned_url_log(
             f"Action '{data['action']}' is not allowed ({allowed_actions})",
         )
 
-    # take a timestamp as input, store a datetime in the database
-    if data["timestamp"]:
-        data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
-    else:
-        # timestamp=now is automatically added to rows without timestamp,
-        # but we have to remove the key from the data dict
-        del data["timestamp"]
-
+    handle_timestamp(data)
     background_tasks.add_task(insert_row, "presigned_url", data)
 
 
@@ -119,15 +131,7 @@ async def create_login_log(
     """
     data = body.dict()
     logger.debug(f"Creating `login` audit log. Received body: {data}")
-
-    # take a timestamp as input, store a datetime in the database
-    if data["timestamp"]:
-        data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
-    else:
-        # timestamp=now is automatically added to rows without timestamp,
-        # but we have to remove the key from the data dict
-        del data["timestamp"]
-
+    handle_timestamp(data)
     background_tasks.add_task(insert_row, "login", data)
 
 
