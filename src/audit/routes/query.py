@@ -93,16 +93,16 @@ async def query_logs(
     """
     logger.debug(f"Querying category {category}")
 
-    # TODO if the category is `presigned_url`, we could implement more granular authz using the audit logs' `resource_paths`.
-    resource_path = f"/services/audit/{category}"
-    await auth.authorize("read", [resource_path])
-
     if category not in CATEGORY_TO_MODEL_CLASS:
         raise HTTPException(
             HTTP_400_BAD_REQUEST,
             f"Category '{category}' is not one of {list(CATEGORY_TO_MODEL_CLASS.keys())}",
         )
     model = CATEGORY_TO_MODEL_CLASS[category]
+
+    # TODO if the category is `presigned_url`, we could implement more granular authz using the audit logs' `resource_paths`.
+    resource_path = f"/services/audit/{category}"
+    await auth.authorize("read", [resource_path])
 
     # don't just overwrite `stop` with the current timestamp, because the
     # `stop` param is exclusive and when we don't specify it, we want to
