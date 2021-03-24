@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "audit"
+version = "1.0.0"
+description = "Gen3 Access Request Service"
+authors = ["CTDS UChicago <cdis@uchicago.edu>"]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/uc-cdis/audit-service"
+include = [
+  "NOTICE",
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+alembic = "^1.4.2"
+authutils = "^5.0.4"
+cdislogging = "^=1.0.0"
+fastapi = "^0.61.0"
+gen3authz = "^1.0.0"
+gen3config = "^0.1.8"
+gino = {version = "^1.0.1", extras = ["starlette"]}
+gunicorn = "^20.0.4"
+importlib-metadata = {version = "^1.7.0", python = "<3.8"}
+httpx = "^0.12.1"
+psycopg2-binary = "^2.8.5"
+uvicorn = "^0.11.8"
+# cryptography is an authutils dependency. cryptography>=3.4 includes
+# Rust code. Alpine 3.7 does not support newer versions of Rust. Pin
+# to <3.4 to fix Dockerfile build.
+# https://github.com/pyca/cryptography/blob/main/CHANGELOG.rst#34---2021-02-07
+# https://cryptography.io/en/latest/installation.html#alpine
+cryptography = "<3.4"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.0.1"
+pytest-asyncio = "^0.14.0"
+pytest-cov = "^2.8"
+requests = "^2.24.0"
+
+[tool.poetry.plugins."audit.modules"]
+"system" = "audit.routes.system"
+"maintain" = "audit.routes.maintain"
+"query" = "audit.routes.query"
+
+[build-system]
+requires = ["poetry>=1.0.0"]
+build-backend = "poetry.masonry.api"

@@ -1,0 +1,310 @@
+components:
+  schemas:
+    CreateLoginLogInput:
+      properties:
+        client_id:
+          title: Client Id
+          type: string
+        fence_idp:
+          title: Fence Idp
+          type: string
+        idp:
+          title: Idp
+          type: string
+        request_url:
+          title: Request Url
+          type: string
+        shib_idp:
+          title: Shib Idp
+          type: string
+        status_code:
+          title: Status Code
+          type: integer
+        sub:
+          title: Sub
+          type: integer
+        timestamp:
+          title: Timestamp
+          type: integer
+        username:
+          title: Username
+          type: string
+      required:
+      - request_url
+      - status_code
+      - username
+      - sub
+      - idp
+      title: CreateLoginLogInput
+      type: object
+    CreatePresignedUrlLogInput:
+      properties:
+        action:
+          title: Action
+          type: string
+        guid:
+          title: Guid
+          type: string
+        protocol:
+          title: Protocol
+          type: string
+        request_url:
+          title: Request Url
+          type: string
+        resource_paths:
+          items: {}
+          title: Resource Paths
+          type: array
+        status_code:
+          title: Status Code
+          type: integer
+        sub:
+          title: Sub
+          type: integer
+        timestamp:
+          title: Timestamp
+          type: integer
+        username:
+          title: Username
+          type: string
+      required:
+      - request_url
+      - status_code
+      - username
+      - sub
+      - guid
+      - resource_paths
+      - action
+      title: CreatePresignedUrlLogInput
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            type: string
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+  securitySchemes:
+    HTTPBearer:
+      scheme: bearer
+      type: http
+info:
+  title: Audit Service
+  version: 1.0.0
+openapi: 3.0.2
+paths:
+  /:
+    get:
+      operationId: get_status__get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Get Status
+      tags:
+      - System
+  /_status:
+    get:
+      operationId: get_status__status_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Get Status
+      tags:
+      - System
+  /_version:
+    get:
+      operationId: get_version__version_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Get Version
+      tags:
+      - System
+  /log/login:
+    post:
+      description: 'Create a new `login` audit log.
+
+
+        This endpoint does not include any authorization checks, but it is not
+
+        exposed and is only meant for internal use.
+
+
+        If the timestamp is omitted from the request body, the current date and
+
+        time will be used.
+
+
+        The response is returned _before_ inserting the new audit log in the
+
+        database, so that POSTing audit logs does not impact the performance of
+
+        the caller and audit-service failures are not visible to users.'
+      operationId: create_login_log_log_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoginLogInput'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Login Log
+      tags:
+      - Maintain
+  /log/presigned_url:
+    post:
+      description: 'Create a new `presigned_url` audit log.
+
+
+        This endpoint does not include any authorization checks, but it is not
+
+        exposed and is only meant for internal use.
+
+
+        If the timestamp is omitted from the request body, the current date and
+
+        time will be used.
+
+
+        The response is returned _before_ inserting the new audit log in the
+
+        database, so that POSTing audit logs does not impact the performance of
+
+        the caller and audit-service failures are not visible to users.'
+      operationId: create_presigned_url_log_log_presigned_url_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePresignedUrlLogInput'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Presigned Url Log
+      tags:
+      - Maintain
+  /log/{category}:
+    get:
+      description: "Queries the logs the current user has access to see. Returned\
+        \ data:\n\n    {\n        \"nextTimeStamp\": <timestamp or null>,\n      \
+        \  \"data\": [<entry>, <entry>, ...] OR int if using `count` param,\n    }\n\
+        \nThis endpoint only returns up to a configured maximum number of entries\n\
+        at a time. If there are more entries to query, it returns a non-null\n\"nextTimeStamp\"\
+        \ which can be used to get the next page.\n\nThe returned entries are ordered\
+        \ by increasing timestamp (least recent to\nmost recent), so that new entries\
+        \ are at the end and there is no risk of\nskipping entries when getting the\
+        \ next page.\n\nFilters can be added as query strings. Accepted filters include\
+        \ all fields\nfor the queried category, as well as the following special filters:\n\
+        - \"groupby\" to get counts\n- \"count\" to get the number of rows instead\
+        \ of a list\n- \"start\" to specify a starting timestamp (inclusive). Default:\
+        \ none\n- \"stop\" to specify an end timestamp (exclusive). Default: none\n\
+        \nIf queries are time-boxed (depends on the configuration),\n(\"stop\" - \"\
+        start\") must be lower than the configured maximum.\n\nWithout filters, this\
+        \ endpoint will return all data within the time-box.\nAdd filters as query\
+        \ strings like this:\n\n    GET /log/presigned_url?a=1&b=2\n\nThis will match\
+        \ all records that have values containing all of:\n\n    {\"a\": 1, \"b\"\
+        : 2}\n\nProviding the same key with more than one value filters records whose\n\
+        value of the given key matches any of the given values. But values of\ndifferent\
+        \ keys must all match. For example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\
+        \nMatches these:\n\n    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\n\
+        But won't match these:\n\n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\"\
+        : 3}\n\n`groupby` example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\
+        \n    {\"b\": 1, \"c\": 2, \"count\": 5}\n    {\"b\": 1, \"c\": 3, \"count\"\
+        : 8}\n\n`count` example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c&count\n\
+        \n    Returns: 2 (see previous example returning 2 rows)"
+      operationId: query_logs_log__category__get
+      parameters:
+      - in: path
+        name: category
+        required: true
+        schema:
+          title: Category
+          type: string
+      - description: Start timestamp
+        in: query
+        name: start
+        required: false
+        schema:
+          description: Start timestamp
+          title: Start
+          type: integer
+      - description: Stop timestamp
+        in: query
+        name: stop
+        required: false
+        schema:
+          description: Stop timestamp
+          title: Stop
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Query Logs
+      tags:
+      - Query

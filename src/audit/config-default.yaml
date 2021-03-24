@@ -1,0 +1,45 @@
+####################
+# SERVER           #
+####################
+
+# whether to enable debug logs
+DEBUG: true
+
+TEST_KEEP_DB: false
+
+DOCS_URL_PREFIX: /audit
+
+# defaults to "http://arborist-service/"
+ARBORIST_URL:
+
+####################
+# DATABASE         #
+####################
+
+DB_DRIVER: postgresql
+DB_HOST:
+DB_PORT:
+DB_USER:
+DB_PASSWORD:
+DB_DATABASE: audit
+
+DB_POOL_MIN_SIZE: 1
+DB_POOL_MAX_SIZE: 16
+DB_ECHO: False
+DB_SSL:
+DB_USE_CONNECTION_FOR_REQUEST: true
+DB_RETRY_LIMIT: 1
+DB_RETRY_INTERVAL: 1
+
+####################
+# API              #
+####################
+
+# if left empty, queries are not time-boxed
+QUERY_TIMEBOX_MAX_DAYS:
+
+QUERY_PAGE_SIZE: 1000
+
+# whether to return usernames in query responses,
+# and to allow querying by username
+QUERY_USERNAMES: true

@@ -1,0 +1,15 @@
+DEBUG: true
+TEST_KEEP_DB: false
+DOCS_URL_PREFIX: /
+
+# These are required for automated testing (see .github/workflows/ci.yaml)
+DB_DRIVER: postgresql
+DB_HOST: localhost
+DB_PORT: 5432
+DB_USER: postgres
+DB_PASSWORD: postgres
+DB_DATABASE: audit_test
+
+# big default values so that these parameters don't impact unit tests
+# that are not meant to test them:
+QUERY_PAGE_SIZE: 999999999
