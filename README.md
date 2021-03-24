@@ -8,7 +8,7 @@ The Audit Service exposes an API to create and query audit logs. It allows us to
 - Which files from dataset `D` were downloaded yesterday?
 - How many times were files from dataset `D` downloaded yesterday?
 - How many users downloaded data last year?
-- How many unique user logged in since the creation of the Data Commons?
+- How many unique users logged in since the creation of the Data Commons?
 - How many users logged in via identity provider `X` last year?
 
 The server is built with [FastAPI](https://fastapi.tiangolo.com/) and packaged with [Poetry](https://poetry.eustace.io/).
