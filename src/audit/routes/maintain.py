@@ -67,13 +67,17 @@ def handle_timestamp(data):
     example by parsing historical logs from before the Audit Service was
     deployed to a Data Commons.
     """
-    # "timestamp" key always exists because it's defined in `CreateLogInput`
+    if "timestamp" not in data:
+        return
     if data["timestamp"]:
         # we take a timestamp as input, but store a datetime in the database
+        # TODO timestamp to datetime error handling
         data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
     else:
-        # timestamp=now is automatically added to rows without timestamp,
-        # but we have to remove the key from the data dict
+        # when hitting the API endpoint, the "timestamp" key always exists
+        # because it's defined in `CreateLogInput`. It is automatically added
+        # to rows without timestamp, but we have to remove it from the dict
+        # before inserting in the DB
         del data["timestamp"]
 
 
@@ -97,6 +101,11 @@ async def create_presigned_url_log(
     the caller and audit-service failures are not visible to users.
     """
     data = body.dict()
+    validate_presigned_url_log(data)
+    background_tasks.add_task(insert_row, "presigned_url", data)
+
+
+def validate_presigned_url_log(data):
     logger.debug(f"Creating `presigned_url` audit log. Received body: {data}")
 
     allowed_actions = ["download", "upload"]
@@ -107,7 +116,6 @@ async def create_presigned_url_log(
         )
 
     handle_timestamp(data)
-    background_tasks.add_task(insert_row, "presigned_url", data)
 
 
 @router.post("/log/login", status_code=HTTP_201_CREATED)
@@ -130,9 +138,13 @@ async def create_login_log(
     the caller and audit-service failures are not visible to users.
     """
     data = body.dict()
+    validate_login_log(data)
+    background_tasks.add_task(insert_row, "login", data)
+
+
+def validate_login_log(data):
     logger.debug(f"Creating `login` audit log. Received body: {data}")
     handle_timestamp(data)
-    background_tasks.add_task(insert_row, "login", data)
 
 
 def init_app(app: FastAPI):
