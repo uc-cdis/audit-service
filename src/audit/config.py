@@ -29,7 +29,20 @@ class AuditServiceConfig(Config):
         """
         Perform a series of sanity checks on a loaded config.
         """
-        pass
+        if self["PULL_FROM_QUEUE"]:
+            assert "QUEUE_CONFIG" in self, "Config is missing 'QUEUE_CONFIG'"
+            queue_type = self["QUEUE_CONFIG"].get("type")
+            if queue_type == "aws_sqs":
+                assert (
+                    "sqs_url" in self["QUEUE_CONFIG"]
+                ), "Config is missing 'QUEUE_CONFIG.sqs_url'"
+                assert (
+                    "region" in self["QUEUE_CONFIG"]
+                ), "Config is missing 'QUEUE_CONFIG.region'"
+            else:
+                raise Exception(
+                    f"Config 'QUEUE_CONFIG.type': unknown queue type '{queue_type}'"
+                )
 
 
 config = AuditServiceConfig(DEFAULT_CFG_PATH)

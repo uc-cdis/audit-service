@@ -12,8 +12,14 @@ DOCS_URL_PREFIX: /audit
 # defaults to "http://arborist-service/"
 ARBORIST_URL:
 
+# If `PULL_FROM_QUEUE` is true, `QUEUE_CONFIG` is required.
+# `QUEUE_CONFIG.type` is one of: [aws_sqs].
+# - if type == api: logs are created by hitting the log creation endpoint.
+# - if type == aws_sqs: logs are pulled from an SQS and fields `sqs_url` and
+# `region` are required. Fields `aws_access_key_id` and
+# `aws_secret_access_key` are optional.
 PULL_FROM_QUEUE: true
-QUEUE_CONFIG:  # TODO comment
+QUEUE_CONFIG:
   type: aws_sqs
   sqs_url:
   region:
