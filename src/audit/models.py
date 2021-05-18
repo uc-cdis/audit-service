@@ -1,9 +1,8 @@
-from datetime import datetime
 from gino.ext.starlette import Gino
 from pydantic import BaseModel
 import sqlalchemy
-from sqlalchemy import Column, DateTime, Integer, String, UniqueConstraint
-from sqlalchemy.dialects.postgresql import ARRAY, TIMESTAMP
+from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY
 
 from .config import config
 

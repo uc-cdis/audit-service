@@ -1,26 +1,14 @@
-import uuid
-
-from asyncpg.exceptions import UniqueViolationError
 from datetime import datetime
-from enum import Enum
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, FastAPI, HTTPException
-from gino.exceptions import NoSuchRowError
-from starlette.requests import Request
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, HTTPException
 from starlette.status import (
-    HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
-    HTTP_403_FORBIDDEN,
-    HTTP_409_CONFLICT,
-    HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
 from .. import logger
 from ..auth import Auth
-from ..config import config
 from ..models import (
     CATEGORY_TO_MODEL_CLASS,
-    db,
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
 )
@@ -50,7 +38,7 @@ async def insert_row(category, data):
     is raised, we just catch and ignore it.
 
     TODO Once a newer version of GINO is released, upgrade and catch
-    `NoSuchRowError` instead of `AttributeError`.
+    `gino.exceptions.NoSuchRowError` instead of `AttributeError`.
     """
     try:
         await CATEGORY_TO_MODEL_CLASS[category].create(**data)
