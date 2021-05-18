@@ -71,8 +71,13 @@ def handle_timestamp(data):
         return
     if data["timestamp"]:
         # we take a timestamp as input, but store a datetime in the database
-        # TODO timestamp to datetime error handling
-        data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
+        try:
+            data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
+        except Exception as e:
+            raise HTTPException(
+                HTTP_400_BAD_REQUEST,
+                f"Invalid timestamp '{data['timestamp']}'",
+            )
     else:
         # when hitting the API endpoint, the "timestamp" key always exists
         # because it's defined in `CreateLogInput`. It is automatically added
