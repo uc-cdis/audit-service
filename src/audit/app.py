@@ -14,7 +14,7 @@ from gen3authz.client.arborist.client import ArboristClient
 from . import logger
 from .config import config, DEFAULT_CFG_PATH
 
-# Load the configuration *before* importing models
+# Load the configuration *before* importing modules that rely on it
 try:
     if os.environ.get("AUDIT_SERVICE_CONFIG_PATH"):
         config.load(config_path=os.environ["AUDIT_SERVICE_CONFIG_PATH"])
@@ -44,7 +44,7 @@ def load_modules(app: FastAPI = None) -> None:
 
 def app_init() -> FastAPI:
     logger.info("Initializing app")
-    config.validate()
+    config.validate(logger)
 
     debug = config["DEBUG"]
     app = FastAPI(
@@ -73,7 +73,10 @@ def app_init() -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
-        if config["PULL_FROM_QUEUE"]:
+        if (
+            config["PULL_FROM_QUEUE"]
+            and config["QUEUE_CONFIG"].get("type") == "aws_sqs"
+        ):
             loop = asyncio.get_running_loop()
             loop.create_task(pull_from_queue_loop())
 

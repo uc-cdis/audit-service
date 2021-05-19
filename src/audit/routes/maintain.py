@@ -102,7 +102,8 @@ def validate_presigned_url_log(data):
     logger.debug(f"Creating `presigned_url` audit log. Received body: {data}")
 
     allowed_actions = ["download", "upload"]
-    if data["action"] not in allowed_actions:
+    # `action` is a required field", but that's checked during the DB insert
+    if "action" in data and data["action"] not in allowed_actions:
         raise HTTPException(
             HTTP_400_BAD_REQUEST,
             f"Action '{data['action']}' is not allowed ({allowed_actions})",

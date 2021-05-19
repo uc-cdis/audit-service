@@ -25,7 +25,7 @@ class AuditServiceConfig(Config):
             ),
         )
 
-    def validate(self) -> None:
+    def validate(self, logger) -> None:
         """
         Perform a series of sanity checks on a loaded config.
         """
@@ -33,12 +33,11 @@ class AuditServiceConfig(Config):
             assert "QUEUE_CONFIG" in self, "Config is missing 'QUEUE_CONFIG'"
             queue_type = self["QUEUE_CONFIG"].get("type")
             if queue_type == "aws_sqs":
-                assert (
-                    "sqs_url" in self["QUEUE_CONFIG"]
-                ), "Config is missing 'QUEUE_CONFIG.sqs_url'"
-                assert (
-                    "region" in self["QUEUE_CONFIG"]
-                ), "Config is missing 'QUEUE_CONFIG.region'"
+                for key in ["sqs_url", "region"]:
+                    if not self["QUEUE_CONFIG"].get(key):
+                        logger.warning(
+                            f"'PULL_FROM_QUEUE' is enabled with 'type' == 'aws_sqs', but config is missing 'QUEUE_CONFIG.{key}'"
+                        )
             else:
                 raise Exception(
                     f"Config 'QUEUE_CONFIG.type': unknown queue type '{queue_type}'"

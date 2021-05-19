@@ -26,7 +26,51 @@ async def process_log(data):
     await insert_row(category, data)
 
 
+async def pull_from_queue(sqs):
+    failed = False
+    messages = []
+    try:
+        response = sqs.receive_message(
+            QueueUrl=config["QUEUE_CONFIG"]["sqs_url"],
+            MaxNumberOfMessages=10,  # 10 is the max
+        )
+        messages = response.get("Messages", [])
+    except Exception as e:
+        failed = True
+        logger.error(f"Error pulling from queue: {e}")
+        traceback.print_exc()
+
+    for message in messages:
+        data = json.loads(message["Body"])
+        receipt_handle = message["ReceiptHandle"]
+        try:
+            await process_log(data)
+        except Exception as e:
+            failed = True
+            logger.error(f"Error processing audit log: {e}")
+            traceback.print_exc()
+        else:
+            # delete message from queue once successfully processed
+            try:
+                sqs.delete_message(
+                    QueueUrl=config["QUEUE_CONFIG"]["sqs_url"],
+                    ReceiptHandle=receipt_handle,
+                )
+            except Exception as e:
+                failed = True
+                logger.error(f"Error deleting message from queue: {e}")
+                traceback.print_exc()
+
+    # if the queue is empty, or we failed to process a message: sleep
+    should_sleep = not messages or failed
+    return should_sleep
+
+
 async def pull_from_queue_loop():
+    """
+    Note that `pull_from_queue_loop` and `pull_from_queue` only handle
+    AWS SQS right now.
+    """
     logger.info("Starting to pull from queue...")
     sqs = boto3.client(
         "sqs",
@@ -36,40 +80,7 @@ async def pull_from_queue_loop():
     )
     sleep_time = config["PULL_FREQUENCY_SECONDS"]
     while True:
-        failed = False
-        messages = []
-        try:
-            response = sqs.receive_message(
-                QueueUrl=config["QUEUE_CONFIG"]["sqs_url"],
-                MaxNumberOfMessages=10,  # 10 is the max
-            )
-            messages = response.get("Messages", [])
-        except Exception as e:
-            failed = True
-            logger.error(f"Error pulling from queue: {e}")
-            traceback.print_exc()
-
-        for message in messages:
-            data = json.loads(message["Body"])
-            receipt_handle = message["ReceiptHandle"]
-            try:
-                await process_log(data)
-            except Exception as e:
-                failed = True
-                logger.error(f"Error processing audit log: {e}")
-                traceback.print_exc()
-            else:
-                # delete message from queue once successfully processed
-                try:
-                    sqs.delete_message(
-                        QueueUrl=config["QUEUE_CONFIG"]["sqs_url"],
-                        ReceiptHandle=receipt_handle,
-                    )
-                except Exception as e:
-                    failed = True
-                    logger.error(f"Error deleting message from queue: {e}")
-                    traceback.print_exc()
-
-        if not messages or failed:  # queue is empty: sleep
+        should_sleep = await pull_from_queue(sqs)
+        if should_sleep:
             logger.info(f"Sleeping for {sleep_time} seconds...")
             await asyncio.sleep(sleep_time)
