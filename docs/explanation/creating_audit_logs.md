@@ -6,7 +6,7 @@ The audit log creation endpoints is an async endpoint:
 - POSTing audit logs does not impact the performance of the caller.
 - Audit Service failures are not visible to users (for example, we don’t want to return a 500 error to users who are trying to download).
 
-However, it's difficult to monitor errors when using this endpoints.
+However, it's difficult to monitor errors when using this endpoint.
 
 ## Pulling from a queue
 

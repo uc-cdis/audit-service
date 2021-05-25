@@ -44,17 +44,23 @@ class CreateLogInput(BaseModel):
 
 
 class PresignedUrl(AuditLog):
+    """
+    `resource_paths` can be null if the user requested a file that
+    doesn't exist.
+    `protocol` can be null in the same case or if action=="upload"
+    """
+
     __tablename__ = "presigned_url"
 
     guid = Column(String, nullable=False)
-    resource_paths = Column(ARRAY(String), nullable=False)
+    resource_paths = Column(ARRAY(String), nullable=True)
     action = Column(String, nullable=False)
-    protocol = Column(String, nullable=True)  # can be null if action=="upload"
+    protocol = Column(String, nullable=True)
 
 
 class CreatePresignedUrlLogInput(CreateLogInput):
     guid: str
-    resource_paths: list
+    resource_paths: list = None
     action: str
     protocol: str = None
 
