@@ -73,7 +73,6 @@ components:
       - username
       - sub
       - guid
-      - resource_paths
       - action
       title: CreatePresignedUrlLogInput
       type: object
