@@ -31,7 +31,7 @@ async def pull_from_queue(sqs):
     messages = []
     try:
         response = sqs.receive_message(
-            QueueUrl=config["QUEUE_CONFIG"]["sqs_url"],
+            QueueUrl=config["QUEUE_CONFIG"]["aws_sqs_config"]["sqs_url"],
             MaxNumberOfMessages=10,  # 10 is the max allowed by AWS
         )
         messages = response.get("Messages", [])
@@ -53,7 +53,7 @@ async def pull_from_queue(sqs):
             # delete message from queue once successfully processed
             try:
                 sqs.delete_message(
-                    QueueUrl=config["QUEUE_CONFIG"]["sqs_url"],
+                    QueueUrl=config["QUEUE_CONFIG"]["aws_sqs_config"]["sqs_url"],
                     ReceiptHandle=receipt_handle,
                 )
             except Exception as e:
@@ -72,11 +72,12 @@ async def pull_from_queue_loop():
     AWS SQS right now.
     """
     logger.info("Starting to pull from queue...")
+    aws_sqs_config = config["QUEUE_CONFIG"]["aws_sqs_config"]
     sqs = boto3.client(
         "sqs",
-        region_name=config["QUEUE_CONFIG"]["region"],
-        aws_access_key_id=config["QUEUE_CONFIG"].get("aws_access_key_id"),
-        aws_secret_access_key=config["QUEUE_CONFIG"].get("aws_secret_access_key"),
+        region_name=aws_sqs_config["region"],
+        aws_access_key_id=aws_sqs_config.get("aws_access_key_id"),
+        aws_secret_access_key=aws_sqs_config.get("aws_secret_access_key"),
     )
     sleep_time = config["PULL_FREQUENCY_SECONDS"]
     while True:

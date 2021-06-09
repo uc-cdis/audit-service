@@ -16,15 +16,16 @@ ARBORIST_URL:
 # logs can only be created by hitting the API's log creation endpoint.
 PULL_FROM_QUEUE: true
 # `QUEUE_CONFIG.type` is one of: [aws_sqs].
-# - if type == aws_sqs: logs are pulled from an SQS and fields `sqs_url` and
-# `region` are required. Fields `aws_access_key_id` and
+# - if type == aws_sqs: logs are pulled from an SQS and `aws_sqs_config`
+# fields `sqs_url` and `region` are required. Fields `aws_access_key_id` and
 # `aws_secret_access_key` are optional.
 QUEUE_CONFIG:
   type: aws_sqs
-  sqs_url:
-  region:
-  aws_access_key_id:
-  aws_secret_access_key:
+  aws_sqs_config:
+    sqs_url:
+    region:
+    aws_access_key_id:
+    aws_secret_access_key:
 # how often to check the queue for new audit logs after
 # seeing an empty queue
 PULL_FREQUENCY_SECONDS: 300  # default: 5 min

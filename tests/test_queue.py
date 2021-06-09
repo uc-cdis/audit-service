@@ -148,7 +148,9 @@ async def test_pull_from_queue_success(monkeypatch):
     Test that `pull_from_queue` properly processes messages in the queue.
     """
     queue = TestQueue()
-    monkeypatch.setitem(config, "QUEUE_CONFIG", {"sqs_url": "some_queue_url"})
+    monkeypatch.setitem(
+        config, "QUEUE_CONFIG", {"aws_sqs_config": {"sqs_url": "some_queue_url"}}
+    )
     monkeypatch.setitem(config, "PULL_FREQUENCY_SECONDS", 0)
 
     should_sleep = await pull_from_queue(queue)
@@ -176,7 +178,9 @@ async def test_pull_from_queue_failure(monkeypatch):
     for messages in [[bad_message], []]:
         print(f"Messages: {messages}")
         queue = TestQueue(messages=messages)
-        monkeypatch.setitem(config, "QUEUE_CONFIG", {"sqs_url": "some_queue_url"})
+        monkeypatch.setitem(
+            config, "QUEUE_CONFIG", {"aws_sqs_config": {"sqs_url": "some_queue_url"}}
+        )
         monkeypatch.setitem(config, "PULL_FREQUENCY_SECONDS", 0)
 
         should_sleep = await pull_from_queue(queue)

@@ -33,10 +33,14 @@ class AuditServiceConfig(Config):
             assert "QUEUE_CONFIG" in self, "Config is missing 'QUEUE_CONFIG'"
             queue_type = self["QUEUE_CONFIG"].get("type")
             if queue_type == "aws_sqs":
+                aws_sqs_config = self["QUEUE_CONFIG"].get("aws_sqs_config")
+                assert (
+                    aws_sqs_config
+                ), f"'PULL_FROM_QUEUE' is enabled with 'type' == 'aws_sqs', but config is missing 'QUEUE_CONFIG.aws_sqs_config'"
                 for key in ["sqs_url", "region"]:
-                    if not self["QUEUE_CONFIG"].get(key):
+                    if not aws_sqs_config.get(key):
                         logger.warning(
-                            f"'PULL_FROM_QUEUE' is enabled with 'type' == 'aws_sqs', but config is missing 'QUEUE_CONFIG.{key}'"
+                            f"'PULL_FROM_QUEUE' is enabled with 'type' == 'aws_sqs', but config is missing 'QUEUE_CONFIG.aws_sqs_config.{key}'"
                         )
             else:
                 raise Exception(
