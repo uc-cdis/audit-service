@@ -32,7 +32,7 @@ async def pull_from_queue(sqs):
     try:
         response = sqs.receive_message(
             QueueUrl=config["QUEUE_CONFIG"]["sqs_url"],
-            MaxNumberOfMessages=10,  # 10 is the max
+            MaxNumberOfMessages=10,  # 10 is the max allowed by AWS
         )
         messages = response.get("Messages", [])
     except Exception as e:
