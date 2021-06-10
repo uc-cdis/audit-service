@@ -23,5 +23,5 @@ The server is built with [FastAPI](https://fastapi.tiangolo.com/) and packaged w
 * [Deploying the Audit Service to a Gen3 Data Commons](docs/how-to/deployment.md)
 * [Architecture](docs/reference/architecture.md)
 * [Query response page size](docs/explanation/query_page_size.md)
-* [Async POST endpoint](docs/explanation/async_post.md)
+* [Creating audit logs](docs/explanation/creating_audit_logs.md)
 * [How to add a new audit log category?](docs/how-to/add_log_category.md)

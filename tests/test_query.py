@@ -1,7 +1,4 @@
 from datetime import datetime
-import pytest
-from random import randint
-import time
 
 from audit.config import config
 

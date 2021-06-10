@@ -9,6 +9,8 @@ ENABLE_AUDIT_LOGS:
   login: <true or false>
 ```
 
+The `PUSH_AUDIT_LOGS_CONFIG` field must also be configured. When using `type: aws_sqs`, the SQS URL and region can be copied from the Audit Service configuration. See the [default Fence configuration file](https://github.com/uc-cdis/fence/blob/master/fence/config-default.yaml) for more details.
+
 ## Notes
 
 1. When adding audit log creation in a service for the first time, the `audit-service` deployment file `network-ingress` annotation (see [here](https://github.com/uc-cdis/cloud-automation/blob/27770776d239bc609bbbd23607689cf62de1bc66/kube/services/audit-service/audit-service-deploy.yaml#L6)) must be updated to allow the service to talk to `audit-service`.

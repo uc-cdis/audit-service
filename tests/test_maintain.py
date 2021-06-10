@@ -1,6 +1,4 @@
 from datetime import datetime
-import pytest
-from unittest.mock import patch
 import time
 
 
@@ -36,6 +34,24 @@ def test_create_presigned_url_log_with_timestamp(client):
     response_timestamp = response_data.pop("timestamp").replace("T", " ")
     assert response_timestamp == request_timestamp
     assert response_data == request_data
+
+
+def test_create_presigned_url_log_with_bad_timestamp(client):
+    # create a log with a timestamp
+    guid = "dg.hello/abc"
+    request_data = {
+        "request_url": f"/request_data/download/{guid}",
+        "status_code": 200,
+        "timestamp": 999999999999999,
+        "username": "audit-service_user",
+        "sub": 10,
+        "guid": guid,
+        "resource_paths": ["/my/resource/path1", "/path2"],
+        "action": "download",
+        "protocol": "s3",
+    }
+    res = client.post("/log/presigned_url", json=request_data)
+    assert res.status_code == 400, res.text
 
 
 def test_create_presigned_url_log_without_timestamp(client):

@@ -1,6 +1,5 @@
 from alembic.config import main as alembic_main
 import copy
-import importlib
 import os
 import pytest
 import requests

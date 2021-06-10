@@ -1,12 +1,10 @@
 from collections import defaultdict
 from datetime import datetime
-from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from starlette.requests import Request
 from starlette.status import (
     HTTP_200_OK,
     HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
 )
 import time
 
@@ -19,7 +17,7 @@ from ..models import CATEGORY_TO_MODEL_CLASS, db
 router = APIRouter()
 
 
-@router.get("/log/{category}")
+@router.get("/log/{category}", status_code=HTTP_200_OK)
 async def query_logs(
     request: Request,
     category: str,

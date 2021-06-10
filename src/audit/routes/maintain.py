@@ -1,26 +1,14 @@
-import uuid
-
-from asyncpg.exceptions import UniqueViolationError
 from datetime import datetime
-from enum import Enum
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, FastAPI, HTTPException
-from gino.exceptions import NoSuchRowError
-from starlette.requests import Request
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, HTTPException
 from starlette.status import (
-    HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
-    HTTP_403_FORBIDDEN,
-    HTTP_409_CONFLICT,
-    HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
 from .. import logger
 from ..auth import Auth
-from ..config import config
 from ..models import (
     CATEGORY_TO_MODEL_CLASS,
-    db,
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
 )
@@ -50,7 +38,7 @@ async def insert_row(category, data):
     is raised, we just catch and ignore it.
 
     TODO Once a newer version of GINO is released, upgrade and catch
-    `NoSuchRowError` instead of `AttributeError`.
+    `gino.exceptions.NoSuchRowError` instead of `AttributeError`.
     """
     try:
         await CATEGORY_TO_MODEL_CLASS[category].create(**data)
@@ -67,13 +55,22 @@ def handle_timestamp(data):
     example by parsing historical logs from before the Audit Service was
     deployed to a Data Commons.
     """
-    # "timestamp" key always exists because it's defined in `CreateLogInput`
+    if "timestamp" not in data:
+        return
     if data["timestamp"]:
         # we take a timestamp as input, but store a datetime in the database
-        data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
+        try:
+            data["timestamp"] = datetime.fromtimestamp(data["timestamp"])
+        except Exception as e:
+            raise HTTPException(
+                HTTP_400_BAD_REQUEST,
+                f"Invalid timestamp '{data['timestamp']}'",
+            )
     else:
-        # timestamp=now is automatically added to rows without timestamp,
-        # but we have to remove the key from the data dict
+        # when hitting the API endpoint, the "timestamp" key always exists
+        # because it's defined in `CreateLogInput`. It is automatically added
+        # to rows without timestamp, but we have to remove it from the dict
+        # before inserting in the DB
         del data["timestamp"]
 
 
@@ -97,17 +94,22 @@ async def create_presigned_url_log(
     the caller and audit-service failures are not visible to users.
     """
     data = body.dict()
+    validate_presigned_url_log(data)
+    background_tasks.add_task(insert_row, "presigned_url", data)
+
+
+def validate_presigned_url_log(data):
     logger.debug(f"Creating `presigned_url` audit log. Received body: {data}")
 
     allowed_actions = ["download", "upload"]
-    if data["action"] not in allowed_actions:
+    # `action` is a required field", but that's checked during the DB insert
+    if "action" in data and data["action"] not in allowed_actions:
         raise HTTPException(
             HTTP_400_BAD_REQUEST,
             f"Action '{data['action']}' is not allowed ({allowed_actions})",
         )
 
     handle_timestamp(data)
-    background_tasks.add_task(insert_row, "presigned_url", data)
 
 
 @router.post("/log/login", status_code=HTTP_201_CREATED)
@@ -130,9 +132,13 @@ async def create_login_log(
     the caller and audit-service failures are not visible to users.
     """
     data = body.dict()
+    validate_login_log(data)
+    background_tasks.add_task(insert_row, "login", data)
+
+
+def validate_login_log(data):
     logger.debug(f"Creating `login` audit log. Received body: {data}")
     handle_timestamp(data)
-    background_tasks.add_task(insert_row, "login", data)
 
 
 def init_app(app: FastAPI):
