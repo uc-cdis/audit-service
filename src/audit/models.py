@@ -37,7 +37,7 @@ class CreateLogInput(BaseModel):
     # int timestamps as input
     timestamp: int = None
     username: str
-    sub: int
+    sub: int = None
 
 
 # child audit log classes
