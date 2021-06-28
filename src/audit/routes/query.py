@@ -89,8 +89,6 @@ async def query_logs(
 
         Returns: 2 (see previous example returning 2 rows)
     """
-    logger.debug(f"Querying category {category}")
-
     if category not in CATEGORY_TO_MODEL_CLASS:
         raise HTTPException(
             HTTP_400_BAD_REQUEST,
