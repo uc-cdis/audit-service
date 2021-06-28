@@ -33,7 +33,6 @@ components:
       - request_url
       - status_code
       - username
-      - sub
       - idp
       title: CreateLoginLogInput
       type: object
@@ -71,7 +70,6 @@ components:
       - request_url
       - status_code
       - username
-      - sub
       - guid
       - action
       title: CreatePresignedUrlLogInput
