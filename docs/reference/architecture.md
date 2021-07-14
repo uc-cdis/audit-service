@@ -32,7 +32,7 @@ Filters can be added as query strings. Accepted filters include all fields for t
 
 If queries are time-boxed (depends on configuration variable `QUERY_TIMEBOX_MAX_DAYS`), (`stop` - `start`) must be lower than the configured maximum.
 
-We can populate the Audit Service database with historical data by parsing logs and making POST requests to create audit entries, because the POST endpoint accepts the timestamp as an optional parameter.
+We can populate the Audit Service database with historical data by parsing logs and making POST requests to create audit entries, because the log creation endpoint accepts the timestamp as an optional parameter.
 
 About retention: for now, there is no planned mechanism to delete old entries.
 
