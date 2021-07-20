@@ -23,4 +23,4 @@ See the [Fence default configuration file](https://github.com/uc-cdis/fence/blob
 ## Notes
 
 1. When adding audit log creation in a service for the first time, the `audit-service` deployment file `network-ingress` annotation (see [here](https://github.com/uc-cdis/cloud-automation/blob/27770776d239bc609bbbd23607689cf62de1bc66/kube/services/audit-service/audit-service-deploy.yaml#L6)) must be updated to allow the service to talk to `audit-service`.
-2. In most cases, services should **not** provide a timestamp when creating audit logs. The timestamp is only accepted in log creation requests to allow populating the audit database with historical data, for example by parsing historical logs from before the Audit Service was deployed to a Data Commons.
+2. In most cases, services should **not** provide a timestamp when creating audit logs. See [Creating audit logs, Timestamps section](../explanation/creating_audit_logs.md#timestamps).

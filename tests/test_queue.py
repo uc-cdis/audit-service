@@ -19,11 +19,11 @@ async def test_process_log_success():
     # create a log
     guid = "dg.hello/abc"
     category = "presigned_url"
+    timestamp = int(time.time())
     message_data = {
         "category": category,
         "request_url": f"/request_data/download/{guid}",
         "status_code": 200,
-        "timestamp": int(time.time()),
         "username": "audit-service_user",
         "sub": 10,
         "guid": guid,
@@ -31,7 +31,7 @@ async def test_process_log_success():
         "action": "download",
         "protocol": "s3",
     }
-    await process_log(message_data)
+    await process_log(message_data, timestamp)
 
     data = await db.all(db.text(f"select * from {category}"))
     assert len(data) == 1, f"1 row should have been inserted in table '{category}'"
@@ -60,11 +60,11 @@ async def test_process_log_failure():
     # attempt to create a log with a bad category
     guid = "dg.hello/abc"
     category = "this_does_not_exist"
+    timestamp = int(time.time())
     message_data = {
         "category": category,
         "request_url": f"/request_data/download/{guid}",
         "status_code": 200,
-        "timestamp": int(time.time()),
         "username": "audit-service_user",
         "sub": 10,
         "guid": guid,
@@ -73,7 +73,7 @@ async def test_process_log_failure():
         "protocol": "s3",
     }
     with pytest.raises(AssertionError, match=f"Unknown log category {category}"):
-        await process_log(message_data)
+        await process_log(message_data, timestamp)
 
     for category in CATEGORY_TO_MODEL_CLASS:
         data = await db.all(db.text(f"select * from {category}"))
@@ -82,7 +82,6 @@ async def test_process_log_failure():
         ), f"Nothing should have been inserted in table '{category}'"
 
     # attempt to create a log with missing fields
-    guid = "dg.hello/abc"
     category = "presigned_url"
     message_data = {
         "category": category,
@@ -92,7 +91,7 @@ async def test_process_log_failure():
         "action": "download",
     }
     with pytest.raises(Exception, match="null value in column"):
-        await process_log(message_data)
+        await process_log(message_data, timestamp)
 
     # make sure `process_log` did not insert any rows
     for category in CATEGORY_TO_MODEL_CLASS:
@@ -127,12 +126,13 @@ class TestQueue:
         else:
             self.messages = messages
 
-    def receive_message(self, QueueUrl, MaxNumberOfMessages):
+    def receive_message(self, QueueUrl, MaxNumberOfMessages, AttributeNames):
         n_messages = min(MaxNumberOfMessages, len(self.messages))
         messages = [
             {
                 "Body": json.dumps(message),
                 "ReceiptHandle": "123",
+                "Attributes": {"SentTimestamp": int(time.time())},
             }
             for message in self.messages[:n_messages]
         ]
@@ -140,6 +140,9 @@ class TestQueue:
 
     def delete_message(self, QueueUrl, ReceiptHandle):
         pass
+
+
+TestQueue.__test__ = False  # prevent pytest from trying to collect it
 
 
 @pytest.mark.asyncio

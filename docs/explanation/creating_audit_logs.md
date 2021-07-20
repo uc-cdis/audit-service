@@ -11,3 +11,9 @@ However, it's difficult to monitor errors when using this endpoint.
 ## Pulling from a queue
 
 The audit service can also handle pulling audit logs from a queue, which allows for easier monitoring. This can be configured by turning on the `PULL_FROM_QUEUE` flag in the configuration file (enabled by default). Right now, only AWS SQS is integrated, but integrations for other types of queues can be added by adding code and extending the values accepted for the `QUEUE_CONFIG.type` field in the configuration file.
+
+## Timestamps
+
+In most cases, services should **not** provide a timestamp when creating audit logs. The timestamp is only accepted in log creation requests to allow populating the audit database with historical data, for example by parsing historical logs from before the Audit Service was deployed to a Data Commons.
+
+For other use cases, for consistency and to avoid mistakes, the timestamp should either be generated automatically by `audit-service` (when using the API's creation endpoint) or come from the message's `SentTimestamp` (when using AWS SQS).
