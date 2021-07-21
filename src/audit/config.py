@@ -42,6 +42,10 @@ class AuditServiceConfig(Config):
                         logger.warning(
                             f"'PULL_FROM_QUEUE' is enabled with 'type' == 'aws_sqs', but config is missing 'QUEUE_CONFIG.aws_sqs_config.{key}'"
                         )
+                if "aws_cred" in aws_sqs_config and aws_sqs_config["aws_cred"]:
+                    assert (
+                        aws_sqs_config["aws_cred"] in config["AWS_CREDENTIALS"]
+                    ), f"The 'QUEUE_CONFIG.aws_sqs_config.aws_cred' value '{aws_sqs_config['aws_cred']}' is not configured in 'AWS_CREDENTIALS'"
             else:
                 raise Exception(
                     f"Config 'QUEUE_CONFIG.type': unknown queue type '{queue_type}'"

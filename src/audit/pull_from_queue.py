@@ -81,11 +81,27 @@ async def pull_from_queue_loop():
     """
     logger.info("Starting to pull from queue...")
     aws_sqs_config = config["QUEUE_CONFIG"]["aws_sqs_config"]
+    # we know the cred is in AWS_CREDENTIALS (see `AuditServiceConfig.validate`)
+    aws_creds = (
+        config["AWS_CREDENTIALS"][aws_sqs_config["aws_cred"]]
+        if "aws_cred" in aws_sqs_config
+        else {}
+    )
+    if (
+        not aws_creds
+        and "aws_access_key_id" in aws_sqs_config
+        and "aws_secret_access_key" in aws_sqs_config
+    ):
+        # for backwards compatibility
+        aws_creds = {
+            "aws_access_key_id": aws_sqs_config["aws_access_key_id"],
+            "aws_secret_access_key": aws_sqs_config["aws_secret_access_key"],
+        }
     sqs = boto3.client(
         "sqs",
         region_name=aws_sqs_config["region"],
-        aws_access_key_id=aws_sqs_config.get("aws_access_key_id"),
-        aws_secret_access_key=aws_sqs_config.get("aws_secret_access_key"),
+        aws_access_key_id=aws_creds.get("aws_access_key_id"),
+        aws_secret_access_key=aws_creds.get("aws_secret_access_key"),
     )
     sleep_time = config["PULL_FREQUENCY_SECONDS"]
     while True:
