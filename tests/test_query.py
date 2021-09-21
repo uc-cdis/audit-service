@@ -178,7 +178,7 @@ def test_query_field_filter(client):
     assert res.status_code == 200, res.text
     response_data = res.json()["data"]
     assert len(response_data) == 1  # test log A2
-    assert all(log["guid"] == "guid2" for log in response_data)
+    assert all(log["status_code"] == 401 for log in response_data)
 
     # query a value that is not the right type for the field
     res = client.get(
