@@ -26,6 +26,7 @@ PRESIGNED_URL_TEST_DATA = {
     "A2": {
         "username": "userA",
         "guid": "guid2",
+        "status_code": 401,
         "timestamp": timestamp_for_date("2020/02/02"),
         "resource_paths": ["/resource/path/to/query"],
     },
@@ -169,6 +170,23 @@ def test_query_field_filter(client):
         assert item["guid"] == test_data["guid"]
         assert item["resource_paths"] == test_data["resource_paths"]
 
+    # query logs for a status code (non-string parameter)
+    res = client.get(
+        "/log/presigned_url?status_code=401",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 1  # test log A2
+    assert all(log["guid"] == "guid2" for log in response_data)
+
+    # query a value that is not the right type for the field
+    res = client.get(
+        "/log/presigned_url?status_code=string",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 400, res.text
+
     # query with a field that doesn't exist for this category
     res = client.get(
         "/log/presigned_url?whatisthis=yes",
@@ -272,6 +290,19 @@ def test_query_groupby(client, monkeypatch):
     response_data = res.json()["data"]
     assert len(response_data) == 3
     assert all(log["count"] == 1 for log in response_data)
+
+    # query logs grouped by status_code
+    res = client.get(
+        "/log/presigned_url?groupby=status_code",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    expected = [
+        {"status_code": 200, "count": 4},
+        {"status_code": 401, "count": 1},
+    ]
+    assert sorted(response_data, key=lambda e: e["status_code"]) == expected
 
     # make sure the page limit is ignored for groupby queries:
     # set the page limit to 1 and query logs grouped by username
