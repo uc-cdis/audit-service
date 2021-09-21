@@ -216,6 +216,16 @@ def validate_and_normalize_times(start, stop):
 
 
 def add_filters(model, query, query_params, start_date=None, stop_date=None):
+    def _type_cast(model, field, value):
+        field_type = getattr(model, field).type.python_type
+        try:
+            return field_type(value)
+        except ValueError as e:
+            raise HTTPException(
+                HTTP_400_BAD_REQUEST,
+                f"Value '{value}' is not valid for field '{field}': {e}",
+            )
+
     if start_date:
         query = query.where(model.timestamp >= start_date)
     if stop_date:
@@ -226,7 +236,11 @@ def add_filters(model, query, query_params, start_date=None, stop_date=None):
         if hasattr(getattr(model, field).type, "item_type"):  # ARRAY
             query = query.where(getattr(model, field).overlap(values))
         else:
-            query = query.where(db.or_(getattr(model, field) == v for v in values))
+            query = query.where(
+                db.or_(
+                    getattr(model, field) == _type_cast(model, field, v) for v in values
+                )
+            )
     return query
 
 
