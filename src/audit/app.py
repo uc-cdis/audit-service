@@ -91,7 +91,7 @@ def app_init() -> FastAPI:
         msg = context.get("exception", context["message"])
         logger.error(f"Caught exception: {msg}")
         logger.info("Shutting down...")
-        asyncio.create_task(shutdown_event(loop))
+        asyncio.create_task(shutdown_event())
 
     return app
 
