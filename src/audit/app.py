@@ -91,7 +91,7 @@ def app_init() -> FastAPI:
         Whenever an exception occurs in the asyncio loop, the loop still continues to execute without crashing.
         Therefore, we implement a custom exception handler that will ensure that the loop is stopped upon an Exception.
         """
-        msg = context.get("exception", context["message"])
+        msg = context.get("exception", context.get("message"))
         logger.error(f"Caught exception: {msg}")
         loop.stop()
         logger.info("Shutting down...")
