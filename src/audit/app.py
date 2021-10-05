@@ -78,24 +78,29 @@ def app_init() -> FastAPI:
             and config["QUEUE_CONFIG"].get("type") == "aws_sqs"
         ):
             loop = asyncio.get_running_loop()
-            loop.create_task(pull_from_queue_loop())
-            loop.set_exception_handler(handle_exception)
+            try:
+                loop.create_task(pull_from_queue_loop())
+            except Exception as e:
+                logger.error(e)
+                loop.stop()
+
+            # loop.set_exception_handler(handle_exception)
 
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("Closing async client.")
         await app.async_client.aclose()
 
-    def handle_exception(loop, context):
-        """
-        Whenever an exception occurs in the asyncio loop, the loop still continues to execute without crashing.
-        Therefore, we implement a custom exception handler that will ensure that the loop is stopped upon an Exception.
-        """
-        msg = context.get("exception", context.get("message"))
-        logger.error(f"Caught exception: {msg}")
-        loop.stop()
-        logger.info("Shutting down...")
-        asyncio.create_task(shutdown_event())
+    # def handle_exception(loop, context):
+    #     """
+    #     Whenever an exception occurs in the asyncio loop, the loop still continues to execute without crashing.
+    #     Therefore, we implement a custom exception handler that will ensure that the loop is stopped upon an Exception.
+    #     """
+    #     msg = context.get("exception", context.get("message"))
+    #     logger.error(f"Caught exception: {msg}")
+    #     loop.stop()
+    #     logger.info("Shutting down...")
+    #     asyncio.create_task(shutdown_event())
 
     return app
 
