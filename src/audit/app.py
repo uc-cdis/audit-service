@@ -99,6 +99,7 @@ def app_init() -> FastAPI:
             logger.info(f"Closed {index} tasks out of all tasks")
         logger.info("Closed all tasks, now stopping the loop")
         loop.stop()
+        logger.info("Loop Stopped!")
 
     return app
 
