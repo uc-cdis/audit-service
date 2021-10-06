@@ -84,7 +84,10 @@ def app_init() -> FastAPI:
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("Closing async client.")
-        await app.async_client.aclose()
+        try:
+            await app.async_client.aclose()
+        except Exception as ex:
+            print(ex)
 
     def handle_exception(loop, context):
         """
@@ -93,12 +96,8 @@ def app_init() -> FastAPI:
         """
         msg = context.get("exception", context.get("message"))
         logger.error(f"Caught exception: {msg}")
-        # tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
         for task in asyncio.Task.all_tasks():
             task.cancel()
-        # loop.stop()
-        # logger.info("Shutting down...")
-        # asyncio.create_task(shutdown_event())
 
     return app
 
