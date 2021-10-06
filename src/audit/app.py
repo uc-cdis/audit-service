@@ -84,7 +84,8 @@ def app_init() -> FastAPI:
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("Closing async client.")
-        # await app.async_client.aclose()
+        await app.async_client.aclose()
+        logger.info("[Completed] Closing async client.")
 
     def handle_exception(loop, context):
         """
