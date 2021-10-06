@@ -94,8 +94,10 @@ def app_init() -> FastAPI:
         """
         msg = context.get("exception", context.get("message"))
         logger.error(f"Caught exception: {msg}")
-        for task in asyncio.Task.all_tasks():
+        for index, task in enumerate(asyncio.Task.all_tasks()):
             task.cancel()
+            logger.info(f"Closed {index} tasks out of all tasks")
+        logger.info("Closed all tasks")
 
     return app
 
