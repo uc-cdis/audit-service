@@ -97,8 +97,8 @@ def app_init() -> FastAPI:
         for task in asyncio.Task.all_tasks():
             task.cancel()
         # loop.stop()
-        logger.info("Shutting down...")
-        asyncio.create_task(shutdown_event())
+        # logger.info("Shutting down...")
+        # asyncio.create_task(shutdown_event())
 
     return app
 
