@@ -24,4 +24,4 @@ if __name__ == "__main__":
             yaml.dump(schema, f, default_flow_style=False)
         print(f"Saved docs at {path}")
     else:
-        uvicorn.run("audit.asgi:app", reload=True)
+        uvicorn.run("audit.asgi:app", reload=True, lifespan="on")
