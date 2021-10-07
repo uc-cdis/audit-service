@@ -109,3 +109,4 @@ async def pull_from_queue_loop():
         if should_sleep:
             logger.info(f"Sleeping for {sleep_time} seconds...")
             await asyncio.sleep(sleep_time)
+        raise Exception  # Delete before merging
