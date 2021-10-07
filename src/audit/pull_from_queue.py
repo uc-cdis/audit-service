@@ -106,7 +106,8 @@ async def pull_from_queue_loop():
     sleep_time = config["PULL_FREQUENCY_SECONDS"]
     while True:
         should_sleep = await pull_from_queue(sqs)
-        raise Exception("Custom Exception thrown to test a feature")
         if should_sleep:
             logger.info(f"Sleeping for {sleep_time} seconds...")
             await asyncio.sleep(sleep_time)
+        logger.info(f"Throwing a custom error to see if it is raised!")
+        raise Exception("Custom Exception thrown to test a feature")
