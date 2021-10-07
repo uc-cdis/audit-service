@@ -87,17 +87,6 @@ def app_init() -> FastAPI:
         await app.async_client.aclose()
         logger.info("[Completed] Closing async client.")
 
-    async def terminate(loop, signal=None):
-        """Cleanup tasks tied to the service's shutdown."""
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-
-        [task.cancel() for task in tasks]
-
-        logger.info(f"Cancelling {len(tasks)} outstanding tasks")
-        await asyncio.gather(*tasks, return_exceptions=True)
-        logger.info(f"Flushing metrics")
-        loop.stop()
-
     def handle_exception(loop, context):
         """
         Whenever an exception occurs in the asyncio loop, the loop still continues to execute without crashing.
@@ -105,7 +94,9 @@ def app_init() -> FastAPI:
         """
         msg = context.get("exception", context.get("message"))
         logger.error(f"Caught exception: {msg}")
-        loop.create_task(terminate(loop))
+        for index, task in enumerate(asyncio.Task.all_tasks()):
+            task.cancel()
+        logger.info("Closed all tasks")
 
     return app
 
