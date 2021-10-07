@@ -104,11 +104,9 @@ async def pull_from_queue_loop():
         aws_secret_access_key=aws_creds.get("aws_secret_access_key"),
     )
     sleep_time = config["PULL_FREQUENCY_SECONDS"]
+    raise Exception("Custom Exception thrown to test a feature")
     while True:
         should_sleep = await pull_from_queue(sqs)
         if should_sleep:
             logger.info(f"Sleeping for {sleep_time} seconds...")
             await asyncio.sleep(sleep_time)
-        raise Exception(
-            "Custom Exception thrown to test a feature"
-        )  # Delete before merging
