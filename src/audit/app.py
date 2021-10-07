@@ -97,9 +97,6 @@ def app_init() -> FastAPI:
         for index, task in enumerate(asyncio.Task.all_tasks()):
             task.cancel()
             logger.info(f"Closed {index} tasks out of all tasks")
-        logger.info("Closed all tasks, now stopping the loop")
-        loop.stop()
-        logger.info("Loop Stopped!")
 
     return app
 
