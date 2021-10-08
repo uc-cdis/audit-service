@@ -23,7 +23,7 @@ QUEUE_CONFIG:
   type: aws_sqs
   aws_sqs_config:
     sqs_url:
-    region: us-east-1
+    region:
     aws_cred:
 # how often to check the queue for new audit logs after
 # seeing an empty queue
