@@ -13,3 +13,10 @@ DB_DATABASE: audit_test
 # big default values so that these parameters don't impact unit tests
 # that are not meant to test them:
 QUERY_PAGE_SIZE: 999999999
+
+QUEUE_CONFIG:
+  type: aws_sqs
+  aws_sqs_config:
+    sqs_url:
+    region: us-east-1
+    aws_cred:
