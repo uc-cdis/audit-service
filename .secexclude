@@ -54,3 +54,5 @@ docker-compose.yml
 ehthumbs.db
 test/*
 tests/*
+cfg_help.py
+docs/*
