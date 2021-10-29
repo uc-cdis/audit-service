@@ -188,6 +188,7 @@ def test_query_field_filter(client):
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
     assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
     assert len(response_data) == 1
     assert response_data[0] == log
 
