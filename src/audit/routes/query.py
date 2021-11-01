@@ -218,6 +218,14 @@ def validate_and_normalize_times(start, stop):
 def add_filters(model, query, query_params, start_date=None, stop_date=None):
     def _type_cast(model, field, value):
         field_type = getattr(model, field).type.python_type
+        if field_type == datetime:
+            try:
+                return datetime.fromtimestamp(int(value))
+            except ValueError as e:
+                raise HTTPException(
+                    HTTP_400_BAD_REQUEST,
+                    f"Unable to convert value '{value}' to datetime for field '{field}': {e}",
+                )
         try:
             return field_type(value)
         except ValueError as e:
