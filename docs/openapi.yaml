@@ -257,7 +257,7 @@ paths:
         \ all records that have values containing all of:\n\n    {\"a\": 1, \"b\"\
         : 2}\n\nProviding the same key with more than one value filters records whose\n\
         value of the given key matches any of the given values. But values of\ndifferent\
-        \ keys must all match. For example:\n\n    GET /log/presigned_url?a=1&a2&b=3\n\
+        \ keys must all match. For example:\n\n    GET /log/presigned_url?a=1&a=2&b=3\n\
         \nMatches these:\n\n    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\n\
         But won't match these:\n\n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\"\
         : 3}\n\n`groupby` example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\

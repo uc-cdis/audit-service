@@ -64,7 +64,7 @@ async def query_logs(
     value of the given key matches any of the given values. But values of
     different keys must all match. For example:
 
-        GET /log/presigned_url?a=1&a2&b=3
+        GET /log/presigned_url?a=1&a=2&b=3
 
     Matches these:
 
