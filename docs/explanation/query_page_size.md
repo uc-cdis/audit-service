@@ -27,7 +27,7 @@ For example, if `QUERY_PAGE_SIZE == 3` and the database contains the following l
 ]
 ```
 
-The query response with contain 4 logs:
+The query response will contain 4 logs:
 
 ```
 {

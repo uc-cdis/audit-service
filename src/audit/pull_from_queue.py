@@ -84,7 +84,7 @@ async def pull_from_queue_loop():
     # we know the cred is in AWS_CREDENTIALS (see `AuditServiceConfig.validate`)
     aws_creds = (
         config["AWS_CREDENTIALS"][aws_sqs_config["aws_cred"]]
-        if "aws_cred" in aws_sqs_config
+        if "aws_cred" in aws_sqs_config and aws_sqs_config["aws_cred"]
         else {}
     )
     if (

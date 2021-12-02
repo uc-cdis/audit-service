@@ -180,6 +180,18 @@ def test_query_field_filter(client):
     assert len(response_data) == 1  # test log A2
     assert all(log["status_code"] == 401 for log in response_data)
 
+    # query logs for a timestamp (int=>datetime parameter)
+    log = response_data[0]
+    timestamp = timestamp_for_date(log["timestamp"].split("T")[0], format="%Y-%m-%d")
+    res = client.get(
+        f"/log/presigned_url?timestamp={timestamp}",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 1
+    assert response_data[0] == log
+
     # query a value that is not the right type for the field
     res = client.get(
         "/log/presigned_url?status_code=string",
