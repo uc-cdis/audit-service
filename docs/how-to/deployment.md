@@ -11,7 +11,7 @@ ENABLE_AUDIT_LOGS:
 
 The `PUSH_AUDIT_LOGS_CONFIG` field must also be configured.
 
-## Deploying audit-service 1.1.0
+## Deploying audit-service 1.0.0
 
 - **Systems where the audit-service has been deployed previously:** Fence 5.1.0 or more recent might NOT work with audit-service < 1.0.0. Update audit-service, then run `kubectl delete secret audit-g3auto` and `gen3 kube-setup-audit-service`. Then configure [PUSH_AUDIT_LOGS_CONFIG](https://github.com/uc-cdis/fence/blob/5.1.0/fence/config-default.yaml#L632-L636) in the Fence config (run `gen3 sqs info $(gen3 api safe-name audit-sqs)` to get the SQS URL) and run `kubectl delete secret fence-config` and `gen3 kube-setup-fence`.
 - **Systems where the audit-service has never been deployed:** run `gen3 kube-setup-audit-service`. Then configure [ENABLE_AUDIT_LOGS](https://github.com/uc-cdis/fence/blob/5.1.0/fence/config-default.yaml#L624-L626) and [PUSH_AUDIT_LOGS_CONFIG](https://github.com/uc-cdis/fence/blob/5.1.0/fence/config-default.yaml#L632-L636) in the Fence config (run `gen3 sqs info $(gen3 api safe-name audit-sqs)` to get the SQS URL) and run `kubectl delete secret fence-config` and `gen3 kube-setup-fence`.
