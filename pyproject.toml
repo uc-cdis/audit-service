@@ -25,14 +25,11 @@ importlib-metadata = {version = "^1.7.0", python = "<3.8"}
 httpx = "^0.12.1"
 psycopg2-binary = "^2.8.5"
 uvicorn = "^0.11.8"
-# 'soft_unicode' was deprecated after version 2.0.1
+# markupsafe is a jinja dependency. Jinja is used by gen3config.
+# The current version of jinja imports the ‘soft_unicode’ method from markupsafe.
+# soft_unicode has been deprecated from markupsafe versions > 2.0.1.
+# Pin to <=2.0.1 for compatibility with jinja.
 markupsafe = "<=2.0.1"
-# cryptography is an authutils dependency. cryptography>=3.4 includes
-# Rust code. Alpine 3.7 does not support newer versions of Rust. Pin
-# to <3.4 to fix Dockerfile build.
-# https://github.com/pyca/cryptography/blob/main/CHANGELOG.rst#34---2021-02-07
-# https://cryptography.io/en/latest/installation.html#alpine
-cryptography = "<3.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
