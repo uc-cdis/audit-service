@@ -101,45 +101,6 @@ async def test_process_log_failure():
         ), f"Nothing should have been inserted in table '{category}'"
 
 
-@pytest.mark.asyncio
-async def test_process_log_str_sub():
-    """
-    A bug in Fence (fixed in Fence 5.5.5/2022.01) caused a string "sub" to
-    be sent to the audit SQS instead of an int. This is a temporary fix to
-    allow the audit log to be created instead of rejected over and over
-    again and cluttering the SQS. Set "sub" to None since there is no way to
-    know the real "sub".
-    TODO remove this once string "sub"s have been ingested in all affected
-    environments.
-    """
-    # create a log
-    category = "login"
-    timestamp = int(time.time())
-    message_data = {
-        "category": category,
-        "request_url": "/login",
-        "status_code": 200,
-        "username": "audit-service_user",
-        "sub": "qwerty123",
-        "idp": "google",
-    }
-    await process_log(message_data, timestamp)
-
-    data = await db.all(db.text(f"select * from {category}"))
-    assert len(data) == 1, f"1 row should have been inserted in table '{category}'"
-    assert data[0] == (
-        message_data["request_url"],
-        message_data["status_code"],
-        message_data["timestamp"],
-        message_data["username"],
-        None,  # nullified sub
-        message_data["idp"],
-        None,  # fence_idp
-        None,  # shib_idp
-        None,  # client_id
-    )
-
-
 class TestQueue:
     """
     This class mocks the boto3 SQS client

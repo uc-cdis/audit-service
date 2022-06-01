@@ -143,17 +143,6 @@ async def create_login_log(
 
 def validate_login_log(data):
     logger.debug(f"Creating `login` audit log. Received body: {data}")
-
-    # A bug in Fence (fixed in Fence 5.5.5/2022.01) caused a string "sub" to
-    # be sent to the audit SQS instead of an int. This is a temporary fix to
-    # allow the audit log to be created instead of rejected over and over
-    # again and cluttering the SQS. Set "sub" to None since there is no way to
-    # know the real "sub".
-    # TODO remove this once string "sub"s have been ingested in all affected
-    # environments.
-    if type(data.get("sub")) == str:
-        data["sub"] = None
-
     handle_timestamp(data)
 
 
