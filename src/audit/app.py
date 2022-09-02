@@ -24,7 +24,7 @@ try:
             "{}/.gen3/audit-service".format(os.path.expanduser("~")),
         ]
         config.load(search_folders=CONFIG_SEARCH_FOLDERS)
-except:
+except Exception:
     logger.warning("Unable to load config, using default config...", exc_info=True)
     config.load(config_path=DEFAULT_CFG_PATH)
 
