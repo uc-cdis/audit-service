@@ -17,7 +17,7 @@ authutils = "^6.2.1"
 boto3 = "^1.14"
 cdislogging = "^1.0.0"
 fastapi = "^0.65.2"
-gen3authz = "^1.0.0"
+gen3authz = "^2.0.0"
 gen3config = "^1.0.0"
 gino = {version = "^1.0.1", extras = ["starlette"]}
 gunicorn = "^20.0.4"

@@ -266,7 +266,7 @@ test = ["pytest (==5.4.3)", "pytest-cov (==2.10.0)", "pytest-asyncio (>=0.14.0,<
 
 [[package]]
 name = "gen3authz"
-version = "1.5.1"
+version = "2.0.0"
 description = "Gen3 authz client"
 category = "main"
 optional = false
@@ -755,7 +755,7 @@ python-versions = ">=3.4"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "a8c1c08a82506f20e1e202e91c8c48880a7c1160df9dc9896fa9a9767bf375ac"
+content-hash = "5dd87d87da3933edd899fdf6f4404d429ced44be8a828add48ff13bbfbefe4c5"
 
 [metadata.files]
 alembic = []
@@ -865,10 +865,7 @@ fastapi = [
     {file = "fastapi-0.65.3-py3-none-any.whl", hash = "sha256:d3e3c0ac35110efb22ee3ed28201cf32f9d11a9a0e52d7dd676cad25f5219523"},
     {file = "fastapi-0.65.3.tar.gz", hash = "sha256:6ea2286e439c4ced7cce2b2862c25859601bf327a515c12dd6e431ef5d49d12f"},
 ]
-gen3authz = [
-    {file = "gen3authz-1.5.1-py3-none-any.whl", hash = "sha256:249ab21471e1ae3c283a30f3e32819db218aaa63d8d7151ac7b6b83496ac3518"},
-    {file = "gen3authz-1.5.1.tar.gz", hash = "sha256:897f804a2f9d29181a6074fa14335fc9f18e757dd2e5dcec2a68bb9a008bfcb8"},
-]
+gen3authz = []
 gen3config = [
     {file = "gen3config-1.0.0.tar.gz", hash = "sha256:3b41ed4cfc44dc22ed10acaaa10cb424f4644e61ea87ff3a4da4b22b6ea595f3"},
 ]

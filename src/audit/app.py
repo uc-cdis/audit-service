@@ -9,7 +9,7 @@ except ImportError:
     from importlib_metadata import entry_points, version
 
 from cdislogging import get_logger
-from gen3authz.client.arborist.client import ArboristClient
+from gen3authz.client.arborist.async_client import ArboristClient
 
 from . import logger
 from .config import config, DEFAULT_CFG_PATH
