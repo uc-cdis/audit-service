@@ -1,5 +1,12 @@
 # Audit Service architecture
 
+* [Architecture diagram](#architecture-diagram)
+* [Database](#database)
+* [API](#api)
+* [Authorization](#authorization)
+
+## Architecture diagram
+
 ![Architecture diagram](../img/architecture_diagram.png)
 
 ## Database
@@ -40,6 +47,54 @@ About retention: for now, there is no planned mechanism to delete old entries.
 
 The POST endpoint is not exposed. Only internal services can use it.
 
-The GET endpoint is exposed and protected by Arborist policies on resources `/audit/<category>`. For presigned URLs, we could use `/audit/presigned_url/<resource_path>` if needed in the future.
+The GET endpoint is exposed and protected by Arborist policies on resources with the following syntax: `/audit/<category>`. See the `user.yaml` extract below for guidance on how to configure user access to audit logs. For presigned URLs, we could use `/audit/presigned_url/<resource_path>` if needed in the future (not implemented).
 
-The Audit Service can be deployed to a Data Commons without granting any users access to make queries: the audit data would only be available by direct database query by an administrator.
+**Note:** The Audit Service can be deployed to a Data Commons without granting any users access to make queries: the audit data would only be available by database query or internal API call by an administrator.
+
+
+```yaml
+authz:
+  resources:
+  - name: audit
+    subresources:
+    - name: presigned_url
+    - name: login
+
+  roles:
+  - id: audit_reader
+    permissions:
+    - id: audit_reader_action
+      action:
+        service: audit
+        method: read
+
+  policies:
+  - id: audit_reader
+    role_ids:
+    - audit_reader
+    resource_paths:
+    - /services/audit
+  - id: presigned_url_audit_reader
+    role_ids:
+    - audit_reader
+    resource_paths:
+    - /services/audit/presigned_url
+  - id: login_audit_reader
+    role_ids:
+    - audit_reader
+    resource_paths:
+    - /services/audit/login
+
+  groups:
+  - name: login_audit_readers
+    policies:
+    - audit_reader
+    users:
+    - user1
+    - user2
+  - name: all_audit_readers
+    policies:
+    - audit_reader
+    users:
+    - user3
+```
