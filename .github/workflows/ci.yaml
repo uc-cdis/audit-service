@@ -30,11 +30,12 @@ jobs:
           ${{ runner.os }}-poetry-
     - name: Install dependencies
       run: |
-        curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-        $HOME/.poetry/bin/poetry install
+        pip install poetry
+        poetry install -vv --no-root --no-interaction
+        poetry show -vv
     - name: Test with pytest
       run: |
-        $HOME/.poetry/bin/poetry run pytest tests/ -vv --cov=src --cov=migrations/versions --cov-report xml
+        poetry run pytest tests/ -vv --cov=src --cov=migrations/versions --cov-report xml
     - name: Submit coverage report
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
