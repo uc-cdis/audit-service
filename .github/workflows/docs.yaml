@@ -23,10 +23,10 @@ jobs:
         key: ${{ runner.os }}-poetry-${{ hashFiles(format('{0}{1}', github.workspace, '/poetry.lock')) }}
         restore-keys: |
           ${{ runner.os }}-poetry-
-    - name: Install dependencies (allow "failures" and attempt to continue)
+    - name: Install dependencies
       run: |
         pip install poetry
-        poetry install -vv --no-root --no-interaction
+        poetry install -vv --no-interaction
         poetry show -vv
     - name: Build docs
       run: AUDIT_SERVICE_CONFIG_PATH=src/audit/config-default.yaml poetry run python run.py openapi
