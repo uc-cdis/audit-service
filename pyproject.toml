@@ -13,18 +13,18 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.9"
 alembic = "^1.4.2"
-authutils = "^5.0.4"
+authutils = "^6.2.1"
 boto3 = "^1.14"
 cdislogging = "^1.0.0"
 fastapi = "^0.65.2"
-gen3authz = "^1.0.0"
-gen3config = "^0.1.8"
+gen3authz = "^2.0.0"
+gen3config = "^1.0.0"
 gino = {version = "^1.0.1", extras = ["starlette"]}
 gunicorn = "^20.0.4"
 importlib-metadata = {version = "^1.7.0", python = "<3.8"}
-httpx = "^0.12.1"
+httpx = "^0.23.0"
 psycopg2-binary = "^2.8.5"
-uvicorn = "^0.11.8"
+uvicorn = "^0.18.3"
 # markupsafe is a jinja dependency. Jinja is used by gen3config.
 # The current version of jinja imports the ‘soft_unicode’ method from markupsafe.
 # soft_unicode has been deprecated from markupsafe versions > 2.0.1.

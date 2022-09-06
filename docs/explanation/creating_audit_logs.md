@@ -10,7 +10,7 @@ However, it's difficult to monitor errors when using this endpoint.
 
 ## Pulling from a queue
 
-The audit service can also handle pulling audit logs from a queue, which allows for easier monitoring. This can be configured by turning on the `PULL_FROM_QUEUE` flag in the configuration file (enabled by default). Right now, only AWS SQS is integrated, but integrations for other types of queues can be added by adding code and extending the values accepted for the `QUEUE_CONFIG.type` field in the configuration file.
+The Audit Service can also handle pulling audit logs from a queue, which allows for easier monitoring. This can be configured by turning on the `PULL_FROM_QUEUE` flag in the configuration file (enabled by default). Right now, only AWS SQS is integrated, but integrations for other types of queues can be added by adding code and extending the values accepted for the `QUEUE_CONFIG.type` field in the configuration file.
 
 ## Timestamps
 
