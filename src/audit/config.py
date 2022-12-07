@@ -16,12 +16,12 @@ class AuditServiceConfig(Config):
         # generate DB_URL from DB configs
         self["DB_URL"] = make_url(
             URL(
-                drivername=self["DB_DRIVER"],
-                host=self["DB_HOST"],
-                port=self["DB_PORT"],
-                username=self["DB_USER"],
-                password=self["DB_PASSWORD"],
-                database=self["DB_DATABASE"],
+                drivername=os.environ.get("DB_DRIVER", self["DB_DRIVER"]),
+                host=os.environ.get("DB_HOST", self["DB_HOST"]),
+                port=os.environ.get("DB_PORT", self["DB_PORT"]),
+                username=os.environ.get("DB_USER", self["DB_USER"]),
+                password=os.environ.get("DB_PASSWORD", self["DB_PASSWORD"]),
+                database=os.environ.get("DB_DATABASE", self["DB_DATABASE"]),
             ),
         )
 
