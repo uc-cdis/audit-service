@@ -44,6 +44,7 @@ helm upgrade --install gen3/audit
 These commands will add the Gen3 helm chart repo and install the audit service to your Kubernetes cluster.
 
 Deploying audit this way will use the defaults that are defined in this [values.yaml file](https://github.com/uc-cdis/gen3-helm/blob/master/helm/audit/values.yaml)
+
 You can learn more about these values by accessing the audit [README.md](https://github.com/uc-cdis/gen3-helm/blob/master/helm/audit/README.md)
 
 If you would like to override any of the default values, simply copy the above values.yaml file into a local file and make any changes needed.
