@@ -18,6 +18,7 @@ The server is built with [FastAPI](https://fastapi.tiangolo.com/) and packaged w
 [This blog](https://documentation.divio.com/introduction/) introduces the different types of documentation (explanation, how-to, tutorials, reference). The documentation can be browsed in the [docs](docs) folder, and key documents are linked below.
 
 * [Detailed API Documentation](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/audit-service/master/docs/openapi.yaml)
+* [API example requests](docs/tutorials/api_examples.md)
 * [Quick start](docs/tutorials/quick_start.md)
 * [Local installation](docs/how-to/local_installation.md)
 * [Deploying the Audit Service to a Gen3 Data Commons](docs/how-to/deployment.md)
