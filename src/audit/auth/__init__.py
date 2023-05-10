@@ -40,7 +40,10 @@ class Auth:
                 self.bearer_token
             )
         except Exception as e:
-            logger.error(f"Could not get token claims:\n{e}", exc_info=True)
+            logger.error(
+                f"Could not get token claims:\n{e.detail if hasattr(e, 'detail') else e}",
+                exc_info=True,
+            )
             raise HTTPException(
                 HTTP_401_UNAUTHORIZED,
                 "Could not verify, parse, and/or validate scope from provided access token.",
