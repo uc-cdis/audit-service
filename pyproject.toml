@@ -35,7 +35,7 @@ markupsafe = "<=2.0.1"
 pytest = "^6.0.1"
 pytest-asyncio = "^0.14.0"
 pytest-cov = "^2.8"
-requests = "^2.24.0"
+requests = "^2.31.0"
 
 [tool.poetry.plugins."audit.modules"]
 "system" = "audit.routes.system"
