@@ -16,7 +16,7 @@ alembic = "^1.4.2"
 authutils = "^6.2.1"
 boto3 = "^1.14"
 cdislogging = "^1.0.0"
-fastapi = "^0.65.2"
+fastapi = "^0.109.1"
 gen3authz = "^2.0.0"
 gen3config = "^1.0.0"
 gino = {version = "^1.0.1", extras = ["starlette"]}
@@ -30,6 +30,7 @@ uvicorn = "^0.18.3"
 # soft_unicode has been deprecated from markupsafe versions > 2.0.1.
 # Pin to <=2.0.1 for compatibility with jinja.
 markupsafe = "<=2.0.1"
+pyyaml = "^6.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
