@@ -24,4 +24,4 @@ QUEUE_CONFIG:
   aws_sqs_config:
     sqs_url: some_sqs_url
     region: us-east-1
-    aws_cred:
+    aws_cred: CRED1
