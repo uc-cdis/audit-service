@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audit"
-version = "1.1.0"
+version = "1.1.1"
 description = "Gen3 Access Request Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -13,12 +13,12 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.9"
 alembic = "^1.4.2"
-authutils = "^6.2.1"
+authutils = "<7"
 boto3 = "^1.14"
-cdislogging = "^1.0.0"
 fastapi = "^0.109.1"
-gen3authz = "^2.0.0"
-gen3config = "^1.0.0"
+cdislogging = "<2"
+gen3authz = "<3"
+gen3config = "<2"
 gino = {version = "^1.0.1", extras = ["starlette"]}
 gunicorn = "^20.0.4"
 importlib-metadata = {version = "^1.7.0", python = "<3.8"}
