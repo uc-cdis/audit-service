@@ -17,6 +17,6 @@ QUERY_PAGE_SIZE: 999999999
 QUEUE_CONFIG:
   type: aws_sqs
   aws_sqs_config:
-    sqs_url:
+    sqs_url: some_sqs_url
     region: us-east-1
     aws_cred:
