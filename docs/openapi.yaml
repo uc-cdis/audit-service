@@ -87,7 +87,9 @@ components:
       properties:
         loc:
           items:
-            type: string
+            anyOf:
+            - type: string
+            - type: integer
           title: Location
           type: array
         msg:
@@ -109,7 +111,7 @@ components:
 info:
   title: Audit Service
   version: 1.1.1
-openapi: 3.0.2
+openapi: 3.1.0
 paths:
   /:
     get:
@@ -118,7 +120,9 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Get Status  Get
+                type: object
           description: Successful Response
       summary: Get Status
       tags:
@@ -130,7 +134,9 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Get Status  Status Get
+                type: object
           description: Successful Response
       summary: Get Status
       tags:
@@ -142,7 +148,9 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Get Version  Version Get
+                type: object
           description: Successful Response
       summary: Get Version
       tags:
@@ -178,7 +186,9 @@ paths:
         '201':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Create Login Log Log Login Post
+                type: object
           description: Successful Response
         '422':
           content:
@@ -222,7 +232,9 @@ paths:
         '201':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Create Presigned Url Log Log Presigned Url Post
+                type: object
           description: Successful Response
         '422':
           content:
@@ -292,7 +304,10 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                items: {}
+                title: Response Query Logs Log  Category  Get
+                type: array
           description: Successful Response
         '422':
           content:
