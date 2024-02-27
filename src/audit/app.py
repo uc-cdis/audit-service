@@ -42,17 +42,24 @@ def load_modules(app: FastAPI = None) -> None:
                 init_app(app)
 
 
-def app_init() -> FastAPI:
+def app_init(for_unit_testing=False) -> FastAPI:
     logger.info("Initializing app")
     config.validate(logger)
 
     debug = config["DEBUG"]
-    app = FastAPI(
-        title="Audit Service",
-        version=version("audit"),
-        debug=debug,
-        root_path=config["DOCS_URL_PREFIX"],
-    )
+    if for_unit_testing:
+        app = FastAPI(
+            title="Audit Service",
+            version=version("audit"),
+            debug=debug,
+        )
+    else:
+        app = FastAPI(
+            title="Audit Service",
+            version=version("audit"),
+            debug=debug,
+            root_path=config["DOCS_URL_PREFIX"],
+        )
     app.add_middleware(ClientDisconnectMiddleware)
     app.async_client = httpx.AsyncClient()
 

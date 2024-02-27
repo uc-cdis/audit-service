@@ -18,7 +18,7 @@ from audit.app import app_init
 
 @pytest.fixture(scope="session")
 def app():
-    app = app_init()
+    app = app_init(for_unit_testing=True)
     return app
 
 
@@ -42,7 +42,7 @@ def setup_test_database():
 
 @pytest.fixture()
 def client():
-    with TestClient(app_init()) as client:
+    with TestClient(app_init(for_unit_testing=True)) as client:
         yield client
 
 
