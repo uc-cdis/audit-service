@@ -16,7 +16,7 @@ alembic = "^1.4.2"
 authutils = "<7"
 boto3 = "^1.14"
 cdislogging = "<2"
-fastapi = "^0.65.2"
+fastapi = "^0.109.1"
 gen3authz = "<3"
 gen3config = "<2"
 gino = {version = "^1.0.1", extras = ["starlette"]}
