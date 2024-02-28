@@ -51,7 +51,7 @@ def app_init() -> FastAPI:
         title="Audit Service",
         version=version("audit"),
         debug=debug,
-        root_path=config["DOCS_URL_PREFIX"],
+        # root_path=config["DOCS_URL_PREFIX"],
     )
     app.add_middleware(ClientDisconnectMiddleware)
     app.async_client = httpx.AsyncClient()
