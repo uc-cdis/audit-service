@@ -24,7 +24,7 @@ async def query_logs(
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),
-) -> list:
+) -> dict:
     """
     Queries the logs the current user has access to see. Returned data:
 
@@ -307,7 +307,7 @@ async def query_logs_groupby(model, start_date, stop_date, query_params, groupby
         query = query.group_by(getattr(model, field))
     query = add_filters(model, query, query_params, start_date, stop_date)
     logs = await query.gino.all()
-    return logs
+    return [dict(l) for l in logs]
 
 
 def init_app(app: FastAPI):

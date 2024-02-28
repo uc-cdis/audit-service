@@ -84,7 +84,7 @@ async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-) -> dict:
+) -> None:
     """
     Create a new `presigned_url` audit log.
 
@@ -122,7 +122,7 @@ async def create_login_log(
     body: CreateLoginLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-) -> dict:
+) -> None:
     """
     Create a new `login` audit log.
 

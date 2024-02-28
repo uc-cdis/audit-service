@@ -11,12 +11,12 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9, <4"
 alembic = "^1.4.2"
 authutils = "<7"
-boto3 = "^1.14"
+boto3 = "<1.35"
 cdislogging = "<2"
-fastapi = "^0.109.1"
+fastapi = "<1"
 gen3authz = "<3"
 gen3config = "<2"
 gino = {version = "^1.0.1", extras = ["starlette"]}
@@ -30,6 +30,9 @@ uvicorn = "^0.18.3"
 # soft_unicode has been deprecated from markupsafe versions > 2.0.1.
 # Pin to <=2.0.1 for compatibility with jinja.
 markupsafe = "<=2.0.1"
+# urllib3 is a sub-dependency of requests and botocore (dep of boto3). For some reason poetry was not
+# able to resolve deps until we pinned it. TODO remove later
+urllib3 = "^1.26"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
