@@ -87,7 +87,9 @@ components:
       properties:
         loc:
           items:
-            type: string
+            anyOf:
+            - type: string
+            - type: integer
           title: Location
           type: array
         msg:
@@ -109,7 +111,7 @@ components:
 info:
   title: Audit Service
   version: 1.1.1
-openapi: 3.0.2
+openapi: 3.1.0
 paths:
   /:
     get:
@@ -118,7 +120,9 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Get Status  Get
+                type: object
           description: Successful Response
       summary: Get Status
       tags:
@@ -130,7 +134,9 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Get Status  Status Get
+                type: object
           description: Successful Response
       summary: Get Status
       tags:
@@ -142,7 +148,9 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Get Version  Version Get
+                type: object
           description: Successful Response
       summary: Get Version
       tags:
@@ -292,7 +300,9 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
+              schema:
+                title: Response Query Logs Log  Category  Get
+                type: object
           description: Successful Response
         '422':
           content:
