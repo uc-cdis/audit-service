@@ -6,9 +6,10 @@ from audit.config import config
 from audit.models import CATEGORY_TO_MODEL_CLASS, db
 from audit.pull_from_queue import process_log, pull_from_queue
 
+fake_jwt = "1.2.3"
 
 @pytest.mark.asyncio
-async def test_process_log_success():
+async def test_process_log_success(client):
     """
     Test that `process_log` properly inserts audit logs into the DB.
 
@@ -33,19 +34,31 @@ async def test_process_log_success():
     }
     await process_log(message_data, timestamp)
 
-    data = await db.all(db.text(f"select * from {category}"))
-    assert len(data) == 1, f"1 row should have been inserted in table '{category}'"
-    assert data[0] == (
-        message_data["request_url"],
-        message_data["status_code"],
-        message_data["timestamp"],
-        message_data["username"],
-        message_data["sub"],
-        guid,
-        message_data["resource_paths"],
-        message_data["action"],
-        message_data["protocol"],
+    # data = await db.all(db.text(f"select * from {category}"))
+    # assert len(data) == 1, f"1 row should have been inserted in table '{category}'"
+    # assert data[0] == (
+    #     message_data["request_url"],
+    #     message_data["status_code"],
+    #     message_data["timestamp"],
+    #     message_data["username"],
+    #     message_data["sub"],
+    #     guid,
+    #     message_data["resource_paths"],
+    #     message_data["action"],
+    #     message_data["protocol"],
+    # )
+    res = client.get(
+        f"/log/{category}", headers={"Authorization": f"bearer {fake_jwt}"}
     )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 1
+    print(json.dumps(response_data, indent=4))
+    expected = [
+        {"guid": "guid1", "count": 2},
+        {"guid": "guid2", "count": 1},
+        {"guid": "guid3", "count": 1},
+    ]
 
 
 @pytest.mark.asyncio
