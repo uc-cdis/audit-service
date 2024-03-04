@@ -14,6 +14,7 @@ DB_DATABASE: audit_test
 # that are not meant to test them:
 QUERY_PAGE_SIZE: 999999999
 
+PULL_FROM_QUEUE: false
 QUEUE_CONFIG:
   type: aws_sqs
   aws_sqs_config:
