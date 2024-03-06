@@ -29,10 +29,10 @@ uvicorn = "^0.18.3"
 # The current version of jinja imports the ‘soft_unicode’ method from markupsafe.
 # soft_unicode has been deprecated from markupsafe versions > 2.0.1.
 # Pin to <=2.0.1 for compatibility with jinja.
-markupsafe = "<=2.0.1"
+# markupsafe = "<=2.0.1"
 # urllib3 is a sub-dependency of requests and botocore (dep of boto3). For some reason poetry was not
 # able to resolve deps until we pinned it. TODO remove later
-urllib3 = "^1.26"
+# urllib3 = "^1.26"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
