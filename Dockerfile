@@ -64,8 +64,6 @@ RUN chown -R gen3:gen3 /var/lib/nginx/
 # copy nginx config
 COPY ./deployment/nginx/nginx.conf /etc/nginx/nginx.conf
 
-COPY dockerrun.bash dockerrun.bash
-
 # Switch to non-root user 'gen3' for the serving process
 USER gen3
 
@@ -74,4 +72,4 @@ RUN source /venv/bin/activate
 ENV PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=UTF-8
 
-CMD ["./dockerrun.bash"]
+CMD ["/src/dockerrun.bash"]
