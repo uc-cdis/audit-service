@@ -48,6 +48,7 @@ COPY --from=builder /src /src
 # install nginx
 RUN yum install nginx -y
 
+# allows nginx to run on port 80 without being root user
 RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx
 
 # chown nginx directories
