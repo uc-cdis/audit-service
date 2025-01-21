@@ -12,6 +12,8 @@ WORKDIR /${appname}
 # Builder stage
 FROM base AS builder
 
+RUN dnf install -y openssl-devel
+
 USER gen3
 
 COPY poetry.lock pyproject.toml /${appname}/
@@ -28,6 +30,8 @@ ENV  PATH="$(poetry env info --path)/bin:$PATH"
 
 # Final stage
 FROM base
+
+RUN  yum install -y postgresql-libs
 
 COPY --from=builder /${appname} /${appname}
 
