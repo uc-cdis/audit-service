@@ -12,7 +12,10 @@ WORKDIR /${appname}
 # Builder stage
 FROM base AS builder
 
-RUN dnf install -y openssl-devel
+RUN dnf install -y openssl-devel \
+    bzip2-devel \
+    libffi-devel \
+    postgresql-devel
 
 USER gen3
 
@@ -30,6 +33,8 @@ ENV  PATH="$(poetry env info --path)/bin:$PATH"
 
 # Final stage
 FROM base
+
+RUN dnf install -y openssl-devel
 
 RUN  yum install -y postgresql-libs
 
