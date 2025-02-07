@@ -1,7 +1,7 @@
 from gino.ext.starlette import Gino
 from pydantic import BaseModel
 import sqlalchemy
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, DateTime, Integer, String, Boolean
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from .config import config
@@ -56,6 +56,8 @@ class PresignedUrl(AuditLog):
     resource_paths = Column(ARRAY(String), nullable=True)
     action = Column(String, nullable=False)
     protocol = Column(String, nullable=True)
+    jti = Column(String, nullable=True)
+    passport = Column(Boolean, nullable=True)
 
 
 class CreatePresignedUrlLogInput(CreateLogInput):
@@ -63,6 +65,8 @@ class CreatePresignedUrlLogInput(CreateLogInput):
     resource_paths: list = None
     action: str
     protocol: str = None
+    jti: str = None
+    passport: bool = False
 
 
 class Login(AuditLog):
