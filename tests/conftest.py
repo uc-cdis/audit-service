@@ -6,6 +6,7 @@ import requests
 from starlette.config import environ
 from starlette.testclient import TestClient
 from unittest.mock import AsyncMock, MagicMock, patch
+from sqlalchemy import create_engine
 
 # Set AUDIT_SERVICE_CONFIG_PATH *before* loading the configuration
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -20,6 +21,19 @@ from audit.app import app_init
 def app():
     app = app_init()
     return app
+
+
+@pytest.fixture(scope="function")
+def connection():
+    engine = create_engine(
+        f"{config['DB_DRIVER']}://{config['DB_USER']}:{config['DB_PASSWORD']}@{config['DB_HOST']}:{config['DB_PORT']}/{config['DB_DATABASE']}"
+    )
+    connection = engine.connect()
+
+    yield connection
+
+    connection.close()
+    engine.dispose()
 
 
 @pytest.fixture(autouse=True)

@@ -8,7 +8,7 @@ DB_HOST: localhost
 DB_PORT: 5432
 DB_USER: postgres
 DB_PASSWORD: postgres
-DB_DATABASE: audit_test
+DB_DATABASE: audit
 
 # big default values so that these parameters don't impact unit tests
 # that are not meant to test them:
