@@ -14,6 +14,12 @@ FROM base AS builder
 
 USER gen3
 
+ENV POETRY_VERSION=2.1.1
+ENV POETRY_HOME="/opt/poetry"
+ENV PATH="$POETRY_HOME/bin:$PATH"
+
+RUN curl -sSL https://install.python-poetry.org | python3 - --version $POETRY_VERSION
+
 COPY poetry.lock pyproject.toml /${appname}/
 
 RUN poetry install -vv --no-interaction --without dev
