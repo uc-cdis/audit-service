@@ -31,6 +31,9 @@ FROM base
 
 COPY --from=builder /${appname} /${appname}
 
+RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /etc/pki/ca-trust/source/anchors/global-bundle.crt \
+    && update-ca-trust extract
+
 # Switch to non-root user 'gen3' for the serving process
 
 USER gen3
