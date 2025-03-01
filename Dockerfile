@@ -12,9 +12,6 @@ WORKDIR /${appname}
 # Builder stage
 FROM base AS builder
 
-ADD https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem /etc/ssl/certs/rds-combined-ca-bundle.pem
-ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/global-bundle.pem
-
 USER gen3
 
 COPY poetry.lock pyproject.toml /${appname}/
@@ -34,8 +31,8 @@ FROM base
 
 COPY --from=builder /${appname} /${appname}
 
-ADD https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem /etc/ssl/certs/rds-combined-ca-bundle.pem
-ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/global-bundle.pem
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/pki/ca-trust/source/anchors/global-bundle.pem
+RUN update-ca-trust
 
 # Switch to non-root user 'gen3' for the serving process
 
