@@ -7,12 +7,19 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from .config import config
 
 
+import ssl
+
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ssl_context.verify_mode = ssl.CERT_REQUIRED
+ssl_context.check_hostname = True
+ssl_context.load_verify_locations(cafile="/etc/pki/tls/certs/ca-bundle.crt") # trick line
+
 db = Gino(
     dsn=config["DB_URL"],
     pool_min_size=config["DB_POOL_MIN_SIZE"],
     pool_max_size=config["DB_POOL_MAX_SIZE"],
     echo=config["DB_ECHO"],
-    ssl=config["DB_SSL"],
+    ssl=ssl_context,
     use_connection_for_request=config["DB_USE_CONNECTION_FOR_REQUEST"],
     retry_limit=config["DB_RETRY_LIMIT"],
     retry_interval=config["DB_RETRY_INTERVAL"],
