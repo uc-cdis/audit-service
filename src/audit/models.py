@@ -12,7 +12,7 @@ import ssl
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ssl_context.verify_mode = ssl.CERT_REQUIRED
 ssl_context.check_hostname = True
-# ssl_context.load_verify_locations(cafile="/etc/pki/tls/certs/ca-bundle.crt") # trick line
+ssl_context.load_verify_locations(cafile="/etc/pki/tls/certs/ca-bundle.crt") # trick line
 
 db = Gino(
     dsn=config["DB_URL"],
