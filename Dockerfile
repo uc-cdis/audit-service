@@ -12,6 +12,9 @@ WORKDIR /${appname}
 # Builder stage
 FROM base AS builder
 
+ADD https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem /etc/ssl/certs/rds-combined-ca-bundle.pem
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/global-bundle.pem
+
 USER gen3
 
 COPY poetry.lock pyproject.toml /${appname}/
@@ -24,15 +27,15 @@ COPY --chown=gen3:gen3 ./deployment/wsgi/wsgi.py /${appname}/wsgi.py
 # Run poetry again so this app itself gets installed too
 RUN poetry install -vv --no-interaction --without dev
 
-ENV  PATH="$(poetry env info --path)/bin:$PATH"
+ENV PATH="$(poetry env info --path)/bin:$PATH"
 
 # Final stage
 FROM base
 
 COPY --from=builder /${appname} /${appname}
 
-RUN curl https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /etc/pki/ca-trust/source/anchors/global-bundle.crt \
-    && update-ca-trust extract
+ADD https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem /etc/ssl/certs/rds-combined-ca-bundle.pem
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/global-bundle.pem
 
 # Switch to non-root user 'gen3' for the serving process
 
