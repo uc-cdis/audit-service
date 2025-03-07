@@ -13,6 +13,8 @@ from ..auth import Auth
 from ..config import config
 from ..models import CATEGORY_TO_MODEL_CLASS, db
 
+from ..db import DataAccessLayer, get_data_access_layer
+
 
 router = APIRouter()
 
