@@ -36,12 +36,20 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.future import select
 from starlette import status
 
-from gen3userdatalibrary import config
+from audit.config import config
 
-engine = create_async_engine(str(config["DB_URL"]), pool_pre_ping=True, echo=True)
+engine = create_async_engine(
+    url=config["DB_URL"],
+    pool_size=config.get("DB_POOL_MIN_SIZE", 15),
+    max_overflow=config["DB_POOL_MAX_SIZE"] - config["DB_POOL_MIN_SIZE"],
+    echo=config["DB_ECHO"],
+    connect_args={"ssl": config["DB_SSL"]} if config["DB_SSL"] else {},
+    pool_pre_ping=True,
+)
+
 
 # creates AsyncSession instances
-async_sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
+async_sessionmaker = async_sessionmaker(bind=engine, expire_on_commit=False)
 
 
 class DataAccessLayer:
@@ -70,3 +78,34 @@ async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
     async with async_sessionmaker() as session:
         async with session.begin():
             yield DataAccessLayer(session)
+
+
+# NOTES TO BE DELETED ABOUT ALT DESIGN PATTERN TO REPLACE GINO
+
+# async def get_db() -> AsyncSession:
+#     async with AsyncSessionLocal() as session:
+#         yield session
+#
+# # In FastAPI route:
+# @app.get("/")
+# async def read_data(session: AsyncSession = Depends(get_db)):
+#     result = await session.execute(select(...))
+
+# from tenacity import retry, stop_after_attempt, wait_fixed
+
+# @retry(
+#     stop=stop_after_attempt(config["DB_RETRY_LIMIT"]),
+#     wait=wait_fixed(config["DB_RETRY_INTERVAL"])
+# )
+# async def safe_query(session: AsyncSession):
+#     try:
+#         result = await session.execute(select(...))
+#         return result
+#     except Exception as e:
+#         await session.rollback()
+#         raise
+
+# db = Gino(
+#     retry_limit=config["DB_RETRY_LIMIT"],
+#     retry_interval=config["DB_RETRY_INTERVAL"],
+# )

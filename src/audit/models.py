@@ -1,4 +1,3 @@
-from gino.ext.starlette import Gino
 from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy import Column, DateTime, Integer, String
@@ -6,23 +5,22 @@ from sqlalchemy.dialects.postgresql import ARRAY
 
 from .config import config
 
+# TODO: replace gino ORM (not ORM?) interface with sqlalchemy's
+# Refer to the gen3 user data library for guidance on how to redesign this
 
-db = Gino(
-    dsn=config["DB_URL"],
-    pool_min_size=config["DB_POOL_MIN_SIZE"],
-    pool_max_size=config["DB_POOL_MAX_SIZE"],
-    echo=config["DB_ECHO"],
-    ssl=config["DB_SSL"],
-    use_connection_for_request=config["DB_USE_CONNECTION_FOR_REQUEST"],
-    retry_limit=config["DB_RETRY_LIMIT"],
-    retry_interval=config["DB_RETRY_INTERVAL"],
-)
+# db = Gino(
+#     dsn=config["DB_URL"],
+#     pool_min_size=config["DB_POOL_MIN_SIZE"],
+#     pool_max_size=config["DB_POOL_MAX_SIZE"],
+#     echo=config["DB_ECHO"],
+#     ssl=config["DB_SSL"],
+#     use_connection_for_request=config["DB_USE_CONNECTION_FOR_REQUEST"],
+#     retry_limit=config["DB_RETRY_LIMIT"],
+#     retry_interval=config["DB_RETRY_INTERVAL"],
+# )
 
 
-# base audit log class
-
-
-class AuditLog(db.Model):
+class AuditLog(BaseModel):
     request_url = Column(String, nullable=False)
     status_code = Column(Integer, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=sqlalchemy.func.now())
