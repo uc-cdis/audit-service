@@ -67,6 +67,11 @@ class DataAccessLayer:
         """
         await self.db_session.execute(text("SELECT 1;"))
 
+    # TODO:
+    # Implement the following methods:
+    #  - query_audit_logs
+    #  - create_logs (presigned_url, login)
+
 
 async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
     """
