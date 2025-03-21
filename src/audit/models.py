@@ -2,6 +2,7 @@ from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import declarative_base
 
 from .config import config
 
@@ -19,8 +20,11 @@ from .config import config
 #     retry_interval=config["DB_RETRY_INTERVAL"],
 # )
 
+# SQLAlchemy ORM classes
+Base = declarative_base()
 
-class AuditLog(BaseModel):
+
+class AuditLog(Base):
     request_url = Column(String, nullable=False)
     status_code = Column(Integer, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=sqlalchemy.func.now())
@@ -28,19 +32,7 @@ class AuditLog(BaseModel):
     sub = Column(Integer, nullable=True)  # can be null for public data
 
 
-class CreateLogInput(BaseModel):
-    request_url: str
-    status_code: int
-    # timestamp: we store DateTimes in the DB but the API takes
-    # int timestamps as input
-    timestamp: int = None
-    username: str
-    sub: int = None
-
-
 # child audit log classes
-
-
 class PresignedUrl(AuditLog):
     """
     `resource_paths` can be null if the user requested a file that
@@ -56,13 +48,6 @@ class PresignedUrl(AuditLog):
     protocol = Column(String, nullable=True)
 
 
-class CreatePresignedUrlLogInput(CreateLogInput):
-    guid: str
-    resource_paths: list = None
-    action: str
-    protocol: str = None
-
-
 class Login(AuditLog):
     __tablename__ = "login"
 
@@ -70,6 +55,24 @@ class Login(AuditLog):
     fence_idp = Column(String, nullable=True)
     shib_idp = Column(String, nullable=True)
     client_id = Column(String, nullable=True)
+
+
+# Pydantic input models for API endpoints
+class CreateLogInput(BaseModel):
+    request_url: str
+    status_code: int
+    # timestamp: we store DateTimes in the DB but the API takes
+    # int timestamps as input
+    timestamp: int = None
+    username: str
+    sub: int = None
+
+
+class CreatePresignedUrlLogInput(CreateLogInput):
+    guid: str
+    resource_paths: list = None
+    action: str
+    protocol: str = None
 
 
 class CreateLoginLogInput(CreateLogInput):
