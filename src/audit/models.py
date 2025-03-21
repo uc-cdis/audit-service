@@ -25,6 +25,7 @@ Base = declarative_base()
 
 
 class AuditLog(Base):
+    __abstract__ = True  # Prevents table creation
     request_url = Column(String, nullable=False)
     status_code = Column(Integer, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=sqlalchemy.func.now())

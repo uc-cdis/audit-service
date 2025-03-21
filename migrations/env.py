@@ -3,13 +3,14 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from audit.config import config
-from audit.app import db, load_modules
+from audit.app import load_modules
+from audit.db import engine
 
 
 conf = context.config
 fileConfig(conf.config_file_name)
 load_modules()
-target_metadata = db
+target_metadata = engine
 conf.set_main_option("sqlalchemy.url", str(config["DB_URL"]))
 
 
