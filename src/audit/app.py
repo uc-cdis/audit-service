@@ -2,6 +2,8 @@ import asyncio
 import httpx
 import os
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from typing import AsyncIterable
 
 try:
     from importlib.metadata import entry_points, version
@@ -28,8 +30,8 @@ except Exception:
     logger.warning("Unable to load config, using default config...", exc_info=True)
     config.load(config_path=DEFAULT_CFG_PATH)
 
-from .models import db
 from .pull_from_queue import pull_from_queue_loop
+from .db import DataAccessLayer, get_data_access_layer
 
 
 def load_modules(app: FastAPI = None) -> None:
@@ -42,6 +44,45 @@ def load_modules(app: FastAPI = None) -> None:
                 init_app(app)
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Parse the configuration, setup and instantiate necessary classes.
+
+    This is FastAPI's way of dealing with startup logic before the app
+    starts receiving requests.
+
+    https://fastapi.tiangolo.com/advanced/events/#lifespan
+
+    Args:
+        app (fastapi.FastAPI): The FastAPI app object
+    """
+    # startup
+    await check_db_connection()
+    yield
+    # teardown
+
+
+async def check_db_connection():
+    """
+    Simple check to ensure we can talk to the db
+    """
+    try:
+        logger.debug(
+            "Startup database connection test initiating. Attempting a simple query..."
+        )
+        dals: AsyncIterable[DataAccessLayer] = get_data_access_layer()
+        async for data_access_layer in dals:
+            outcome = await data_access_layer.test_connection()
+            logger.debug("Startup database connection test PASSED.")
+    except Exception as exc:
+        logger.exception(
+            "Startup database connection test FAILED. Unable to connect to the configured database."
+        )
+        logger.debug(exc)
+        raise
+
+
 def app_init() -> FastAPI:
     logger.info("Initializing app")
     config.validate(logger)
@@ -51,6 +92,7 @@ def app_init() -> FastAPI:
         title="Audit Service",
         version=version("audit"),
         debug=debug,
+        lifespan=lifespan,
         # root_path=config["DOCS_URL_PREFIX"],
     )
     app.add_middleware(ClientDisconnectMiddleware)
@@ -68,7 +110,6 @@ def app_init() -> FastAPI:
     else:
         app.arborist_client = ArboristClient(logger=logger)
 
-    db.init_app(app)
     load_modules(app)
 
     @app.on_event("startup")
