@@ -43,6 +43,7 @@ class PresignedUrl(AuditLog):
 
     __tablename__ = "presigned_url"
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
     guid = Column(String, nullable=False)
     resource_paths = Column(ARRAY(String), nullable=True)
     action = Column(String, nullable=False)
@@ -52,6 +53,7 @@ class PresignedUrl(AuditLog):
 class Login(AuditLog):
     __tablename__ = "login"
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
     idp = Column(String, nullable=False)
     fence_idp = Column(String, nullable=True)
     shib_idp = Column(String, nullable=True)

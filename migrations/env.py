@@ -1,16 +1,18 @@
 from alembic import context
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.engine import Connection
 
 from audit.config import config
 from audit.app import load_modules
-from audit.db import engine
+from audit.models import Base
 
 
 conf = context.config
 fileConfig(conf.config_file_name)
 load_modules()
-target_metadata = engine
+target_metadata = Base.metadata
 conf.set_main_option("sqlalchemy.url", str(config["DB_URL"]))
 
 
