@@ -7,6 +7,7 @@ from starlette.status import (
 
 from .. import logger
 from ..auth import Auth
+from ..db import DataAccessLayer, get_data_access_layer
 from ..models import (
     CATEGORY_TO_MODEL_CLASS,
     CreateLoginLogInput,
@@ -84,6 +85,7 @@ async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
+    dal: DataAccessLayer = Depends(get_data_access_layer),
 ) -> None:
     """
     Create a new `presigned_url` audit log.
@@ -100,7 +102,8 @@ async def create_presigned_url_log(
     """
     data = body.dict()
     validate_presigned_url_log(data)
-    background_tasks.add_task(insert_row, "presigned_url", data)
+    # background_tasks.add_task(insert_row, "presigned_url", data)
+    dal.create_presigned_url_log(data)
 
 
 def validate_presigned_url_log(data):

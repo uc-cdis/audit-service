@@ -37,7 +37,9 @@ from sqlalchemy.future import select
 from starlette import status
 
 from audit.config import config
+from audit.models import PresignedUrl
 
+print(f"DB_URL: {config['DB_URL']}")
 engine = create_async_engine(
     url=config["DB_URL"],
     pool_size=config.get("DB_POOL_MIN_SIZE", 15),
@@ -71,6 +73,13 @@ class DataAccessLayer:
     # Implement the following methods:
     #  - query_audit_logs
     #  - create_logs (presigned_url, login)
+
+    async def create_presigned_url_log(self, data: Dict[str, Any]) -> None:
+        """
+        Create a new `presigned_url` audit log.
+        """
+        self.db_session.add(PresignedUrl(**data))
+        await self.db_session.commit()
 
 
 async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
