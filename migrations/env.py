@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.engine import Connection
+import asyncio
 
 from audit.config import config
 from audit.app import load_modules
@@ -13,7 +14,25 @@ conf = context.config
 fileConfig(conf.config_file_name)
 load_modules()
 target_metadata = Base.metadata
-conf.set_main_option("sqlalchemy.url", str(config["DB_URL"]))
+
+
+async def run_async_migrations() -> None:
+    """In this scenario we need to create an Engine
+    and associate a connection with the context.
+
+    """
+
+    conf.set_main_option("sqlalchemy.url", str(config["DB_URL"]))
+
+    connectable = async_engine_from_config(
+        conf.get_section(conf.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+    await connectable.dispose()
 
 
 def run_migrations_offline():
@@ -47,17 +66,14 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        conf.get_section(conf.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    asyncio.run(run_async_migrations())
 
-    with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
 
-        with context.begin_transaction():
-            context.run_migrations()
+def do_run_migrations(connection):
+    context.configure(connection=connection, target_metadata=target_metadata)
+
+    with context.begin_transaction():
+        context.run_migrations()
 
 
 if context.is_offline_mode():
