@@ -125,6 +125,7 @@ async def create_login_log(
     body: CreateLoginLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
+    dal: DataAccessLayer = Depends(get_data_access_layer),
 ) -> None:
     """
     Create a new `login` audit log.
@@ -141,7 +142,8 @@ async def create_login_log(
     """
     data = body.dict()
     validate_login_log(data)
-    background_tasks.add_task(insert_row, "login", data)
+    # background_tasks.add_task(insert_row, "login", data)
+    dal.create_login_log(data)
 
 
 def validate_login_log(data):

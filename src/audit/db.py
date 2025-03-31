@@ -37,7 +37,7 @@ from sqlalchemy.future import select
 from starlette import status
 
 from audit.config import config
-from audit.models import PresignedUrl
+from audit.models import PresignedUrl, Login
 
 print(f"DB_URL: {config['DB_URL']}")
 engine = create_async_engine(
@@ -79,6 +79,13 @@ class DataAccessLayer:
         Create a new `presigned_url` audit log.
         """
         self.db_session.add(PresignedUrl(**data))
+        await self.db_session.commit()
+
+    async def create_login_log(self, data: Dict[str, Any]) -> None:
+        """
+        Create a new `login` audit log.
+        """
+        self.db_session.add(Login(**data))
         await self.db_session.commit()
 
 
