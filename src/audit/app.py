@@ -129,9 +129,6 @@ async def check_db_connection():
 async def intiate_sqs_pull():
     """
     Start the SQS pull loop in the background."""
-    loop = asyncio.get_running_loop()
-    loop.create_task(pull_from_queue_loop())
-    loop.set_exception_handler(handle_exception)
 
     def handle_exception(loop, context):
         """
@@ -143,6 +140,10 @@ async def intiate_sqs_pull():
         for _, task in enumerate(asyncio.all_tasks()):
             task.cancel()
         logger.info("Closed all tasks")
+
+    loop = asyncio.get_running_loop()
+    loop.create_task(pull_from_queue_loop())
+    loop.set_exception_handler(handle_exception)
 
 
 class ClientDisconnectMiddleware:
