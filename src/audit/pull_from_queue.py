@@ -7,13 +7,11 @@ from . import logger
 from .config import config
 from .models import CATEGORY_TO_MODEL_CLASS
 from .routes.maintain import insert_row, validate_presigned_url_log, validate_login_log
-from .routes.maintain import get_data_access_layer
-from .routes.maintain import DataAccessLayer
-from fastapi import Depends
 
 
 async def process_log(
-    data, timestamp, dal: DataAccessLayer = Depends(get_data_access_layer)
+    data,
+    timestamp,
 ):
     # check log category
     category = data.pop("category")
@@ -28,13 +26,11 @@ async def process_log(
     # validate log
     if category == "presigned_url":
         validate_presigned_url_log(data)
-        dal.create_presigned_url_log(data)
     elif category == "login":
         validate_login_log(data)
-        dal.create_login_log(data)
 
     # insert log in DB
-    # await insert_row(category, data)
+    await insert_row(category, data)
 
 
 async def pull_from_queue(sqs):

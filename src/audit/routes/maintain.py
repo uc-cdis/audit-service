@@ -18,33 +18,21 @@ from ..models import (
 router = APIRouter()
 
 
-async def insert_row(category, data):
+async def insert_row(
+    category, data, dal: DataAccessLayer = Depends(get_data_access_layer)
+):
     """
-    GINO returns the row after inserting it:
-    `insert into (...) values (...) returning (all the columns)`
-    Because the table is partitioned with a trigger that returns null (see
-    migration script d5b18185c458), GINO does not get the row back after
-    inserting like it expects.
-    In GINO v1.0.1, this results in the following error:
-        > for k, v in row.items():
-        E  AttributeError: 'NoneType' object has no attribute 'items'
-    In later versions, it results in a `NoSuchRowError` exception
-    (https://github.com/python-gino/gino/blob/v1.1.0b2/src/gino/crud.py#L858).
-    However, at the time of writing this update has only been pre-released.
-
-    According to this doc
-    https://wiki.postgresql.org/wiki/INSERT_RETURNING_vs_Partitioning, we could
-    implement a workaround. But since we do not currently need GINO to return
-    the inserted statement, and the row does get inserted before the exception
-    is raised, we just catch and ignore it.
-
-    TODO Once a newer version of GINO is released, upgrade and catch
-    `gino.exceptions.NoSuchRowError` instead of `AttributeError`.
+    Insert a new row in the database.
     """
     try:
-        await CATEGORY_TO_MODEL_CLASS[category].create(**data)
-    except AttributeError:
-        pass
+        if category == "presigned_url":
+            await dal.create_presigned_url_log(data)
+        elif category == "login":
+            await dal.create_login_log(data)
+        else:
+            raise Exception(
+                f"Unknown log category '{category}'",
+            )
     except Exception:
         logger.error(
             f"Failed to insert {category} audit log for URL {data.get('request_url')} at {data.get('timestamp')}"
@@ -85,7 +73,6 @@ async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_data_access_layer),
 ) -> None:
     """
     Create a new `presigned_url` audit log.
@@ -102,8 +89,7 @@ async def create_presigned_url_log(
     """
     data = body.dict()
     validate_presigned_url_log(data)
-    # background_tasks.add_task(insert_row, "presigned_url", data)
-    dal.create_presigned_url_log(data)
+    background_tasks.add_task(insert_row, "presigned_url", data)
 
 
 def validate_presigned_url_log(data):
@@ -125,7 +111,6 @@ async def create_login_log(
     body: CreateLoginLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_data_access_layer),
 ) -> None:
     """
     Create a new `login` audit log.
@@ -142,8 +127,7 @@ async def create_login_log(
     """
     data = body.dict()
     validate_login_log(data)
-    # background_tasks.add_task(insert_row, "login", data)
-    dal.create_login_log(data)
+    background_tasks.add_task(insert_row, "login", data)
 
 
 def validate_login_log(data):
