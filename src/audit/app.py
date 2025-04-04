@@ -44,45 +44,6 @@ def load_modules(app: FastAPI = None) -> None:
                 init_app(app)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Parse the configuration, setup and instantiate necessary classes.
-
-    This is FastAPI's way of dealing with startup logic before the app
-    starts receiving requests.
-
-    https://fastapi.tiangolo.com/advanced/events/#lifespan
-
-    Args:
-        app (fastapi.FastAPI): The FastAPI app object
-    """
-    # startup
-    await check_db_connection()
-    yield
-    # teardown
-
-
-async def check_db_connection():
-    """
-    Simple check to ensure we can talk to the db
-    """
-    try:
-        logger.debug(
-            "Startup database connection test initiating. Attempting a simple query..."
-        )
-        dals: AsyncIterable[DataAccessLayer] = get_data_access_layer()
-        async for data_access_layer in dals:
-            outcome = await data_access_layer.test_connection()
-            logger.debug("Startup database connection test PASSED.")
-    except Exception as exc:
-        logger.exception(
-            "Startup database connection test FAILED. Unable to connect to the configured database."
-        )
-        logger.debug(exc)
-        raise
-
-
 def app_init() -> FastAPI:
     logger.info("Initializing app")
     config.validate(logger)
@@ -112,21 +73,65 @@ def app_init() -> FastAPI:
 
     load_modules(app)
 
-    @app.on_event("startup")
-    async def startup_event():
-        if (
-            config["PULL_FROM_QUEUE"]
-            and config["QUEUE_CONFIG"].get("type") == "aws_sqs"
-        ):
-            loop = asyncio.get_running_loop()
-            loop.create_task(pull_from_queue_loop())
-            loop.set_exception_handler(handle_exception)
+    return app
 
-    @app.on_event("shutdown")
-    async def shutdown_event():
-        logger.info("Closing async client.")
-        await app.async_client.aclose()
-        logger.info("[Completed] Closing async client.")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Parse the configuration, setup and instantiate necessary classes.
+
+    This is FastAPI's way of dealing with startup logic before the app
+    starts receiving requests.
+
+    https://fastapi.tiangolo.com/advanced/events/#lifespan
+
+    Args:
+        app (fastapi.FastAPI): The FastAPI app object
+    """
+    # startup
+
+    # Verify database connection before starting the app
+    await check_db_connection()
+
+    if config["PULL_FROM_QUEUE"] and config["QUEUE_CONFIG"].get("type") == "aws_sqs":
+        logger.info("Initiating SQS pull.")
+        await intiate_sqs_pull()
+
+    yield
+
+    # teardown
+    logger.info("Closing async client.")
+    await app.async_client.aclose()
+    logger.info("[Completed] Closing async client.")
+
+
+async def check_db_connection():
+    """
+    Simple check to ensure we can talk to the db
+    """
+    try:
+        logger.debug(
+            "Startup database connection test initiating. Attempting a simple query..."
+        )
+        dals: AsyncIterable[DataAccessLayer] = get_data_access_layer()
+        async for data_access_layer in dals:
+            await data_access_layer.test_connection()
+            logger.debug("Startup database connection test PASSED.")
+    except Exception as exc:
+        logger.exception(
+            "Startup database connection test FAILED. Unable to connect to the configured database."
+        )
+        logger.debug(exc)
+        raise
+
+
+async def intiate_sqs_pull():
+    """
+    Start the SQS pull loop in the background."""
+    loop = asyncio.get_running_loop()
+    loop.create_task(pull_from_queue_loop())
+    loop.set_exception_handler(handle_exception)
 
     def handle_exception(loop, context):
         """
@@ -135,11 +140,9 @@ def app_init() -> FastAPI:
         """
         msg = context.get("exception", context.get("message"))
         logger.error(f"Caught exception: {msg}")
-        for index, task in enumerate(asyncio.all_tasks()):
+        for _, task in enumerate(asyncio.all_tasks()):
             task.cancel()
         logger.info("Closed all tasks")
-
-    return app
 
 
 class ClientDisconnectMiddleware:
