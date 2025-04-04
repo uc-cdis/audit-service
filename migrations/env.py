@@ -21,6 +21,7 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    print(config["DB_URL"])
 
     conf.set_main_option("sqlalchemy.url", str(config["DB_URL"]))
 

@@ -29,6 +29,7 @@ ENV  PATH="$(poetry env info --path)/bin:$PATH"
 # Final stage
 FROM base
 
+RUN yum install -y vim nano
 COPY --from=builder /${appname} /${appname}
 
 # Switch to non-root user 'gen3' for the serving process
