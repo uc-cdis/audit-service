@@ -21,9 +21,9 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
-    print(config["DB_URL"])
-
-    conf.set_main_option("sqlalchemy.url", str(config["DB_URL"]))
+    conf.set_main_option(
+        "sqlalchemy.url", config["DB_URL"].render_as_string(hide_password=False)
+    )
 
     connectable = async_engine_from_config(
         conf.get_section(conf.config_ini_section),
