@@ -11,7 +11,7 @@ from ..utils.route_utils import (
     validate_login_log,
     validate_presigned_url_log,
 )
-from ..db import DataAccessLayer, get_data_access_layer
+from ..db import DataAccessLayer, get_dal_dependency
 from ..models import (
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
@@ -25,7 +25,7 @@ async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_data_access_layer),
+    dal: DataAccessLayer = Depends(get_dal_dependency),
 ) -> None:
     """
     Create a new `presigned_url` audit log.
@@ -56,7 +56,7 @@ async def create_login_log(
     body: CreateLoginLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_data_access_layer),
+    dal: DataAccessLayer = Depends(get_dal_dependency),
 ) -> None:
     """
     Create a new `login` audit log.

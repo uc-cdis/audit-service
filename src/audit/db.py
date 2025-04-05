@@ -27,6 +27,7 @@ What do we do in this file?
   a fresh session from the session maker factory
     - This is what gets injected into endpoint code using FastAPI's dep injections
 """
+from contextlib import asynccontextmanager
 from typing import List, Optional, Tuple, Union, Any, Dict, AsyncGenerator
 from uuid import UUID
 
@@ -89,6 +90,7 @@ class DataAccessLayer:
         await self.db_session.commit()
 
 
+@asynccontextmanager
 async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
     """
     Create an AsyncSession and yield an instance of the Data Access Layer,
@@ -99,6 +101,11 @@ async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
     async with async_sessionmaker() as session:
         async with session.begin():
             yield DataAccessLayer(session)
+
+
+async def get_dal_dependency() -> AsyncGenerator[DataAccessLayer, None]:
+    async with get_data_access_layer() as dal:
+        yield dal
 
 
 # NOTES TO BE DELETED ABOUT ALT DESIGN PATTERN TO REPLACE GINO
