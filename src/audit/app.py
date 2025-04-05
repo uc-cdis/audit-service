@@ -114,10 +114,10 @@ async def check_db_connection():
         logger.debug(
             "Startup database connection test initiating. Attempting a simple query..."
         )
-        dals: AsyncIterable[DataAccessLayer] = get_data_access_layer()
-        async for data_access_layer in dals:
-            await data_access_layer.test_connection()
-            logger.debug("Startup database connection test PASSED.")
+        async with get_data_access_layer() as dals:
+            async for data_access_layer in dals:
+                await data_access_layer.test_connection()
+                logger.debug("Startup database connection test PASSED.")
     except Exception as exc:
         logger.exception(
             "Startup database connection test FAILED. Unable to connect to the configured database."
