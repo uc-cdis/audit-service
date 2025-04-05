@@ -14,6 +14,7 @@ from cdislogging import get_logger
 from gen3authz.client.arborist.async_client import ArboristClient
 
 from . import logger
+from .db import get_dal_dependency
 from .config import config, DEFAULT_CFG_PATH
 
 # Load the configuration *before* importing modules that rely on it
@@ -114,10 +115,10 @@ async def check_db_connection():
         logger.debug(
             "Startup database connection test initiating. Attempting a simple query..."
         )
-        async with get_data_access_layer() as dals:
-            async for data_access_layer in dals:
-                await data_access_layer.test_connection()
-                logger.debug("Startup database connection test PASSED.")
+        dals: AsyncIterable[DataAccessLayer] = get_dal_dependency()
+        async for data_access_layer in dals:
+            await data_access_layer.test_connection()
+            logger.debug("Startup database connection test PASSED.")
     except Exception as exc:
         logger.exception(
             "Startup database connection test FAILED. Unable to connect to the configured database."
