@@ -11,6 +11,7 @@ from ..models import (
     CATEGORY_TO_MODEL_CLASS,
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
+    CreateAdminActionLogInput,
 )
 
 
@@ -143,6 +144,35 @@ async def create_login_log(
 
 def validate_login_log(data):
     logger.debug(f"Creating `login` audit log. Received body: {data}")
+    handle_timestamp(data)
+
+
+@router.post("/log/admin_action", status_code=HTTP_201_CREATED)
+async def create_admin_action_log(
+    body: CreateAdminActionLogInput,
+    background_tasks: BackgroundTasks,
+    auth=Depends(Auth),
+) -> None:
+    """
+    Create a new `admin_action` audit log.
+
+    This endpoint does not include any authorization checks, but it is not
+    exposed and is only meant for internal use.
+
+    If the timestamp is omitted from the request body, the current date and
+    time will be used.
+
+    The response is returned _before_ inserting the new audit log in the
+    database, so that POSTing audit logs does not impact the performance of
+    the caller and audit-service failures are not visible to users.
+    """
+    data = body.dict()
+    validate_admin_action_log(data)
+    background_tasks.add_task(insert_row, "admin_action", data)
+
+
+def validate_admin_action_log(data):
+    logger.debug(f"Creating `admin_action` audit log. Received body: {data}")
     handle_timestamp(data)
 
 

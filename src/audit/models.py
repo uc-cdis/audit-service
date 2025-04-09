@@ -81,6 +81,10 @@ class CreateLoginLogInput(CreateLogInput):
     client_id: str = None
 
 
+class CreateAdminActionLogInput(CreateLogInput):
+    action: str
+
+
 # mapping for use by API endpoints
 CATEGORY_TO_MODEL_CLASS = {
     "login": Login,
