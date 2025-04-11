@@ -104,7 +104,9 @@ def upgrade():
             END IF;
 
             IF TG_TABLE_NAME = 'presigned_url' THEN
-                NEW.id := nextval('global_presigned_url_id_seq');
+                IF NEW.id IS NULL THEN
+                    NEW.id := nextval('global_presigned_url_id_seq');
+                END IF;
                 EXECUTE format(
                     'INSERT INTO %I (id, request_url, status_code, timestamp, username, sub, guid, resource_paths, action, protocol)
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
@@ -113,7 +115,9 @@ def upgrade():
                 USING NEW.id, NEW.request_url, NEW.status_code, NEW.timestamp, NEW.username,
                         NEW.sub, NEW.guid, NEW.resource_paths, NEW.action, NEW.protocol;
             ELSIF TG_TABLE_NAME = 'login' THEN
-                NEW.id := nextval('global_login_id_seq');
+                IF NEW.id IS NULL THEN
+                    NEW.id := nextval('global_login_id_seq');
+                END IF;
                 EXECUTE format(
                     'INSERT INTO %I (id, request_url, status_code, timestamp, username, sub, idp, fence_idp, shib_idp, client_id)
                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',

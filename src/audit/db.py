@@ -79,6 +79,10 @@ class DataAccessLayer:
         """
         Create a new `presigned_url` audit log.
         """
+        result = self.db_session.execute(
+            text("SELECT nextval('global_presigned_url_id_seq')")
+        )
+        data["id"] = result.scalar()
         self.db_session.add(PresignedUrl(**data))
         await self.db_session.commit()
 
@@ -86,6 +90,8 @@ class DataAccessLayer:
         """
         Create a new `login` audit log.
         """
+        result = self.db_session.execute(text("SELECT nextval('global_login_id_seq')"))
+        data["id"] = result.scalar()
         self.db_session.add(Login(**data))
         await self.db_session.commit()
 
