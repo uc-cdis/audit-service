@@ -28,10 +28,10 @@ async def process_log(
         # validate log
         if category == "presigned_url":
             validate_presigned_url_log(data)
-            dal.create_presigned_url_log(data)
+            await dal.create_presigned_url_log(data)
         elif category == "login":
             validate_login_log(data)
-            dal.create_login_log(data)
+            await dal.create_login_log(data)
 
     # insert log in DB
     # await insert_row(category, data)
