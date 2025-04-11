@@ -5,6 +5,7 @@ Revises: fd0510a0a9aa
 Create Date: 2025-04-05 11:03:07.597617
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import text
@@ -24,21 +25,15 @@ PARENT_TABLES = {
 def upgrade():
     connection = op.get_bind()
 
-    # Step 1: Create global sequences
-    op.execute("CREATE SEQUENCE global_presigned_url_id_seq;")
-    op.execute("CREATE SEQUENCE global_login_id_seq;")
+    for parent_table, sequence_name in PARENT_TABLES.items():
 
-    # Step 2: Add 'id' columns to parent tables
-    op.add_column("presigned_url", sa.Column("id", sa.Integer(), nullable=False))
-    op.execute(
-        "ALTER TABLE presigned_url ADD CONSTRAINT presigned_url_pkey PRIMARY KEY (id);"
-    )
+        # Step 1: Create global sequences
+        op.execute(f"CREATE SEQUENCE {sequence_name};")
 
-    op.add_column("login", sa.Column("id", sa.Integer(), nullable=False))
-    op.execute("ALTER TABLE login ADD CONSTRAINT login_pkey PRIMARY KEY (id);")
+        # Step 2: Add 'id' columns to parent tables
+        op.add_column(parent_table, sa.Column("id", sa.Integer()))
 
-    # Step 3: Add 'id' to existing child tables (INHERITS-based)
-    def update_child_tables(parent_table, sequence_name):
+        # Step 3: Add 'id' to existing child tables (INHERITS-based)
 
         # Get a list of all child tables inheriting from the parent table
         res = connection.execute(
@@ -54,28 +49,23 @@ def upgrade():
             {"parent_table": parent_table},
         )
 
+        # for each child table, add the 'id' column if it doesn't exist
         for row in res:
             child_table = row[0]
             print(f"Updating child table: {child_table}")
-
-            # Add id column if not present
-            connection.execute(
+            # Check if the 'id' column already exists
+            result = connection.execute(
                 text(
-                    f"""
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (
+                    """
                         SELECT 1 FROM information_schema.columns
                         WHERE table_name = :child_table AND column_name = 'id'
-                    ) THEN
-                        EXECUTE format('ALTER TABLE %I ADD COLUMN id INTEGER;', :child_table);
-                    END IF;
-                END;
-                $$;
             """
                 ),
                 {"child_table": child_table},
-            )
+            ).fetchone()
+
+            if not result:
+                op.execute(f"ALTER TABLE {child_table} ADD COLUMN id INTEGER;")
 
             # Backfill ID values
             connection.execute(
@@ -87,11 +77,16 @@ def upgrade():
             """
                 )
             )
+        # Step 4: Set primary key constraint
+        # op.update_column(
+        #     parent_table,
+        #     sa.Column("id", sa.Integer(), nullable=False),
+        # )
+        op.execute(
+            "ALTER TABLE {parent_table} ADD CONSTRAINT {parent_table}_pkey PRIMARY KEY (id);"
+        )
 
-    update_child_tables("presigned_url", "global_presigned_url_id_seq")
-    update_child_tables("login", "global_login_id_seq")
-
-    # Step 4: Replace trigger function with format-based version
+    # Step 5: Replace trigger function to include id field for child tables
     op.execute(
         """
     CREATE OR REPLACE FUNCTION create_partition_and_insert() RETURNS trigger AS
