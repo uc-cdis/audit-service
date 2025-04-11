@@ -14,7 +14,6 @@ from cdislogging import get_logger
 from gen3authz.client.arborist.async_client import ArboristClient
 
 from . import logger
-from .db import get_dal_dependency
 from .config import config, DEFAULT_CFG_PATH
 
 # Load the configuration *before* importing modules that rely on it
@@ -32,7 +31,7 @@ except Exception:
     config.load(config_path=DEFAULT_CFG_PATH)
 
 from .pull_from_queue import pull_from_queue_loop
-from .db import DataAccessLayer, get_data_access_layer
+from .db import DataAccessLayer, get_dal_dependency
 
 
 def load_modules(app: FastAPI = None) -> None:
