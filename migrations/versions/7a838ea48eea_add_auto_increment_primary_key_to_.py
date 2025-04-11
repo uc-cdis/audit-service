@@ -83,7 +83,7 @@ def upgrade():
         #     sa.Column("id", sa.Integer(), nullable=False),
         # )
         op.execute(
-            "ALTER TABLE {parent_table} ADD CONSTRAINT {parent_table}_pkey PRIMARY KEY (id);"
+            f"ALTER TABLE {parent_table} ADD CONSTRAINT {parent_table}_pkey PRIMARY KEY (id);"
         )
 
     # Step 5: Replace trigger function to include id field for child tables
