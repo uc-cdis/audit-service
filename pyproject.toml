@@ -33,7 +33,7 @@ markupsafe = "<=2.0.1"
 # urllib3 is a sub-dependency of requests and botocore (dep of boto3). For some reason poetry was not
 # able to resolve deps until we pinned it. TODO remove later
 urllib3 = "^1.26"
-jinja2 = ">=1.3.5"
+jinja2 = "^3.1.6"
 asyncpg = "^0.30.0"
 setuptools = "^78.1.0"
 [tool.poetry.dev-dependencies]
