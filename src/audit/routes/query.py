@@ -13,8 +13,7 @@ from .. import logger
 from ..auth import Auth
 from ..config import config
 from ..models import CATEGORY_TO_MODEL_CLASS
-
-from ..db import DataAccessLayer, get_data_access_layer
+from ..db import DataAccessLayer, get_data_access_layer, async_sessionmaker
 
 
 router = APIRouter()
@@ -140,7 +139,7 @@ async def query_logs(
             HTTP_400_BAD_REQUEST,
             f"Querying by username is not allowed",
         )
-    async with async_session() as session:
+    async with async_sessionmaker() as session:
         if groupby:
             logs = await query_logs_groupby(
                 model, start_date, stop_date, query_params, groupby, dal
