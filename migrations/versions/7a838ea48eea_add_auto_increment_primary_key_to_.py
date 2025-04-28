@@ -78,10 +78,6 @@ def upgrade():
                 )
             )
         # Step 4: Set primary key constraint
-        # op.update_column(
-        #     parent_table,
-        #     sa.Column("id", sa.Integer(), nullable=False),
-        # )
         op.execute(
             f"ALTER TABLE {parent_table} ADD CONSTRAINT {parent_table}_pkey PRIMARY KEY (id);"
         )
@@ -142,3 +138,27 @@ def downgrade():
         op.drop_constraint(f"{parent_table}_pkey", parent_table, type_="primary")
         op.drop_column(parent_table, "id")
         op.execute(f"DROP SEQUENCE IF EXISTS {seq_name};")
+
+    # TODO: In future, replace this hardcoded implementation and fetch the function body dynamically and revert to the previous state
+    op.execute(
+        """CREATE OR REPLACE FUNCTION create_partition_and_insert() RETURNS trigger AS
+        $BODY$
+            DECLARE
+            partition_timestamp TEXT;
+            partition TEXT;
+            BEGIN
+            partition_timestamp := to_char(NEW.timestamp,'YYYY_MM');
+            partition := TG_RELNAME || '_' || partition_timestamp;
+            IF NOT EXISTS(SELECT relname FROM pg_class WHERE relname=partition) THEN
+                RAISE NOTICE 'Partition % has been created',partition;
+                EXECUTE 'CREATE TABLE ' || partition || ' () INHERITS (' || TG_RELNAME || ');';
+            END IF;
+            EXECUTE 'INSERT INTO ' || partition || ' SELECT(' || TG_RELNAME || ' ' || quote_literal(NEW) || ').* RETURNING username;';
+            RETURN NULL;
+            END;
+        $BODY$
+    LANGUAGE plpgsql VOLATILE
+    COST 100;"""
+    )
+
+    print("Reverted trigger function to previous state.")

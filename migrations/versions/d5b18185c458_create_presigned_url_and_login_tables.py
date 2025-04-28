@@ -8,7 +8,7 @@ Create timestamp: 2021-02-02 18:11:46.518674
 from alembic import op
 from datetime import datetime
 import sqlalchemy as sa
-
+from sqlalchemy.sql import text
 
 # revision identifiers, used by Alembic.
 revision = "d5b18185c458"
@@ -58,11 +58,11 @@ def setup_table_partitioning(table_name):
 def delete_table_partitioning(table_name):
     trigger_name = f"{table_name}_partition_trigger"
     print(f"  Deleting `{trigger_name}` trigger")
-    op.execute(f"DROP TRIGGER {trigger_name} on {table_name}")
+    op.execute(f"DROP TRIGGER IF EXISTS {trigger_name} on {table_name}")
 
     stmt = f"""SELECT child.relname FROM pg_inherits JOIN pg_class AS child ON (inhrelid=child.oid) JOIN pg_class as parent ON (inhparent=parent.oid) where parent.relname='{table_name}'"""
     conn = op.get_bind()
-    res = conn.execute(stmt)
+    res = conn.execute(text(stmt))
     partition_names = [table_data[0] for table_data in res.fetchall()]
     for partition in partition_names:
         print(f"  Deleting `{table_name}` table partition `{partition}`")

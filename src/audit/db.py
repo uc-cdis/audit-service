@@ -28,31 +28,49 @@ What do we do in this file?
     - This is what gets injected into endpoint code using FastAPI's dep injections
 """
 from contextlib import asynccontextmanager
-from typing import List, Optional, Tuple, Union, Any, Dict, AsyncGenerator
-from uuid import UUID
+from typing import Any, Dict, AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from fastapi import HTTPException
-from sqlalchemy import delete, func, text, tuple_
+
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.future import select
-from starlette import status
 
 from audit.config import config
 from audit.models import PresignedUrl, Login
 
-print(f"DB_URL: {config['DB_URL']}")
-engine = create_async_engine(
-    url=config["DB_URL"],
-    pool_size=config.get("DB_POOL_MIN_SIZE", 15),
-    max_overflow=config["DB_POOL_MAX_SIZE"] - config["DB_POOL_MIN_SIZE"],
-    echo=config["DB_ECHO"],
-    connect_args={"ssl": config["DB_SSL"]} if config["DB_SSL"] else {},
-    pool_pre_ping=True,
-)
+engine = None
+async_sessionmaker_instance = None
 
 
-# creates AsyncSession instances
-async_sessionmaker = async_sessionmaker(bind=engine, expire_on_commit=False)
+async def initiate_db() -> None:
+    """
+    Initialize the database enigne.
+    """
+    global engine, async_sessionmaker_instance
+    print(f"DB_URL: {config['DB_URL']}")
+    engine = create_async_engine(
+        url=config["DB_URL"],
+        pool_size=config.get("DB_POOL_MIN_SIZE", 15),
+        max_overflow=config["DB_POOL_MAX_SIZE"] - config["DB_POOL_MIN_SIZE"],
+        echo=config["DB_ECHO"],
+        connect_args={"ssl": config["DB_SSL"]} if config["DB_SSL"] else {},
+        pool_pre_ping=True,
+    )
+
+    # creates AsyncSession instances
+    async_sessionmaker_instance = async_sessionmaker(
+        bind=engine, expire_on_commit=False
+    )
+
+
+def get_db_engine_and_sessionmaker() -> tuple[AsyncEngine, async_sessionmaker]:
+    """
+    Get the db engine and sessionmaker instances.
+    """
+    global engine, async_sessionmaker_instance
+    if engine is None or async_sessionmaker_instance is None:
+        raise Exception("Database not initialized. Call initiate_db() first.")
+    return engine, async_sessionmaker_instance
 
 
 class DataAccessLayer:
@@ -106,7 +124,7 @@ async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
 
     Can be injected as a dependency in FastAPI endpoints.
     """
-    async with async_sessionmaker() as session:
+    async with async_sessionmaker_instance() as session:
         async with session.begin():
             yield DataAccessLayer(session)
 

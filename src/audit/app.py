@@ -31,7 +31,7 @@ except Exception:
     config.load(config_path=DEFAULT_CFG_PATH)
 
 from .pull_from_queue import pull_from_queue_loop
-from .db import DataAccessLayer, get_dal_dependency
+from .db import initiate_db, DataAccessLayer, get_dal_dependency
 
 
 def load_modules(app: FastAPI = None) -> None:
@@ -91,12 +91,12 @@ async def lifespan(app: FastAPI):
     """
     # startup
 
-    # Verify database connection before starting the app
+    await initiate_db()
     await check_db_connection()
 
     if config["PULL_FROM_QUEUE"] and config["QUEUE_CONFIG"].get("type") == "aws_sqs":
         logger.info("Initiating SQS pull.")
-        await intiate_sqs_pull()
+    await intiate_sqs_pull()
 
     yield
 

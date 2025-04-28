@@ -1,10 +1,12 @@
 from alembic.config import main as alembic_main
 import copy
 import os
+import asyncio
 import pytest
+import pytest_asyncio
 import requests
 from starlette.config import environ
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Set AUDIT_SERVICE_CONFIG_PATH *before* loading the configuration
@@ -14,6 +16,7 @@ environ["AUDIT_SERVICE_CONFIG_PATH"] = os.path.join(
 )
 from audit.config import config
 from audit.app import app_init
+from audit.db import get_db_engine_and_sessionmaker, initiate_db
 
 
 @pytest.fixture(scope="session")
@@ -22,14 +25,15 @@ def app():
     return app
 
 
-@pytest.fixture(autouse=True)
-def setup_test_database():
+@pytest_asyncio.fixture(autouse=True)
+async def setup_test_database():
     """
     At teardown, restore original config and reset test DB.
     """
     saved_config = copy.deepcopy(config._configs)
 
-    alembic_main(["--raiseerr", "upgrade", "head"])
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, alembic_main, ["--raiseerr", "upgrade", "head"])
 
     yield
 
@@ -37,12 +41,27 @@ def setup_test_database():
     config.update(saved_config)
 
     if not config["TEST_KEEP_DB"]:
-        alembic_main(["--raiseerr", "downgrade", "base"])
+        await loop.run_in_executor(
+            None, alembic_main, ["--raiseerr", "downgrade", "base"]
+        )
 
 
-@pytest.fixture()
-def client():
-    with TestClient(app_init()) as client:
+@pytest_asyncio.fixture(scope="function")
+async def db_session():
+    """
+    Creates a new async DB session with rolled-back transaction for each test.
+    """
+    await initiate_db()
+    _, session_maker_instance = get_db_engine_and_sessionmaker()
+
+    async with session_maker_instance() as session:
+        yield session
+        await session.rollback()  # clean up after each test
+
+
+@pytest_asyncio.fixture
+async def client(app):
+    async with AsyncClient(app=app) as client:
         yield client
 
 

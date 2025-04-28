@@ -38,8 +38,8 @@ asyncpg = "^0.30.0"
 greenlet = "^3.1.1"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^6.0.1"
-pytest-asyncio = "^0.14.0"
+pytest = "^8.0.0"
+pytest-asyncio = "^0.26.0"
 pytest-cov = "^2.8"
 requests = "^2.32.0"
 
