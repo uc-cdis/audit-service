@@ -30,7 +30,7 @@ def handle_timestamp(data):
         # because it's defined in `CreateLogInput`. It is automatically added
         # to rows without timestamp, but we have to remove it from the dict
         # before inserting in the DB
-        del data["timestamp"]
+        data["timestamp"] = datetime.now()
 
 
 def validate_presigned_url_log(data):

@@ -32,6 +32,12 @@ class AuditLog(Base):
     username = Column(String, nullable=False)
     sub = Column(Integer, nullable=True)  # can be null for public data
 
+    # Since declarative_base() has no default to_dict() method,
+    def to_dict(self):
+        return {
+            column.name: getattr(self, column.name) for column in self.__table__.columns
+        }
+
 
 # child audit log classes
 class PresignedUrl(AuditLog):

@@ -13,7 +13,7 @@ from .. import logger
 from ..auth import Auth
 from ..config import config
 from ..models import CATEGORY_TO_MODEL_CLASS
-from ..db import DataAccessLayer, get_data_access_layer, async_sessionmaker
+from ..db import DataAccessLayer, get_dal_dependency
 
 
 router = APIRouter()
@@ -26,7 +26,7 @@ async def query_logs(
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_data_access_layer),
+    dal: DataAccessLayer = Depends(get_dal_dependency),
 ) -> dict:
     """
     Queries the logs the current user has access to see. Returned data:
@@ -139,16 +139,15 @@ async def query_logs(
             HTTP_400_BAD_REQUEST,
             f"Querying by username is not allowed",
         )
-    async with async_sessionmaker() as session:
-        if groupby:
-            logs = await query_logs_groupby(
-                model, start_date, stop_date, query_params, groupby, dal
-            )
-            next_timestamp = None
-        else:
-            logs, next_timestamp = await _query_logs(
-                model, start_date, stop_date, query_params, count, dal
-            )
+    if groupby:
+        logs = await query_logs_groupby(
+            model, start_date, stop_date, query_params, groupby, dal.db_session
+        )
+        next_timestamp = None
+    else:
+        logs, next_timestamp = await _query_logs(
+            model, start_date, stop_date, query_params, count, dal.db_session
+        )
 
     if not config["QUERY_USERNAMES"]:
         # TODO: excluding usernames from the query might be more efficient

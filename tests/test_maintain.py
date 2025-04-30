@@ -5,7 +5,7 @@ import time
 fake_jwt = "1.2.3"
 
 
-def test_create_presigned_url_log_with_timestamp(client):
+def test_create_presigned_url_log_with_timestamp(db_session, client):
     # create a log with a timestamp
     guid = "dg.hello/abc"
     request_data = {
@@ -33,10 +33,14 @@ def test_create_presigned_url_log_with_timestamp(client):
     request_timestamp = str(datetime.fromtimestamp(request_data.pop("timestamp")))
     response_timestamp = response_data.pop("timestamp").replace("T", " ")
     assert response_timestamp == request_timestamp
+
+    # Avoid comparing auto-incremented id
+    del response_data["id"]
+
     assert response_data == request_data
 
 
-def test_create_presigned_url_log_with_bad_timestamp(client):
+def test_create_presigned_url_log_with_bad_timestamp(db_session, client):
     # create a log with a timestamp
     guid = "dg.hello/abc"
     request_data = {
@@ -54,7 +58,7 @@ def test_create_presigned_url_log_with_bad_timestamp(client):
     assert res.status_code == 400, res.text
 
 
-def test_create_presigned_url_log_without_timestamp(client):
+def test_create_presigned_url_log_without_timestamp(db_session, client):
     # create a log without a timestamp (should default to "now")
     guid = "dg.hello/abc"
     request_data = {
@@ -78,6 +82,7 @@ def test_create_presigned_url_log_without_timestamp(client):
     response_data = res.json()
     assert response_data.get("data"), response_data
     response_data = response_data["data"][0]
+    del response_data["id"]  # auto-incremented id
     assert sorted(list(response_data.keys())) == sorted(
         list(request_data.keys()) + ["timestamp"]
     )
@@ -87,7 +92,7 @@ def test_create_presigned_url_log_without_timestamp(client):
     assert response_data == request_data
 
 
-def test_create_presigned_url_log_wrong_body(client):
+def test_create_presigned_url_log_wrong_body(db_session, client):
     guid = "dg.hello/abc"
 
     # create a log with missing fields
