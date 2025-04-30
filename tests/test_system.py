@@ -4,15 +4,13 @@ from audit.db import get_data_access_layer
 from sqlalchemy import text
 
 
-@pytest.mark.asyncio
-async def test_status_endpoint(app, client):
-    res = await client.get("/_status")
+def test_status_endpoint(client, db_session):
+    res = client.get("/_status")
     assert res.status_code == 200
 
 
-@pytest.mark.asyncio
-async def test_version_endpoint(client):
-    res = await client.get("/_version")
+def test_version_endpoint(client):
+    res = client.get("/_version")
     assert res.status_code == 200
 
     version = res.json().get("version")
@@ -92,39 +90,39 @@ async def test_table_partitioning(db_session, category):
         raise
     assert table_names == [category]
 
-    # # insert a July 1789 entry. It should trigger the creation of a partition
-    # await _insert_record(row_data[category], datetime(1789, 7, 14))
-    # assert await _get_table_names() == [category, f"{category}_1789_07"]
+    # insert a July 1789 entry. It should trigger the creation of a partition
+    await _insert_record(row_data[category], datetime(1789, 7, 14))
+    assert await _get_table_names() == [category, f"{category}_1789_07"]
 
-    # # insert another July 1789 entry. It should go in the existing partition
-    # await _insert_record(row_data[category], datetime(1789, 7, 30))
-    # assert await _get_table_names() == [category, f"{category}_1789_07"]
+    # insert another July 1789 entry. It should go in the existing partition
+    await _insert_record(row_data[category], datetime(1789, 7, 30))
+    assert await _get_table_names() == [category, f"{category}_1789_07"]
 
-    # # insert a Jan 2021 entry. It should trigger the creation of a partition
-    # await _insert_record(row_data[category], datetime(2021, 1, 5))
-    # assert await _get_table_names() == [
-    #     category,
-    #     f"{category}_1789_07",
-    #     f"{category}_2021_01",
-    # ]
+    # insert a Jan 2021 entry. It should trigger the creation of a partition
+    await _insert_record(row_data[category], datetime(2021, 1, 5))
+    assert await _get_table_names() == [
+        category,
+        f"{category}_1789_07",
+        f"{category}_2021_01",
+    ]
 
-    # # # after inserting the 3 entries, querying the table should return all 3
-    # data = await _get_records_from_table(category)
-    # assert data == [
-    #     ("user1", datetime(1789, 7, 14)),
-    #     ("user1", datetime(1789, 7, 30)),
-    #     ("user1", datetime(2021, 1, 5)),
-    # ]
+    # # after inserting the 3 entries, querying the table should return all 3
+    data = await _get_records_from_table(category)
+    assert data == [
+        ("user1", datetime(1789, 7, 14)),
+        ("user1", datetime(1789, 7, 30)),
+        ("user1", datetime(2021, 1, 5)),
+    ]
 
-    # # there should be no data in the main table itself. All the data is in
-    # # the partitions
-    # data = await _get_records_from_table(category, use_only=True)
-    # assert data == []
+    # there should be no data in the main table itself. All the data is in
+    # the partitions
+    data = await _get_records_from_table(category, use_only=True)
+    assert data == []
 
-    # # querying the partition tables should only return the entries whose
-    # # timestamp is in each partition's range
-    # data = await _get_records_from_table(f"{category}_1789_07")
-    # assert data == [("user1", datetime(1789, 7, 14)), ("user1", datetime(1789, 7, 30))]
+    # querying the partition tables should only return the entries whose
+    # timestamp is in each partition's range
+    data = await _get_records_from_table(f"{category}_1789_07")
+    assert data == [("user1", datetime(1789, 7, 14)), ("user1", datetime(1789, 7, 30))]
 
-    # data = await _get_records_from_table(f"{category}_2021_01")
-    # assert data == [("user1", datetime(2021, 1, 5))]
+    data = await _get_records_from_table(f"{category}_2021_01")
+    assert data == [("user1", datetime(2021, 1, 5))]

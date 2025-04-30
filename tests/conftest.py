@@ -6,8 +6,9 @@ import pytest
 import pytest_asyncio
 import requests
 from starlette.config import environ
-from httpx import AsyncClient
 from unittest.mock import AsyncMock, MagicMock, patch
+from fastapi.testclient import TestClient
+
 
 # Set AUDIT_SERVICE_CONFIG_PATH *before* loading the configuration
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -59,9 +60,9 @@ async def db_session():
         await session.rollback()  # clean up after each test
 
 
-@pytest_asyncio.fixture
-async def client(app):
-    async with AsyncClient(app=app) as client:
+@pytest.fixture
+def client(app):
+    with TestClient(app=app) as client:
         yield client
 
 
