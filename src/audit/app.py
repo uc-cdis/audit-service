@@ -96,7 +96,7 @@ async def lifespan(app: FastAPI):
 
     if config["PULL_FROM_QUEUE"] and config["QUEUE_CONFIG"].get("type") == "aws_sqs":
         logger.info("Initiating SQS pull.")
-    await intiate_sqs_pull()
+        await initiate_sqs_pull()
 
     yield
 
@@ -126,7 +126,7 @@ async def check_db_connection():
         raise
 
 
-async def intiate_sqs_pull():
+async def initiate_sqs_pull():
     """
     Start the SQS pull loop in the background."""
 

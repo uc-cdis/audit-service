@@ -22,10 +22,9 @@ gen3config = "<2"
 gunicorn = "^22.0.0"
 importlib-metadata = {version = "^1.7.0", python = "<3.8"}
 httpx = "^0.23.0"
-psycopg2-binary = "^2.8.5"
 uvicorn = "^0.18.3"
 # markupsafe is a jinja dependency. Jinja is used by gen3config.
-# The current version of jinja imports the ‘soft_unicode’ method from markupsafe.
+# The current version of jinja imports the `soft_unicode` method from markupsafe.
 # soft_unicode has been deprecated from markupsafe versions > 2.0.1.
 # Pin to <=2.0.1 for compatibility with jinja.
 markupsafe = "<=2.0.1"
