@@ -7,7 +7,7 @@ from starlette.status import (
 
 from .. import logger
 from ..auth import Auth
-from ..utils.route_utils import (
+from ..utils.validate_utils import (
     validate_login_log,
     validate_presigned_url_log,
 )

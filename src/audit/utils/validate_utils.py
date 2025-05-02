@@ -28,8 +28,8 @@ def handle_timestamp(data):
     else:
         # when hitting the API endpoint, the "timestamp" key always exists
         # because it's defined in `CreateLogInput`. It is automatically added
-        # to rows without timestamp, but we have to remove it from the dict
-        # before inserting in the DB
+        # to rows without timestamp, and is defaulted to None.
+        # Setting it to the current date and time.
         data["timestamp"] = datetime.now()
 
 

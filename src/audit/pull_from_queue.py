@@ -6,7 +6,7 @@ import traceback
 from . import logger
 from .config import config
 from .models import CATEGORY_TO_MODEL_CLASS
-from .utils.route_utils import validate_presigned_url_log, validate_login_log
+from .utils.validate_utils import validate_presigned_url_log, validate_login_log
 from .db import get_data_access_layer
 
 
