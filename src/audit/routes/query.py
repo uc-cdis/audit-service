@@ -6,7 +6,6 @@ from starlette.status import (
     HTTP_200_OK,
     HTTP_400_BAD_REQUEST,
 )
-import time
 from sqlalchemy import select, func, or_
 
 from .. import logger
@@ -14,6 +13,7 @@ from ..auth import Auth
 from ..config import config
 from ..models import CATEGORY_TO_MODEL_CLASS
 from ..db import DataAccessLayer, get_dal_dependency
+from ..utils.validate_utils import validate_and_normalize_times
 
 
 router = APIRouter()
@@ -159,62 +159,6 @@ async def query_logs(
         "nextTimeStamp": next_timestamp,
         "data": len(logs) if count else logs,
     }
-
-
-def validate_and_normalize_times(start, stop):
-    """
-    Validate the `start` and `stop` parameters, raise exceptions if the
-    validation fails, and return:
-    - start: if parameter `start` was None, override with default
-    - start_date: `start` as datetime
-    - stop: if parameter `stop` was None, override with default
-    - stop_date: `stop` as datetime
-    """
-    # don't just overwrite `stop` with the current timestamp, because the
-    # `stop` param is exclusive and when we don't specify it, we want to
-    # be able to query logs we just created
-    effective_stop = stop or int(time.time())
-
-    timebox_max_seconds = None
-    if config["QUERY_TIMEBOX_MAX_DAYS"]:
-        timebox_max_seconds = config["QUERY_TIMEBOX_MAX_DAYS"] * 86400
-
-        # if the query is time-boxed and `stop` was not specified,
-        # set `stop` to the newest allowed timestamp
-        if start and not stop:
-            stop = start + timebox_max_seconds
-            effective_stop = stop
-
-        # if the query is time-boxed and `start` was not specified,
-        # set `start` to the oldest allowed timestamp
-        if not start:
-            start = max(effective_stop - timebox_max_seconds, 0)
-
-    start_date = None
-    stop_date = None
-    try:
-        if start:
-            start_date = datetime.fromtimestamp(start)
-        if stop:
-            stop_date = datetime.fromtimestamp(stop)
-    except Exception as e:
-        msg = f"Unable to convert timestamps '{start}' and/or '{stop}' to datetimes"
-        logger.error(f"{msg}:\n{e}")
-        raise HTTPException(HTTP_400_BAD_REQUEST, msg)
-
-    if start and stop and start > stop:
-        raise HTTPException(
-            HTTP_400_BAD_REQUEST,
-            f"The start timestamp '{start}' ({start_date}) should be before the stop timestamp '{stop}' ({stop_date})",
-        )
-
-    if timebox_max_seconds and effective_stop - start > timebox_max_seconds:
-        raise HTTPException(
-            HTTP_400_BAD_REQUEST,
-            f"The difference between the start timestamp '{start}' ({start_date}) and the stop timestamp '{stop}' ({stop_date}) is greater than the configured maximum of {config['QUERY_TIMEBOX_MAX_DAYS']} days",
-        )
-
-    return start, start_date, stop, stop_date
 
 
 def add_filters(model, query, query_params, start_date=None, stop_date=None):
