@@ -6,7 +6,6 @@ from starlette.status import (
     HTTP_200_OK,
     HTTP_400_BAD_REQUEST,
 )
-from sqlalchemy import select, func, or_
 
 from .. import logger
 from ..auth import Auth
@@ -105,7 +104,10 @@ async def query_logs(
     resource_path = f"/services/audit/{category}"
     await auth.authorize("read", [resource_path])
 
-    start, start_date, stop, stop_date = validate_and_normalize_times(start, stop)
+    try:
+        start, start_date, stop, stop_date = validate_and_normalize_times(start, stop)
+    except ValueError as e:
+        raise HTTPException(HTTP_400_BAD_REQUEST, str(e))
 
     query_params = defaultdict(set)
     groupby = set()
@@ -139,15 +141,19 @@ async def query_logs(
             HTTP_400_BAD_REQUEST,
             f"Querying by username is not allowed",
         )
-    if groupby:
-        logs = await query_logs_groupby(
-            model, start_date, stop_date, query_params, groupby, dal.db_session
-        )
-        next_timestamp = None
-    else:
-        logs, next_timestamp = await _query_logs(
-            model, start_date, stop_date, query_params, count, dal.db_session
-        )
+
+    try:
+        if groupby:
+            logs = await dal.query_logs_with_grouping(
+                model, start_date, stop_date, query_params, groupby
+            )
+            next_timestamp = None
+        else:
+            logs, next_timestamp = await dal.query_logs(
+                model, start_date, stop_date, query_params, count
+            )
+    except ValueError as e:
+        raise HTTPException(HTTP_400_BAD_REQUEST, str(e))
 
     if not config["QUERY_USERNAMES"]:
         # TODO: excluding usernames from the query might be more efficient
@@ -159,107 +165,6 @@ async def query_logs(
         "nextTimeStamp": next_timestamp,
         "data": len(logs) if count else logs,
     }
-
-
-def add_filters(model, query, query_params, start_date=None, stop_date=None):
-    def _type_cast(model, field, value):
-        field_type = getattr(model, field).type.python_type
-        if field_type == datetime:
-            try:
-                return datetime.fromtimestamp(int(value))
-            except ValueError as e:
-                raise HTTPException(
-                    HTTP_400_BAD_REQUEST,
-                    f"Unable to convert value '{value}' to datetime for field '{field}': {e}",
-                )
-        try:
-            return field_type(value)
-        except ValueError as e:
-            raise HTTPException(
-                HTTP_400_BAD_REQUEST,
-                f"Value '{value}' is not valid for field '{field}': {e}",
-            )
-
-    if start_date:
-        query = query.where(model.timestamp >= start_date)
-    if stop_date:
-        query = query.where(model.timestamp < stop_date)
-
-    for field, values in query_params.items():
-        column = getattr(model, field)
-
-        # TODO for resource_paths, implement filtering in a way that
-        # would return "/A/B" when querying "/A".
-        if hasattr(column.type, "item_type"):  # ARRAY
-            query = query.where(column.overlap(values))
-        else:
-            typed_values = [_type_cast(model, field, v) for v in values]
-            query = query.where(or_(*(column == v for v in typed_values)))
-
-    return query
-
-
-async def _query_logs(model, start_date, stop_date, query_params, count, session):
-    # get all logs matching the filters and apply the page size limit
-    # Build initial query with filters
-    base_query = select(model)
-    base_query = add_filters(model, base_query, query_params, start_date, stop_date)
-    base_query = base_query.order_by(model.timestamp)
-    if not count:
-        base_query = base_query.limit(config["QUERY_PAGE_SIZE"])
-
-    result = await session.execute(base_query)
-    logs = result.scalars().all()
-
-    if not logs or count:
-        # `count` queries are not paginated: no next timestamp
-        return logs, None
-
-    # if there are more logs with the same timestamp as the last queried log, also return them.
-    # We use timestamp as the primary key for our queries and sorting.
-    # We'll have to add something like a request.uuid to the records if we want to enforce page sizes and sort order.
-    last_timestamp = logs[-1].timestamp
-
-    # Get extra logs with the same timestamp as the last one
-    extra_query = select(model)
-    extra_query = add_filters(model, extra_query, query_params, start_date, stop_date)
-    extra_query = extra_query.where(model.timestamp == last_timestamp).order_by(
-        model.timestamp
-    )
-    extra_result = await session.execute(extra_query)
-    extra_logs = extra_result.scalars().all()
-
-    if len(extra_logs) > 1:
-        logs = [log for log in logs if log.timestamp != last_timestamp]
-        logs.extend(extra_logs)
-
-    # Get the next timestamp
-    next_query = select(model)
-    next_query = add_filters(model, next_query, query_params, start_date, stop_date)
-    next_query = next_query.where(model.timestamp > last_timestamp).order_by(
-        model.timestamp
-    )
-    next_result = await session.execute(next_query)
-    next_log = next_result.scalars().first()
-
-    next_timestamp = int(datetime.timestamp(next_log.timestamp)) if next_log else None
-
-    logs = [log.to_dict() for log in logs]
-    return logs, next_timestamp
-
-
-async def query_logs_groupby(
-    model, start_date, stop_date, query_params, groupby, session
-):
-    select_list = [getattr(model, field) for field in groupby]
-    select_list.append(func.count(model.username).label("count"))
-    query = select(*select_list)
-    for field in groupby:
-        query = query.group_by(getattr(model, field))
-    query = add_filters(model, query, query_params, start_date, stop_date)
-    result = await session.execute(query)
-    logs = result.all()
-    return [dict(row._mapping) for row in logs]
 
 
 def init_app(app: FastAPI):

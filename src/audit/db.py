@@ -28,12 +28,15 @@ What do we do in this file?
     - This is what gets injected into endpoint code using FastAPI's dep injections
 """
 from contextlib import asynccontextmanager
-from typing import Any, Dict, AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncEngine
-
-
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from typing import Any, Dict, AsyncGenerator, List, Tuple, Optional
+from datetime import datetime
+from sqlalchemy import text, select, func, or_
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from audit.config import config
 from audit.models import PresignedUrl, Login
@@ -88,10 +91,128 @@ class DataAccessLayer:
         """
         await self.db_session.execute(text("SELECT 1;"))
 
-    # TODO:
-    # Implement the following methods:
-    #  - query_audit_logs
-    #  - create_logs (presigned_url, login)
+    def _apply_query_filters(
+        self, model, query, query_params, start_date=None, stop_date=None
+    ):
+        """
+        Apply filters to a SQLAlchemy query based on the provided parameters.
+        Raises ValueError for invalid field values.
+        """
+
+        def _cast_field_value(model, field, value):
+            field_type = getattr(model, field).type.python_type
+            if field_type == datetime:
+                try:
+                    return datetime.fromtimestamp(int(value))
+                except ValueError as e:
+                    raise ValueError(
+                        f"Unable to convert value '{value}' to datetime for field '{field}': {e}"
+                    )
+            try:
+                return field_type(value)
+            except ValueError as e:
+                raise ValueError(
+                    f"Value '{value}' is not valid for field '{field}': {e}"
+                )
+
+        if start_date:
+            query = query.where(model.timestamp >= start_date)
+        if stop_date:
+            query = query.where(model.timestamp < stop_date)
+
+        for field, values in query_params.items():
+            column = getattr(model, field)
+
+            # TODO for resource_paths, implement filtering in a way that
+            # would return "/A/B" when querying "/A".
+            if hasattr(column.type, "item_type"):  # ARRAY
+                query = query.where(column.overlap(values))
+            else:
+                typed_values = [_cast_field_value(model, field, v) for v in values]
+                query = query.where(or_(*(column == v for v in typed_values)))
+
+        return query
+
+    async def query_logs(
+        self, model, start_date, stop_date, query_params, count
+    ) -> Tuple[List[Dict[str, Any]], Optional[int]]:
+        """
+        Query logs from the database with pagination support.
+        Returns a tuple of (logs, next_timestamp).
+        """
+        # get all logs matching the filters and apply the page size limit
+        # Build initial query with filters
+        base_query = select(model)
+        base_query = self._apply_query_filters(
+            model, base_query, query_params, start_date, stop_date
+        )
+        base_query = base_query.order_by(model.timestamp)
+        if not count:
+            base_query = base_query.limit(config["QUERY_PAGE_SIZE"])
+
+        result = await self.db_session.execute(base_query)
+        logs = result.scalars().all()
+
+        if not logs or count:
+            # `count` queries are not paginated: no next timestamp
+            return logs, None
+
+        # if there are more logs with the same timestamp as the last queried log, also return them.
+        # We use timestamp as the primary key for our queries and sorting.
+        # We'll have to add something like a request.uuid to the records if we want to enforce page sizes and sort order.
+        last_timestamp = logs[-1].timestamp
+
+        # Get extra logs with the same timestamp as the last one
+        extra_query = select(model)
+        extra_query = self._apply_query_filters(
+            model, extra_query, query_params, start_date, stop_date
+        )
+        extra_query = extra_query.where(model.timestamp == last_timestamp).order_by(
+            model.timestamp
+        )
+        extra_result = await self.db_session.execute(extra_query)
+        extra_logs = extra_result.scalars().all()
+
+        if len(extra_logs) > 1:
+            logs = [log for log in logs if log.timestamp != last_timestamp]
+            logs.extend(extra_logs)
+
+        # Get the next timestamp
+        next_query = select(model)
+        next_query = self._apply_query_filters(
+            model, next_query, query_params, start_date, stop_date
+        )
+        next_query = next_query.where(model.timestamp > last_timestamp).order_by(
+            model.timestamp
+        )
+        next_result = await self.db_session.execute(next_query)
+        next_log = next_result.scalars().first()
+
+        next_timestamp = (
+            int(datetime.timestamp(next_log.timestamp)) if next_log else None
+        )
+
+        logs = [log.to_dict() for log in logs]
+        return logs, next_timestamp
+
+    async def query_logs_with_grouping(
+        self, model, start_date, stop_date, query_params, groupby
+    ) -> List[Dict[str, Any]]:
+        """
+        Query logs from the database with grouping support.
+        Returns a list of dictionaries containing the grouped data.
+        """
+        select_list = [getattr(model, field) for field in groupby]
+        select_list.append(func.count(model.username).label("count"))
+        query = select(*select_list)
+        for field in groupby:
+            query = query.group_by(getattr(model, field))
+        query = self._apply_query_filters(
+            model, query, query_params, start_date, stop_date
+        )
+        result = await self.db_session.execute(query)
+        logs = result.all()
+        return [dict(row._mapping) for row in logs]
 
     async def create_presigned_url_log(self, data: Dict[str, Any]) -> None:
         """
