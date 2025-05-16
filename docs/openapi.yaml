@@ -121,6 +121,7 @@ paths:
           content:
             application/json:
               schema:
+                additionalProperties: true
                 title: Response Get Status  Get
                 type: object
           description: Successful Response
@@ -135,6 +136,7 @@ paths:
           content:
             application/json:
               schema:
+                additionalProperties: true
                 title: Response Get Status  Status Get
                 type: object
           description: Successful Response
@@ -149,6 +151,7 @@ paths:
           content:
             application/json:
               schema:
+                additionalProperties: true
                 title: Response Get Version  Version Get
                 type: object
           description: Successful Response
@@ -301,6 +304,7 @@ paths:
           content:
             application/json:
               schema:
+                additionalProperties: true
                 title: Response Query Logs Log  Category  Get
                 type: object
           description: Successful Response
