@@ -5,10 +5,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from typing import AsyncIterable
 
-try:
-    from importlib.metadata import entry_points, version
-except ImportError:
-    from importlib_metadata import entry_points, version
+from importlib.metadata import entry_points, version
 
 from cdislogging import get_logger
 from gen3authz.client.arborist.async_client import ArboristClient
