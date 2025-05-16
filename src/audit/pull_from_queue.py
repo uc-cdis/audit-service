@@ -33,9 +33,6 @@ async def process_log(
             validate_login_log(data)
             await dal.create_login_log(data)
 
-    # insert log in DB
-    # await insert_row(category, data)
-
 
 async def pull_from_queue(sqs):
     failed = False

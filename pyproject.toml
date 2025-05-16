@@ -19,7 +19,6 @@ cdislogging = "<2"
 fastapi = "<1"
 gen3authz = "<3"
 gen3config = "<2"
-gino = {version = "^1.0.1", extras = ["starlette"]}
 gunicorn = "^23.0.0"
 
 importlib-metadata = {version = "^1.7.0", python = "<3.8"}
@@ -34,8 +33,10 @@ markupsafe = "<=2.0.1"
 # able to resolve deps until we pinned it. TODO remove later
 urllib3 = "^1.26"
 jinja2 = "^3.1.6"
+sqlalchemy = "^2.0.38"
 asyncpg = "^0.30.0"
 setuptools = "^78.1.0"
+greenlet = "^3.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
