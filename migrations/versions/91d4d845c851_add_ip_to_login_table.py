@@ -15,31 +15,9 @@ branch_labels = None
 depends_on = None
 
 
-def _partitions():
-    """
-    First yield parent table (login), then child partition
-    """
-    yield "login"
-
-    conn = op.get_bind()
-    part_query = """
-        SELECT child.relname
-        FROM pg_inherits
-        JOIN pg_class AS child  ON inhrelid  = child.oid
-        JOIN pg_class AS parent ON inhparent = parent.oid
-        WHERE parent.relname = 'login'
-    """
-    for (relname,) in conn.execute(part_query):
-        yield relname
-
-
 def upgrade():
-    ip_col = sa.Column("ip", sa.String(), nullable=True)
-
-    for table in _partitions():
-        op.add_column(table, ip_col.copy())
+    op.add_column("login", sa.Column("ip", sa.String(), nullable=True))
 
 
 def downgrade():
-    for table in _partitions():
-        op.drop_column(table, "ip")
+    op.drop_column("login", "ip")
