@@ -72,6 +72,7 @@ class Login(AuditLog):
     fence_idp = Column(String, nullable=True)
     shib_idp = Column(String, nullable=True)
     client_id = Column(String, nullable=True)
+    ip = Column(String, nullable=True)
 
 
 class CreateLoginLogInput(CreateLogInput):
@@ -79,6 +80,7 @@ class CreateLoginLogInput(CreateLogInput):
     fence_idp: str = None
     shib_idp: str = None
     client_id: str = None
+    ip: str = None
 
 
 # mapping for use by API endpoints

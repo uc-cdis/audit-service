@@ -11,6 +11,9 @@ components:
         idp:
           title: Idp
           type: string
+        ip:
+          title: Ip
+          type: string
         request_url:
           title: Request Url
           type: string
