@@ -9,6 +9,7 @@ Create Date: 2025-04-05 11:03:07.597617
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import text
+from audit import logger
 
 # revision identifiers, used by Alembic.
 revision = "7a838ea48eea"
@@ -52,7 +53,7 @@ def upgrade():
         # for each child table, add the 'id' column if it doesn't exist
         for row in res:
             child_table = row[0]
-            print(f"Updating child table: {child_table}")
+            logger.info(f"Updating child table: {child_table}")
             # Check if the 'id' column already exists
             result = connection.execute(
                 text(
@@ -161,4 +162,4 @@ def downgrade():
     COST 100;"""
     )
 
-    print("Reverted trigger function to previous state.")
+    logger.info("Reverted trigger function to previous state.")

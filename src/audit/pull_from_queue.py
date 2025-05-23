@@ -24,14 +24,14 @@ async def process_log(
     if not data.get("timestamp"):
         data["timestamp"] = timestamp
 
-    async with get_data_access_layer() as dal:
+    async with get_data_access_layer() as data_access_layer:
         # validate log
         if category == "presigned_url":
             validate_presigned_url_log(data)
-            await dal.create_presigned_url_log(data)
+            await data_access_layer.create_presigned_url_log(data)
         elif category == "login":
             validate_login_log(data)
-            await dal.create_login_log(data)
+            await data_access_layer.create_login_log(data)
 
 
 async def pull_from_queue(sqs):

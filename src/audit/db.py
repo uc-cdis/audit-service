@@ -40,6 +40,7 @@ from sqlalchemy.ext.asyncio import (
 
 from audit.config import config
 from audit.models import PresignedUrl, Login
+from audit import logger
 
 engine = None
 async_sessionmaker_instance = None
@@ -50,7 +51,7 @@ async def initiate_db() -> None:
     Initialize the database enigne.
     """
     global engine, async_sessionmaker_instance
-    print(f"DB_URL: {config['DB_URL']}")
+    logger.info(f"DB_URL: {config['DB_URL']}")
     engine = create_async_engine(
         url=config["DB_URL"],
         pool_size=config.get("DB_POOL_MIN_SIZE", 15),
@@ -223,7 +224,6 @@ class DataAccessLayer:
         )
         data["id"] = result.scalar()
         self.db_session.add(PresignedUrl(**data))
-        await self.db_session.commit()
 
     async def create_login_log(self, data: Dict[str, Any]) -> None:
         """
@@ -234,7 +234,6 @@ class DataAccessLayer:
         )
         data["id"] = result.scalar()
         self.db_session.add(Login(**data))
-        await self.db_session.commit()
 
 
 @asynccontextmanager
@@ -250,37 +249,6 @@ async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
             yield DataAccessLayer(session)
 
 
-async def get_dal_dependency() -> AsyncGenerator[DataAccessLayer, None]:
-    async with get_data_access_layer() as dal:
-        yield dal
-
-
-# NOTES TO BE DELETED ABOUT ALT DESIGN PATTERN TO REPLACE GINO
-
-# async def get_db() -> AsyncSession:
-#     async with AsyncSessionLocal() as session:
-#         yield session
-#
-# # In FastAPI route:
-# @app.get("/")
-# async def read_data(session: AsyncSession = Depends(get_db)):
-#     result = await session.execute(select(...))
-
-# from tenacity import retry, stop_after_attempt, wait_fixed
-
-# @retry(
-#     stop=stop_after_attempt(config["DB_RETRY_LIMIT"]),
-#     wait=wait_fixed(config["DB_RETRY_INTERVAL"])
-# )
-# async def safe_query(session: AsyncSession):
-#     try:
-#         result = await session.execute(select(...))
-#         return result
-#     except Exception as e:
-#         await session.rollback()
-#         raise
-
-# db = Gino(
-#     retry_limit=config["DB_RETRY_LIMIT"],
-#     retry_interval=config["DB_RETRY_INTERVAL"],
-# )
+async def get_data_access_layer_dependency() -> AsyncGenerator[DataAccessLayer, None]:
+    async with get_data_access_layer() as data_access_layer:
+        yield data_access_layer

@@ -11,7 +11,7 @@ from .. import logger
 from ..auth import Auth
 from ..config import config
 from ..models import CATEGORY_TO_MODEL_CLASS
-from ..db import DataAccessLayer, get_dal_dependency
+from ..db import DataAccessLayer, get_data_access_layer_dependency
 from ..utils.validate_utils import validate_and_normalize_times
 
 
@@ -25,7 +25,7 @@ async def query_logs(
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_dal_dependency),
+    data_access_layer: DataAccessLayer = Depends(get_data_access_layer_dependency),
 ) -> dict:
     """
     Queries the logs the current user has access to see. Returned data:
@@ -144,12 +144,12 @@ async def query_logs(
 
     try:
         if groupby:
-            logs = await dal.query_logs_with_grouping(
+            logs = await data_access_layer.query_logs_with_grouping(
                 model, start_date, stop_date, query_params, groupby
             )
             next_timestamp = None
         else:
-            logs, next_timestamp = await dal.query_logs(
+            logs, next_timestamp = await data_access_layer.query_logs(
                 model, start_date, stop_date, query_params, count
             )
     except ValueError as e:

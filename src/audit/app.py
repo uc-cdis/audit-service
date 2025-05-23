@@ -28,7 +28,7 @@ except Exception:
     config.load(config_path=DEFAULT_CFG_PATH)
 
 from .pull_from_queue import pull_from_queue_loop
-from .db import initiate_db, DataAccessLayer, get_dal_dependency
+from .db import initiate_db, DataAccessLayer, get_data_access_layer_dependency
 
 
 def load_modules(app: FastAPI = None) -> None:
@@ -111,8 +111,10 @@ async def check_db_connection():
         logger.debug(
             "Startup database connection test initiating. Attempting a simple query..."
         )
-        dals: AsyncIterable[DataAccessLayer] = get_dal_dependency()
-        async for data_access_layer in dals:
+        data_access_layers: AsyncIterable[
+            DataAccessLayer
+        ] = get_data_access_layer_dependency()
+        async for data_access_layer in data_access_layers:
             await data_access_layer.test_connection()
             logger.debug("Startup database connection test PASSED.")
     except Exception as exc:

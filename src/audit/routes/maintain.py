@@ -11,7 +11,7 @@ from ..utils.validate_utils import (
     validate_login_log,
     validate_presigned_url_log,
 )
-from ..db import DataAccessLayer, get_dal_dependency
+from ..db import DataAccessLayer, get_data_access_layer_dependency
 from ..models import (
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
@@ -25,7 +25,7 @@ async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_dal_dependency),
+    data_access_layer: DataAccessLayer = Depends(get_data_access_layer_dependency),
 ) -> None:
     """
     Create a new `presigned_url` audit log.
@@ -43,7 +43,7 @@ async def create_presigned_url_log(
     data = body.model_dump()
     validate_presigned_url_log(data)
     try:
-        await dal.create_presigned_url_log(data)
+        await data_access_layer.create_presigned_url_log(data)
     except Exception as e:
         logger.error(
             f"Failed to insert presigned_url audit log for URL {data.get('request_url')} at {data.get('timestamp')}"
@@ -56,7 +56,7 @@ async def create_login_log(
     body: CreateLoginLogInput,
     background_tasks: BackgroundTasks,
     auth=Depends(Auth),
-    dal: DataAccessLayer = Depends(get_dal_dependency),
+    data_access_layer: DataAccessLayer = Depends(get_data_access_layer_dependency),
 ) -> None:
     """
     Create a new `login` audit log.
@@ -74,7 +74,7 @@ async def create_login_log(
     data = body.model_dump()
     validate_login_log(data)
     try:
-        await dal.create_login_log(data)
+        await data_access_layer.create_login_log(data)
     except Exception as e:
         logger.error(
             f"Failed to insert login audit log for URL {data.get('request_url')} at {data.get('timestamp')}"

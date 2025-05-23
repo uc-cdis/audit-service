@@ -2,6 +2,7 @@ from datetime import datetime
 import pytest
 from audit.db import get_data_access_layer
 from sqlalchemy import text
+from audit import logger
 
 
 def test_status_endpoint(client, db_session):
@@ -47,13 +48,13 @@ async def test_table_partitioning(db_session, category):
         return result.fetchall()
 
     async def _insert_record(record_data, date: datetime = None):
-        async with get_data_access_layer() as dal:
+        async with get_data_access_layer() as data_access_layer:
             # insert a July 1789 entry. It should trigger the creation of a partition
             record_data["timestamp"] = date
             if category == "presigned_url":
-                await dal.create_presigned_url_log(record_data)
+                await data_access_layer.create_presigned_url_log(record_data)
             elif category == "login":
-                await dal.create_login_log(record_data)
+                await data_access_layer.create_login_log(record_data)
 
     row_data = {
         "presigned_url": {
@@ -83,7 +84,7 @@ async def test_table_partitioning(db_session, category):
     try:
         table_names = await _get_table_names()
     except Exception as e:
-        print(f"Error getting table names: {e}")
+        logger.error(f"Error getting table names: {e}")
         import traceback
 
         traceback.print_exc()

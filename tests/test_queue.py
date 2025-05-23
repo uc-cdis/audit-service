@@ -6,6 +6,7 @@ from sqlalchemy import text
 from audit.config import config
 from audit.models import CATEGORY_TO_MODEL_CLASS
 from audit.pull_from_queue import process_log, pull_from_queue
+from audit import logger
 
 
 async def get_table_results(db_session, table_name):
@@ -190,7 +191,7 @@ async def test_pull_from_queue_failure(monkeypatch, db_session):
         "action": "download",
     }
     for messages in [[bad_message], []]:
-        print(f"Messages: {messages}")
+        logger.debug(f"Messages: {messages}")
         queue = TestQueue(messages=messages)
         monkeypatch.setitem(
             config, "QUEUE_CONFIG", {"aws_sqs_config": {"sqs_url": "some_queue_url"}}
