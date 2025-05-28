@@ -18,6 +18,7 @@ import json
 from random import randint
 import requests
 import time
+from audit import logger
 
 
 base_url = "https://qa-niaid.planx-pla.net"
@@ -31,7 +32,7 @@ def get_token():
     token_url = base_url + "/user/credentials/api/access_token"
     resp = requests.post(token_url, json=creds)
     if resp.status_code != 200:
-        print(resp.text)
+        logger.error(resp.text)
         raise Exception(resp.reason)
     return resp.json()["access_token"]
 
@@ -50,7 +51,7 @@ def submit_a_lot():
     start = time.time()
     for i in range(n_logs):
         if n_logs > 500 and i % 500 == 0:
-            print(f"Submitting test data: {i}/{n_logs}")
+            logger.debug(f"Submitting test data: {i}/{n_logs}")
         guid = f"{guid_base}{randint(0, 999):03d}"
         user = f"user_{randint(0, 99):02d}"
         date = f"{randint(2000, 2025)}/{randint(1, 12)}/{randint(1, 28)}"
@@ -66,7 +67,7 @@ def submit_a_lot():
         }
         res = requests.post(f"{base_url}/audit/log/presigned_url", json=request_data)
         assert res.status_code == 201, res.text
-    print(f"Submitted {n_logs} audit logs in {time.time() - start:.1f}s")
+    logger.info(f"Submitted {n_logs} audit logs in {time.time() - start:.1f}s")
 
 
 def query_a_lot(headers):
@@ -80,17 +81,21 @@ def query_a_lot(headers):
         url = query_url
         if next_timestamp:
             url = f"{query_url}?start={next_timestamp}"
-        print(f"Querying {url}")
+        logger.debug(f"Querying {url}")
         res = requests.get(url, headers=headers)
         assert res.status_code == 200, f"{res.text}\n{url}"
         response_data = res.json()["data"]
         next_timestamp = res.json()["nextTimeStamp"]
         total_logs += len(response_data)
-        print(f"Page {i}: {len(response_data)} logs. Next timestamp: {next_timestamp}")
+        logger.debug(
+            f"Page {i}: {len(response_data)} logs. Next timestamp: {next_timestamp}"
+        )
         if not next_timestamp:
             done = True
         i += 1
-    print(f"Queried {total_logs} audit logs in {time.time() - start:.1f}s (no filters)")
+    logger.info(
+        f"Queried {total_logs} audit logs in {time.time() - start:.1f}s (no filters)"
+    )
 
 
 def query_a_lot_groupby(headers):
@@ -104,7 +109,7 @@ def query_a_lot_groupby(headers):
     response_data = res.json()["data"]
     end = time.time() - start
     count = sum(r["count"] for r in response_data)
-    print(f"Queried {count} audit logs in {end:.1f}s (groupby)")
+    logger.info(f"Queried {count} audit logs in {end:.1f}s (groupby)")
 
 
 def query_a_lot_count(headers):
@@ -117,7 +122,7 @@ def query_a_lot_count(headers):
     assert res.status_code == 200, f"{res.text}\n{url}"
     response_data = res.json()["data"]
     end = time.time() - start
-    print(f"Queried {response_data} audit logs in {end:.1f}s (count)")
+    logger.info(f"Queried {response_data} audit logs in {end:.1f}s (count)")
 
 
 if __name__ == "__main__":
