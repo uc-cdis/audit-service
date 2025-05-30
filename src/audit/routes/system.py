@@ -1,7 +1,6 @@
 from fastapi import APIRouter, FastAPI, Request, Depends
 
-from ..models import PresignedUrl
-from ..db import DataAccessLayer, get_data_access_layer_dependency
+from ..db import DataAccessLayer, get_data_access_layer
 
 
 router = APIRouter()
@@ -15,7 +14,7 @@ def get_version(request: Request) -> dict:
 @router.get("/")
 @router.get("/_status")
 async def get_status(
-    data_access_layer: DataAccessLayer = Depends(get_data_access_layer_dependency),
+    data_access_layer: DataAccessLayer = Depends(get_data_access_layer),
 ) -> dict:
     await data_access_layer.test_connection()
     return dict(status="OK")

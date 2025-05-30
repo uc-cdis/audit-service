@@ -24,7 +24,7 @@ async def process_log(
     if not data.get("timestamp"):
         data["timestamp"] = timestamp
 
-    async with get_data_access_layer() as data_access_layer:
+    async for data_access_layer in get_data_access_layer():
         # validate log
         if category == "presigned_url":
             validate_presigned_url_log(data)

@@ -48,7 +48,7 @@ async def test_table_partitioning(db_session, category):
         return result.fetchall()
 
     async def _insert_record(record_data, date: datetime = None):
-        async with get_data_access_layer() as data_access_layer:
+        async for data_access_layer in get_data_access_layer():
             # insert a July 1789 entry. It should trigger the creation of a partition
             record_data["timestamp"] = date
             if category == "presigned_url":

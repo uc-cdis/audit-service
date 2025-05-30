@@ -11,7 +11,7 @@ from .. import logger
 from ..auth import Auth
 from ..config import config
 from ..models import CATEGORY_TO_MODEL_CLASS
-from ..db import DataAccessLayer, get_data_access_layer_dependency
+from ..db import DataAccessLayer, get_data_access_layer
 from ..utils.validate_utils import validate_and_normalize_times
 
 
@@ -25,7 +25,7 @@ async def query_logs(
     start: int = Query(None, description="Start timestamp"),
     stop: int = Query(None, description="Stop timestamp"),
     auth=Depends(Auth),
-    data_access_layer: DataAccessLayer = Depends(get_data_access_layer_dependency),
+    data_access_layer: DataAccessLayer = Depends(get_data_access_layer),
 ) -> dict:
     """
     Queries the logs the current user has access to see. Returned data:

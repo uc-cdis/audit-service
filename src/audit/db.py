@@ -236,7 +236,6 @@ class DataAccessLayer:
         self.db_session.add(Login(**data))
 
 
-@asynccontextmanager
 async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
     """
     Create an AsyncSession and yield an instance of the Data Access Layer,
@@ -247,8 +246,3 @@ async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:
     async with async_sessionmaker_instance() as session:
         async with session.begin():
             yield DataAccessLayer(session)
-
-
-async def get_data_access_layer_dependency() -> AsyncGenerator[DataAccessLayer, None]:
-    async with get_data_access_layer() as data_access_layer:
-        yield data_access_layer
