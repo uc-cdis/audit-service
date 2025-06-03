@@ -23,7 +23,6 @@ router = APIRouter()
 @router.post("/log/presigned_url", status_code=HTTP_201_CREATED)
 async def create_presigned_url_log(
     body: CreatePresignedUrlLogInput,
-    background_tasks: BackgroundTasks,
     auth=Depends(Auth),
     data_access_layer: DataAccessLayer = Depends(get_data_access_layer),
 ) -> None:
@@ -54,7 +53,6 @@ async def create_presigned_url_log(
 @router.post("/log/login", status_code=HTTP_201_CREATED)
 async def create_login_log(
     body: CreateLoginLogInput,
-    background_tasks: BackgroundTasks,
     auth=Depends(Auth),
     data_access_layer: DataAccessLayer = Depends(get_data_access_layer),
 ) -> None:

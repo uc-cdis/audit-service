@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audit"
-version = "1.2.1"
+version = "2.0.0"
 description = "Gen3 Access Request Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -36,7 +36,6 @@ jinja2 = "^3.1.6"
 sqlalchemy = "^2.0.38"
 asyncpg = "^0.30.0"
 setuptools = "^78.1.0"
-greenlet = "^3.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"

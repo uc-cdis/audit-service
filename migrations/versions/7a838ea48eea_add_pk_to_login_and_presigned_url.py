@@ -1,9 +1,32 @@
-"""Add auto-increment primary key to presigned_url
+"""Update primary key to use global id sequence for partitioned tables
 
 Revision ID: 7a838ea48eea
 Revises: fd0510a0a9aa
 Create Date: 2025-04-05 11:03:07.597617
 
+This migration adds a primary key constraint to the `presigned_url` and `login`
+tables, which are partitioned using SQLAlchemy’s inheritance-based table
+partitioning.
+
+Background:
+When using inheritance-based table partitioning in SQLAlchemy,
+auto-increment behavior on the primary key (e.g., 'id') doesn't always
+work as expected. Even if the base table has an auto-incrementing
+primary key defined, the partitioned child tables do not automatically
+inherit this behavior in practice.
+
+This is because the insert occurs on the child (partitioned) table,
+bypassing the base table's sequence or identity configuration. As a
+result, the database may not generate the next ID correctly, leading to
+null or duplicate values.
+
+To resolve this:
+- A global sequence is used to explicitly generate `id` values.
+- The `id` column in each partitioned table is updated to use this sequence.
+- A primary key constraint is added to ensure data integrity.
+
+This change ensures that all inserts into partitioned tables receive
+consistent and valid primary key values.
 """
 
 from alembic import op
@@ -24,6 +47,7 @@ PARENT_TABLES = {
 
 
 def upgrade():
+
     connection = op.get_bind()
 
     for parent_table, sequence_name in PARENT_TABLES.items():

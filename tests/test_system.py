@@ -49,7 +49,6 @@ async def test_table_partitioning(db_session, category):
 
     async def _insert_record(record_data, date: datetime = None):
         async for data_access_layer in get_data_access_layer():
-            # insert a July 1789 entry. It should trigger the creation of a partition
             record_data["timestamp"] = date
             if category == "presigned_url":
                 await data_access_layer.create_presigned_url_log(record_data)
@@ -85,9 +84,6 @@ async def test_table_partitioning(db_session, category):
         table_names = await _get_table_names()
     except Exception as e:
         logger.error(f"Error getting table names: {e}")
-        import traceback
-
-        traceback.print_exc()
         raise
     assert table_names == [category]
 
@@ -107,7 +103,7 @@ async def test_table_partitioning(db_session, category):
         f"{category}_2021_01",
     ]
 
-    # # after inserting the 3 entries, querying the table should return all 3
+    # after inserting the 3 entries, querying the table should return all 3
     data = await _get_records_from_table(category)
     assert data == [
         ("user1", datetime(1789, 7, 14)),

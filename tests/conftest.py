@@ -57,7 +57,7 @@ async def db_session():
 
     async with session_maker_instance() as session:
         yield session
-        await session.rollback()  # clean up after each test
+        # await session.rollback()  # clean up after each test
 
 
 @pytest.fixture
