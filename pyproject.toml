@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audit"
-version = "1.2.1"
+version = "1.2.2"
 description = "Gen3 Access Request Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"

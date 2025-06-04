@@ -16,7 +16,7 @@ jobs:
   build_docs:
 
     runs-on: ubuntu-latest
-
+    if: github.event_name != 'pull_request'
     steps:
     - uses: actions/checkout@v2
       # with:
