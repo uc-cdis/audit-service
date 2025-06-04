@@ -50,14 +50,13 @@ async def setup_test_database():
 @pytest_asyncio.fixture(scope="function")
 async def db_session():
     """
-    Creates a new async DB session with rolled-back transaction for each test.
+    Creates a new async DB session.
     """
     await initiate_db()
     _, session_maker_instance = get_db_engine_and_sessionmaker()
 
     async with session_maker_instance() as session:
         yield session
-        # await session.rollback()  # clean up after each test
 
 
 @pytest.fixture

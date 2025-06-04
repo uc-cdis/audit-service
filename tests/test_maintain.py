@@ -5,7 +5,7 @@ import time
 fake_jwt = "1.2.3"
 
 
-def test_create_presigned_url_log_with_timestamp(db_session, client):
+def test_create_presigned_url_log_with_timestamp(client):
     # create a log with a timestamp
     guid = "dg.hello/abc"
     request_data = {
@@ -40,7 +40,7 @@ def test_create_presigned_url_log_with_timestamp(db_session, client):
     assert response_data == request_data
 
 
-def test_create_presigned_url_log_with_bad_timestamp(db_session, client):
+def test_create_presigned_url_log_with_bad_timestamp(client):
     # create a log with a timestamp
     guid = "dg.hello/abc"
     request_data = {
@@ -58,7 +58,7 @@ def test_create_presigned_url_log_with_bad_timestamp(db_session, client):
     assert res.status_code == 400, res.text
 
 
-def test_create_presigned_url_log_without_timestamp(db_session, client):
+def test_create_presigned_url_log_without_timestamp(client):
     # create a log without a timestamp (should default to "now")
     guid = "dg.hello/abc"
     request_data = {
@@ -92,7 +92,7 @@ def test_create_presigned_url_log_without_timestamp(db_session, client):
     assert response_data == request_data
 
 
-def test_create_presigned_url_log_wrong_body(db_session, client):
+def test_create_presigned_url_log_wrong_body(client):
     guid = "dg.hello/abc"
 
     # create a log with missing fields
