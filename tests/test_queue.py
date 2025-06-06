@@ -1,15 +1,24 @@
 import json
 import time
 import pytest
+from sqlalchemy import text
 
 from audit.config import config
-from audit.models import CATEGORY_TO_MODEL_CLASS, db
+from audit.models import CATEGORY_TO_MODEL_CLASS
 from audit.pull_from_queue import process_log, pull_from_queue
+from audit import logger
 
 
-@pytest.mark.skip(reason="Gino and new version of pytest-asyncio doesn't play nicely so this test is doomed, but the functionality of the app is not affected")
+async def get_table_results(db_session, table_name):
+    """
+    Helper function to get the results from a table.
+    """
+    result = await db_session.execute(text(f"select * from {table_name}"))
+    return result.fetchall()
+
+
 @pytest.mark.asyncio
-async def test_process_log_success():
+async def test_process_log_success(db_session):
     """
     Test that `process_log` properly inserts audit logs into the DB.
 
@@ -34,8 +43,9 @@ async def test_process_log_success():
     }
     await process_log(message_data, timestamp)
 
-    data = await db.all(db.text(f"select * from {category}"))
+    data = await get_table_results(db_session, table_name=category)
     assert len(data) == 1, f"1 row should have been inserted in table '{category}'"
+
     assert data[0] == (
         message_data["request_url"],
         message_data["status_code"],
@@ -46,12 +56,12 @@ async def test_process_log_success():
         message_data["resource_paths"],
         message_data["action"],
         message_data["protocol"],
+        1,  # auto-incremented id
     )
 
 
-@pytest.mark.skip(reason="Gino and new version of pytest-asyncio doesn't play nicely so this test is doomed, but the functionality of the app is not affected")
 @pytest.mark.asyncio
-async def test_process_log_failure():
+async def test_process_log_failure(db_session):
     """
     Test that `process_log` properly rejects bad audit logs.
 
@@ -78,7 +88,7 @@ async def test_process_log_failure():
         await process_log(message_data, timestamp)
 
     for category in CATEGORY_TO_MODEL_CLASS:
-        data = await db.all(db.text(f"select * from {category}"))
+        data = await get_table_results(db_session, table_name=category)
         assert (
             len(data) == 0
         ), f"Nothing should have been inserted in table '{category}'"
@@ -97,7 +107,7 @@ async def test_process_log_failure():
 
     # make sure `process_log` did not insert any rows
     for category in CATEGORY_TO_MODEL_CLASS:
-        data = await db.all(db.text(f"select * from {category}"))
+        data = await get_table_results(db_session, table_name=category)
         assert (
             len(data) == 0
         ), f"Nothing should have been inserted in table '{category}'"
@@ -147,9 +157,8 @@ class TestQueue:
 TestQueue.__test__ = False  # prevent pytest from trying to collect it
 
 
-@pytest.mark.skip(reason="Gino and new version of pytest-asyncio doesn't play nicely so this test is doomed, but the functionality of the app is not affected")
 @pytest.mark.asyncio
-async def test_pull_from_queue_success(monkeypatch):
+async def test_pull_from_queue_success(monkeypatch, db_session):
     """
     Test that `pull_from_queue` properly processes messages in the queue.
     """
@@ -165,13 +174,12 @@ async def test_pull_from_queue_success(monkeypatch):
     assert not should_sleep, "Failed to process audit logs"
 
     # make sure `process_log` inserted a row
-    data = await db.all(db.text(f"select * from presigned_url"))
+    data = await get_table_results(db_session, table_name="presigned_url")
     assert len(data) == 1, f"1 row should have been inserted in table 'presigned_url'"
 
 
-@pytest.mark.skip(reason="Gino and new version of pytest-asyncio doesn't play nicely so this test is doomed, but the functionality of the app is not affected")
 @pytest.mark.asyncio
-async def test_pull_from_queue_failure(monkeypatch):
+async def test_pull_from_queue_failure(monkeypatch, db_session):
     """
     Test that `pull_from_queue` fails when it should and sleeps when it should.
     """
@@ -183,7 +191,7 @@ async def test_pull_from_queue_failure(monkeypatch):
         "action": "download",
     }
     for messages in [[bad_message], []]:
-        print(f"Messages: {messages}")
+        logger.debug(f"Messages: {messages}")
         queue = TestQueue(messages=messages)
         monkeypatch.setitem(
             config, "QUEUE_CONFIG", {"aws_sqs_config": {"sqs_url": "some_queue_url"}}
@@ -200,7 +208,7 @@ async def test_pull_from_queue_failure(monkeypatch):
         assert should_sleep, err_msg
 
         # make sure `process_log` did not insert any rows
-        data = await db.all(db.text(f"select * from presigned_url"))
+        data = await get_table_results(db_session, table_name="presigned_url")
         assert (
             len(data) == 0
         ), f"Nothing should have been inserted in table 'presigned_url'"

@@ -8,7 +8,8 @@ Create timestamp: 2021-02-02 18:11:46.518674
 from alembic import op
 from datetime import datetime
 import sqlalchemy as sa
-
+from sqlalchemy.sql import text
+from audit import logger
 
 # revision identifiers, used by Alembic.
 revision = "d5b18185c458"
@@ -24,7 +25,7 @@ def create_partition_function():
     We partition the table by month: for example, rows with timestamp
     "2021_01_XX" are inserted into partition "<table name>_2021_01".
     """
-    print("  Creating `create_partition_and_insert` function")
+    logger.info("  Creating `create_partition_and_insert` function")
     procedure_stmt = """CREATE OR REPLACE FUNCTION create_partition_and_insert() RETURNS trigger AS
         $BODY$
             DECLARE
@@ -48,7 +49,7 @@ def create_partition_function():
 
 def setup_table_partitioning(table_name):
     trigger_name = f"{table_name}_partition_trigger"
-    print(f"  Creating `{trigger_name}` trigger")
+    logger.info(f"  Creating `{trigger_name}` trigger")
     trigger_stmt = f"""CREATE TRIGGER {trigger_name}
     BEFORE INSERT ON {table_name}
     FOR EACH ROW EXECUTE PROCEDURE create_partition_and_insert();"""
@@ -57,20 +58,20 @@ def setup_table_partitioning(table_name):
 
 def delete_table_partitioning(table_name):
     trigger_name = f"{table_name}_partition_trigger"
-    print(f"  Deleting `{trigger_name}` trigger")
-    op.execute(f"DROP TRIGGER {trigger_name} on {table_name}")
+    logger.info(f"  Deleting `{trigger_name}` trigger")
+    op.execute(f"DROP TRIGGER IF EXISTS {trigger_name} on {table_name}")
 
     stmt = f"""SELECT child.relname FROM pg_inherits JOIN pg_class AS child ON (inhrelid=child.oid) JOIN pg_class as parent ON (inhparent=parent.oid) where parent.relname='{table_name}'"""
     conn = op.get_bind()
-    res = conn.execute(stmt)
+    res = conn.execute(text(stmt))
     partition_names = [table_data[0] for table_data in res.fetchall()]
     for partition in partition_names:
-        print(f"  Deleting `{table_name}` table partition `{partition}`")
+        logger.info(f"  Deleting `{table_name}` table partition `{partition}`")
         op.drop_table(partition)
 
 
 def delete_partition_function():
-    print("  Deleting `create_partition_and_insert` function")
+    logger.info("  Deleting `create_partition_and_insert` function")
     op.execute("DROP FUNCTION create_partition_and_insert()")
 
 
@@ -78,7 +79,7 @@ def upgrade():
     create_partition_function()
 
     table_name = "presigned_url"
-    print(f"  Creating `{table_name}` table")
+    logger.info(f"  Creating `{table_name}` table")
     op.create_table(
         table_name,
         sa.Column("request_url", sa.String(), nullable=False),
@@ -96,7 +97,7 @@ def upgrade():
     setup_table_partitioning(table_name)
 
     table_name = "login"
-    print(f"  Creating `{table_name}` table")
+    logger.info(f"  Creating `{table_name}` table")
     op.create_table(
         table_name,
         sa.Column("request_url", sa.String(), nullable=False),
@@ -117,12 +118,12 @@ def upgrade():
 def downgrade():
     table_name = "presigned_url"
     delete_table_partitioning(table_name)
-    print(f"  Deleting `{table_name}` table")
+    logger.info(f"  Deleting `{table_name}` table")
     op.drop_table(table_name)
 
     table_name = "login"
     delete_table_partitioning(table_name)
-    print(f"  Deleting `{table_name}` table")
+    logger.info(f"  Deleting `{table_name}` table")
     op.drop_table(table_name)
 
     delete_partition_function()

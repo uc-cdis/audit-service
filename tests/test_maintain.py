@@ -33,6 +33,10 @@ def test_create_presigned_url_log_with_timestamp(client):
     request_timestamp = str(datetime.fromtimestamp(request_data.pop("timestamp")))
     response_timestamp = response_data.pop("timestamp").replace("T", " ")
     assert response_timestamp == request_timestamp
+
+    # Avoid comparing auto-incremented id
+    del response_data["id"]
+
     assert response_data == request_data
 
 
@@ -78,6 +82,7 @@ def test_create_presigned_url_log_without_timestamp(client):
     response_data = res.json()
     assert response_data.get("data"), response_data
     response_data = response_data["data"][0]
+    del response_data["id"]  # auto-incremented id
     assert sorted(list(response_data.keys())) == sorted(
         list(request_data.keys()) + ["timestamp"]
     )

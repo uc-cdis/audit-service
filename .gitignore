@@ -98,3 +98,6 @@ venv.bak/
 .idea/
 
 *.DS_Store
+
+# VSCode
+.vscode/
