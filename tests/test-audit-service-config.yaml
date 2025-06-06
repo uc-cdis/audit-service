@@ -3,7 +3,7 @@ TEST_KEEP_DB: false
 DOCS_URL_PREFIX: /
 
 # These are required for automated testing (see .github/workflows/ci.yaml)
-DB_DRIVER: postgresql
+DB_DRIVER: postgresql+asyncpg
 DB_HOST: localhost
 DB_PORT: 5432
 DB_USER: postgres

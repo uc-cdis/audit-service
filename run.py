@@ -10,6 +10,7 @@ import uvicorn
 import yaml
 
 from audit.app import app_init
+from audit import logger
 
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -22,6 +23,6 @@ if __name__ == "__main__":
         yaml.Dumper.ignore_aliases = lambda *args: True
         with open(path, "w+") as f:
             yaml.dump(schema, f, default_flow_style=False)
-        print(f"Saved docs at {path}")
+        logger.info(f"Saved docs at {path}")
     else:
         uvicorn.run("audit.asgi:app", reload=True)

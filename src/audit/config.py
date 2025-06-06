@@ -15,7 +15,7 @@ class AuditServiceConfig(Config):
     def post_process(self) -> None:
         # generate DB_URL from DB configs
         self["DB_URL"] = make_url(
-            URL(
+            URL.create(
                 drivername=os.environ.get("DB_DRIVER", self["DB_DRIVER"]),
                 host=os.environ.get("DB_HOST", self["DB_HOST"]),
                 port=os.environ.get("DB_PORT", self["DB_PORT"]),
