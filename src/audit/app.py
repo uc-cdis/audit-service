@@ -2,11 +2,10 @@ import asyncio
 import httpx
 import os
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from typing import AsyncIterable
 
-try:
-    from importlib.metadata import entry_points, version
-except ImportError:
-    from importlib_metadata import entry_points, version
+from importlib.metadata import entry_points, version
 
 from cdislogging import get_logger
 from gen3authz.client.arborist.async_client import ArboristClient
@@ -28,8 +27,8 @@ except Exception:
     logger.warning("Unable to load config, using default config...", exc_info=True)
     config.load(config_path=DEFAULT_CFG_PATH)
 
-from .models import db
 from .pull_from_queue import pull_from_queue_loop
+from .db import initiate_db, DataAccessLayer, get_data_access_layer
 
 
 def load_modules(app: FastAPI = None) -> None:
@@ -51,6 +50,7 @@ def app_init() -> FastAPI:
         title="Audit Service",
         version=version("audit"),
         debug=debug,
+        lifespan=lifespan,
         # root_path=config["DOCS_URL_PREFIX"],
     )
     app.add_middleware(ClientDisconnectMiddleware)
@@ -68,24 +68,64 @@ def app_init() -> FastAPI:
     else:
         app.arborist_client = ArboristClient(logger=logger)
 
-    db.init_app(app)
     load_modules(app)
 
-    @app.on_event("startup")
-    async def startup_event():
-        if (
-            config["PULL_FROM_QUEUE"]
-            and config["QUEUE_CONFIG"].get("type") == "aws_sqs"
-        ):
-            loop = asyncio.get_running_loop()
-            loop.create_task(pull_from_queue_loop())
-            loop.set_exception_handler(handle_exception)
+    return app
 
-    @app.on_event("shutdown")
-    async def shutdown_event():
-        logger.info("Closing async client.")
-        await app.async_client.aclose()
-        logger.info("[Completed] Closing async client.")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Parse the configuration, setup and instantiate necessary classes.
+
+    This is FastAPI's way of dealing with startup logic before the app
+    starts receiving requests.
+
+    https://fastapi.tiangolo.com/advanced/events/#lifespan
+
+    Args:
+        app (fastapi.FastAPI): The FastAPI app object
+    """
+    # startup
+
+    await initiate_db()
+    await check_db_connection()
+
+    if config["PULL_FROM_QUEUE"] and config["QUEUE_CONFIG"].get("type") == "aws_sqs":
+        logger.info("Initiating SQS pull.")
+        await initiate_sqs_pull()
+
+    yield
+
+    # teardown
+    logger.info("Closing async client.")
+    await app.async_client.aclose()
+    logger.info("[Completed] Closing async client.")
+
+
+async def check_db_connection():
+    """
+    Simple check to ensure we can talk to the db
+    """
+    try:
+        logger.debug(
+            "Startup database connection test initiating. Attempting a simple query..."
+        )
+        data_access_layers: AsyncIterable[DataAccessLayer] = get_data_access_layer()
+        async for data_access_layer in data_access_layers:
+            await data_access_layer.test_connection()
+            logger.debug("Startup database connection test PASSED.")
+    except Exception as exc:
+        logger.exception(
+            "Startup database connection test FAILED. Unable to connect to the configured database."
+        )
+        logger.debug(exc)
+        raise
+
+
+async def initiate_sqs_pull():
+    """
+    Start the SQS pull loop in the background."""
 
     def handle_exception(loop, context):
         """
@@ -94,11 +134,13 @@ def app_init() -> FastAPI:
         """
         msg = context.get("exception", context.get("message"))
         logger.error(f"Caught exception: {msg}")
-        for index, task in enumerate(asyncio.all_tasks()):
+        for _, task in enumerate(asyncio.all_tasks()):
             task.cancel()
         logger.info("Closed all tasks")
 
-    return app
+    loop = asyncio.get_running_loop()
+    loop.create_task(pull_from_queue_loop())
+    loop.set_exception_handler(handle_exception)
 
 
 class ClientDisconnectMiddleware:
