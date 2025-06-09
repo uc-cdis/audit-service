@@ -1,16 +1,17 @@
 """add ip to login table
 
-Revision ID: 91d4d845c851
-Revises: fd0510a0a9aa
-Create Date: 2025-05-20 19:58:22.881579
+Revision ID: 5198001b2ab8
+Revises: 7a838ea48eea
+Create Date: 2025-06-09 01:40:17.421600
 
 """
 from alembic import op
 import sqlalchemy as sa
 
 
-revision = "91d4d845c851"
-down_revision = "fd0510a0a9aa"
+# revision identifiers, used by Alembic.
+revision = "5198001b2ab8"
+down_revision = "7a838ea48eea"
 branch_labels = None
 depends_on = None
 
