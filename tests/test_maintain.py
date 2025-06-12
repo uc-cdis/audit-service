@@ -172,4 +172,5 @@ def test_create_login_log_with_ip(client):
     request_timestamp = str(datetime.fromtimestamp(request_data.pop("timestamp")))
     response_timestamp = response_data.pop("timestamp").replace("T", " ")
     assert response_timestamp == request_timestamp
+    del response_data["id"]
     assert response_data == request_data
