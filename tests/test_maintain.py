@@ -196,13 +196,3 @@ def test_create_login_log_with_none_values(client):
 
     res = client.post("/log/login", json=request_data)
     assert res.status_code == 201, res.text
-    # res = client.get("/log/login", headers={"Authorization": f"bearer {fake_jwt}"})
-    # assert res.status_code == 200, res.text
-    # response_data = res.json()
-    # assert response_data.get("data"), response_data
-    # response_data = response_data["data"][0]
-    # request_timestamp = str(datetime.fromtimestamp(request_data.pop("timestamp")))
-    # response_timestamp = response_data.pop("timestamp").replace("T", " ")
-    # assert response_timestamp == request_timestamp
-    # del response_data["id"]
-    # assert response_data == request_data
