@@ -3,11 +3,15 @@ components:
     CreateLoginLogInput:
       properties:
         client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Client Id
-          type: string
         fence_idp:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Fence Idp
-          type: string
         idp:
           title: Idp
           type: string
@@ -18,8 +22,10 @@ components:
           title: Request Url
           type: string
         shib_idp:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Shib Idp
-          type: string
         status_code:
           title: Status Code
           type: integer
