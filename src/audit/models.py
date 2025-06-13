@@ -3,6 +3,7 @@ import sqlalchemy
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import declarative_base
+from typing import Optional
 
 from .config import config
 
@@ -73,9 +74,9 @@ class CreatePresignedUrlLogInput(CreateLogInput):
 
 class CreateLoginLogInput(CreateLogInput):
     idp: str
-    fence_idp: str = None
-    shib_idp: str = None
-    client_id: str = None
+    fence_idp: Optional[str] = None
+    shib_idp: Optional[str] = None
+    client_id: Optional[str] = None
     ip: str = None
 
 
