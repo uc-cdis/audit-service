@@ -179,7 +179,7 @@ def test_create_login_log_with_ip(client):
 def test_create_login_log_with_none_values(client):
     """
     Fence may send a payload with None values for client_id, fence_idp, and shib_idp
-    Ensure a login log with None values TODO
+    Ensure a login log with None values return 201
     """
     request_data = {
         "client_id": None,
