@@ -145,7 +145,7 @@ def test_create_wrong_category(client):
     assert res.status_code == 405, res.text
 
 
-def test_create_login_log_with_ip(client):
+def test_create_login_log(client):
     """
     Ensure a login log that includes an IP address is posted and correct
     """
