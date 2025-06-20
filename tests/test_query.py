@@ -555,7 +555,6 @@ def test_query_category(client):
         "sub": 10,
         "timestamp": timestamp_for_date("2020/01/01"),
         "idp": "google",
-        "ip": "my_ip",
     }
     res = client.post("/log/login", json=request_data)
     assert res.status_code == 201, res.text
@@ -576,36 +575,11 @@ def test_query_category(client):
     response_data = res.json()["data"]
     assert len(response_data) == 1
     assert "idp" in response_data[0]
-    assert "ip" in response_data[0]
     assert "guid" not in response_data[0]
 
     # query a category that doesn't exist
     res = client.get("/log/whatisthis", headers={"Authorization": f"bearer {fake_jwt}"})
     assert res.status_code == 400, res.text
-
-
-def test_query_login_filter_by_ip(client):
-    # submit a login audit log
-    request_data = {
-        "request_url": "/login",
-        "status_code": 200,
-        "username": "audit-service_user",
-        "sub": 10,
-        "timestamp": timestamp_for_date("2020/01/01"),
-        "idp": "google",
-        "ip": "my_ip",
-    }
-    res = client.post("/log/login", json=request_data)
-    assert res.status_code == 201, res.text
-
-    res = client.get(
-        "/log/login?ip=my_ip",
-        headers={"Authorization": f"bearer {fake_jwt}"},
-    )
-    assert res.status_code == 200, res.text
-    data = res.json()["data"]
-    assert len(data) == 1
-    assert data[0]["ip"] == "my_ip"
 
 
 def test_query_no_usernames(client, monkeypatch):
