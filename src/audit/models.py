@@ -3,7 +3,6 @@ import sqlalchemy
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import declarative_base
-from typing import Optional
 
 from .config import config
 
@@ -51,7 +50,6 @@ class Login(AuditLog):
     fence_idp = Column(String, nullable=True)
     shib_idp = Column(String, nullable=True)
     client_id = Column(String, nullable=True)
-    ip = Column(String, nullable=True)
 
 
 # Pydantic input models for API endpoints
@@ -74,10 +72,9 @@ class CreatePresignedUrlLogInput(CreateLogInput):
 
 class CreateLoginLogInput(CreateLogInput):
     idp: str
-    fence_idp: Optional[str] = None
-    shib_idp: Optional[str] = None
-    client_id: Optional[str] = None
-    ip: str = None
+    fence_idp: str = None
+    shib_idp: str = None
+    client_id: str = None
 
 
 # mapping for use by API endpoints
