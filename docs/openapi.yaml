@@ -16,8 +16,10 @@ components:
           title: Idp
           type: string
         ip:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Ip
-          type: string
         request_url:
           title: Request Url
           type: string
@@ -135,6 +137,24 @@ paths:
                 type: object
           description: Successful Response
       summary: Get Status
+      tags:
+      - System
+  /_schema:
+    get:
+      description: 'GET audit service schema model versions and details
+
+        404s should assume legacy model'
+      operationId: get_schema__schema_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Schema  Schema Get
+                type: object
+          description: Successful Response
+      summary: Get Schema
       tags:
       - System
   /_status:
