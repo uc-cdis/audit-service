@@ -77,7 +77,7 @@ class CreateLoginLogInput(CreateLogInput):
     fence_idp: Optional[str] = None
     shib_idp: Optional[str] = None
     client_id: Optional[str] = None
-    ip: str = None
+    ip: Optional[str] = None
 
 
 # mapping for use by API endpoints
