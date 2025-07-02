@@ -18,6 +18,49 @@ def test_version_endpoint(client):
     assert version
 
 
+def test_schema_endpoint_basic(client):
+    """
+    Ensure schema endpoint returns version and model info for curent audit log types
+    """
+    resp = client.get("/_schema")
+    assert resp.status_code == 200, resp.text
+
+    body = resp.json()
+    assert set(body) == {"login", "presigned_url"}
+
+    for category, info in body.items():
+        assert isinstance(info["version"], int)
+        assert isinstance(info["model"], dict)
+
+
+def test_schema_endpoint_login_details(client):
+    """
+    Ensure schema endpoint returns current version and fields types
+    """
+    log_fields = ["request_url", "status_code", "timestamp", "username", "sub"]
+    login_fields = ["idp", "fence_idp", "shib_idp", "client_id", "ip"]
+    presigned_url_fields = ["guid", "resource_paths", "action", "protocol"]
+
+    resp = client.get("/_schema")
+    body = resp.json()
+    login_schema = body["login"]
+    presigned_url_schema = body["presigned_url"]
+
+    assert login_schema["version"] == 2
+    model = login_schema["model"]
+
+    for field in log_fields + login_fields:
+        assert field in model
+
+    assert model.get("ip", "").endswith("?")
+
+    assert presigned_url_schema["version"] == 1
+    model = presigned_url_schema["model"]
+
+    for field in log_fields + presigned_url_fields:
+        assert field in model
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("category", ["login", "presigned_url"])
 async def test_table_partitioning(db_session, category):
