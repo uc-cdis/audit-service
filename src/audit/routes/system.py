@@ -55,8 +55,8 @@ def _get_pydantic_model(model_class) -> dict[str, str]:
 @router.get("/_schema")
 def get_schema() -> dict:
     """
-    GET audit service schema model versions and details
-    404s should assume legacy model
+    GET audit service schema model versions and details.
+    404s should assume legacy model.
     """
     return {
         "login": {
