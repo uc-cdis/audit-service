@@ -7,7 +7,7 @@ from ..models import CreateLoginLogInput, CreatePresignedUrlLogInput
 
 router = APIRouter()
 
-# Increment versions on schema/model change
+# Increment versions on schema/model change.
 CURRENT_SCHEMA_VERSIONS = {
     "login": 2,
     "presigned_url": 1,
