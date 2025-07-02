@@ -141,9 +141,9 @@ paths:
       - System
   /_schema:
     get:
-      description: 'GET audit service schema model versions and details
+      description: 'GET audit service schema model versions and details.
 
-        404s should assume legacy model'
+        404s should assume legacy model.'
       operationId: get_schema__schema_get
       responses:
         '200':
