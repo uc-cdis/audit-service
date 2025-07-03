@@ -18,6 +18,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Skip for docs-only changes
+      run: |
+        git fetch origin ${{ github.event.before }} --depth=1
+        CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+        echo "Changed files:"
+        echo "$CHANGED"
+
+        if echo "$CHANGED" | grep -v '^docs/' > /dev/null; then
+          echo "Non-docs changes found. Continuing workflow..."
+        else
+          echo "Only docs/ changed. Skipping workflow."
+          exit 0
+        fi
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.head_ref }}
