@@ -7,8 +7,6 @@ DEFAULT_CFG_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "config-default.yaml"
 )
 
-# dummy comment
-
 
 class AuditServiceConfig(Config):
     def __init__(self, *args, **kwargs):
