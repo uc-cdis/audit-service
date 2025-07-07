@@ -5,5 +5,3 @@
 - Use `alembic` to create a new migration. Edit the new migration file to create a new table for this category. The new table should be partitioned like the other audit log tables.
 - In `src/audit/routes/maintain.py`, import the newly created input class and create a new route endpoint that takes the input class as parameter.
 - Run `python run.py openapi` to update the API documentation.
-
-dummy doc
