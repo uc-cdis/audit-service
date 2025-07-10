@@ -15,7 +15,7 @@ jobs:
         token: ${{ secrets.PLANXCYBORG_PAT }}
     - name: Skip for docs-only changes
       run: |
-        git fetch -q
+        git fetch
         CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -v '@')
         echo "Changed files:"
         echo "$CHANGED"
