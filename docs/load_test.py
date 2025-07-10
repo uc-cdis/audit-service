@@ -10,7 +10,6 @@ and comment out the following block:
 - Make sure the environment's audit-service configuration file does not set
 `QUERY_TIMEBOX_MAX_DAYS` since that would stop you from querying all the
 logs at once.
-xxx
 """
 
 
