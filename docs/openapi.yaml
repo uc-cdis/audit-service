@@ -3,7 +3,7 @@ components:
     CreateLoginLogInput:
       properties:
         client_id:
-          title: Client Idxy
+          title: Client Id
           type: string
         fence_idp:
           title: Fence Idp
