@@ -24,31 +24,33 @@ jobs:
           echo "Non-docs changes found. Continuing workflow..."
         else
           echo "Only docs/ changed. Skipping workflow."
-          exit 0
+          echo "SKIP_BUILD=true" >> $GITHUB_ENV
         fi
-
     - name: Set up Python 3.9
+      if: ${{ env.SKIP_BUILD != 'true' }}
       uses: actions/setup-python@v1
       with:
         python-version: 3.9
     - uses: actions/cache@preview
+      if: ${{ env.SKIP_BUILD != 'true' }}
       with:
         path: ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-poetry-${{ hashFiles(format('{0}{1}', github.workspace, '/poetry.lock')) }}
         restore-keys: |
           ${{ runner.os }}-poetry-
     - name: Install dependencies
+      if: ${{ env.SKIP_BUILD != 'true' }}
       run: |
         pip install poetry
         poetry install -vv --no-interaction
         poetry show -vv
     - name: Build docs
+      if: ${{ env.SKIP_BUILD != 'true' }}
       run: AUDIT_SERVICE_CONFIG_PATH=src/audit/config-default.yaml poetry run python run.py openapi
-
     - uses: stefanzweifel/git-auto-commit-action@v4.1.2
+      if: ${{ env.SKIP_BUILD != 'true' }}
       with:
         commit_message: Apply automatic documentation changes
-
         # Optional name of the branch the commit should be pushed to
         # Required if Action is used in Workflow listening to the `pull_request` event
         branch: ${{ github.head_ref }}
