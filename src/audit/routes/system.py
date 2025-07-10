@@ -12,7 +12,7 @@ def get_version(request: Request) -> dict:
 
 
 @router.get("/")
-@router.get("/_statusxxx")
+@router.get("/_status")
 async def get_status(
     data_access_layer: DataAccessLayer = Depends(get_data_access_layer),
 ) -> dict:
