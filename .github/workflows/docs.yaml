@@ -16,17 +16,17 @@ jobs:
     - name: Skip for docs-only changes
       run: |
         git fetch -q
-        CHANGES=$(git diff --name-only origin/${{ github.base_ref }} HEAD)
-        echo "$CHANGES"
-        CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -v '@')
+        CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -v '@' || true)
         echo "Changed files:"
         echo "$CHANGED"
-
-        if echo "$CHANGED" | grep -v '^docs/' > /dev/null; then
+        if [ -z "$CHANGED" ]; then
+          echo "No changes detected. Skipping workflow."
+          echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+        elif echo "$CHANGED" | grep -v '^docs/' > /dev/null; then
           echo "Non-docs changes found. Continuing workflow..."
         else
           echo "Only docs/ changed. Skipping workflow."
-          echo "SKIP_BUILD=true" >> $GITHUB_ENV
+          echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
         fi
     - name: Set up Python 3.9
       if: ${{ env.SKIP_BUILD != 'true' }}
