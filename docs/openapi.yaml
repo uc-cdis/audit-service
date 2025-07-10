@@ -128,16 +128,16 @@ paths:
       summary: Get Status
       tags:
       - System
-  /_statusxxx:
+  /_status:
     get:
-      operationId: get_status__statusxxx_get
+      operationId: get_status__status_get
       responses:
         '200':
           content:
             application/json:
               schema:
                 additionalProperties: true
-                title: Response Get Status  Statusxxx Get
+                title: Response Get Status  Status Get
                 type: object
           description: Successful Response
       summary: Get Status
