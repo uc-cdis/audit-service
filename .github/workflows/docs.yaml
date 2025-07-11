@@ -1,16 +1,6 @@
 name: Build docs
 
-on:
-  # DON'T run on pushed commits to master, ONLY on new commits on pull requests
-  push:
-    branches-ignore:
-      - 'master'
-    paths-ignore:
-      - 'docs/**'
-  # Use push trigger since 'paths-ignore' are not respected as expected by 'on.pull_request.paths-ignore', see https://github.com/actions/runner/issues/2324
-  pull_request:
-    types: [opened]
-    branches: [ master ]
+on: pull_request
 
 jobs:
   build_docs:
@@ -23,28 +13,46 @@ jobs:
         ref: ${{ github.head_ref }}
         # Passing a PAT from the PlanXCybrog bot account here, since otherwise commits pushed by this action won't be able to trigger other actions, see https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#commits-made-by-this-action-do-not-trigger-new-workflow-runs
         token: ${{ secrets.PLANXCYBORG_PAT }}
+    - name: Skip for docs-only changes
+      run: |
+        git fetch -q
+        CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -v '@' || true)
+        echo "Changed files:"
+        echo "$CHANGED"
+        if [ -z "$CHANGED" ]; then
+          echo "No changes detected. Skipping workflow."
+          echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+        elif echo "$CHANGED" | grep -v '^docs/' > /dev/null; then
+          echo "Non-docs changes found. Continuing workflow..."
+        else
+          echo "Only docs/ changed. Skipping workflow."
+          echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+        fi
     - name: Set up Python 3.9
+      if: ${{ env.SKIP_BUILD != 'true' }}
       uses: actions/setup-python@v1
       with:
         python-version: 3.9
     - uses: actions/cache@preview
+      if: ${{ env.SKIP_BUILD != 'true' }}
       with:
         path: ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-poetry-${{ hashFiles(format('{0}{1}', github.workspace, '/poetry.lock')) }}
         restore-keys: |
           ${{ runner.os }}-poetry-
     - name: Install dependencies
+      if: ${{ env.SKIP_BUILD != 'true' }}
       run: |
         pip install poetry
         poetry install -vv --no-interaction
         poetry show -vv
     - name: Build docs
+      if: ${{ env.SKIP_BUILD != 'true' }}
       run: AUDIT_SERVICE_CONFIG_PATH=src/audit/config-default.yaml poetry run python run.py openapi
-
     - uses: stefanzweifel/git-auto-commit-action@v4.1.2
+      if: ${{ env.SKIP_BUILD != 'true' }}
       with:
         commit_message: Apply automatic documentation changes
-
         # Optional name of the branch the commit should be pushed to
         # Required if Action is used in Workflow listening to the `pull_request` event
         branch: ${{ github.head_ref }}
