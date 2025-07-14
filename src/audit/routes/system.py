@@ -9,14 +9,14 @@ router = APIRouter()
 
 # Increment versions on schema/model change.
 CURRENT_SCHEMA_VERSIONS = {
-    "login": 2,
-    "presigned_url": 1,
+    "login": 2.0,
+    "presigned_url": 1.0,
 }
 
 
 def _pretty_type(t) -> str:
     """
-    Human-readable short type name
+    Human-readable short type name. Includes a question mark for optional fields.
 
     str                -> "str"
     list[str]          -> "list"
@@ -28,7 +28,11 @@ def _pretty_type(t) -> str:
     if origin is Union and type(None) in get_args(t):
         # filter out NoneType and assume first remaining arg as base, or fallback to object
         non_none_args = [a for a in get_args(t) if a is not type(None)]
-        base = non_none_args[0] if non_none_args else object
+        if not non_none_args:
+            raise TypeError(
+                "Optional type must include at least one non-None type, e.g. Union[str, None]"
+            )
+        base = non_none_args[0]
         return f"{getattr(base, '__name__', str(base))}?"
 
     # handle parameterized generic type

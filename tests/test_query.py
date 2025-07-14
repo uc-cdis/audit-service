@@ -585,27 +585,40 @@ def test_query_category(client):
 
 
 def test_query_login_filter_by_ip(client):
-    # submit a login audit log
-    request_data = {
+    """
+    Submit two login logs with different IPs and make sure the API
+    returns only the log that matches the requested IP filter.
+    """
+    base = {
         "request_url": "/login",
         "status_code": 200,
         "username": "audit-service_user",
         "sub": 10,
         "timestamp": timestamp_for_date("2020/01/01"),
         "idp": "google",
-        "ip": "my_ip",
     }
-    res = client.post("/log/login", json=request_data)
-    assert res.status_code == 201, res.text
+
+    for ip in ("ip_one", "ip_two"):
+        res = client.post("/log/login", json={**base, "ip": ip})
+        assert res.status_code == 201, res.text
 
     res = client.get(
-        "/log/login?ip=my_ip",
+        "/log/login?ip=ip_one",
         headers={"Authorization": f"bearer {fake_jwt}"},
     )
     assert res.status_code == 200, res.text
     data = res.json()["data"]
     assert len(data) == 1
-    assert data[0]["ip"] == "my_ip"
+    assert data[0]["ip"] == "ip_one"
+
+    res = client.get(
+        "/log/login?ip=ip_two",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    data = res.json()["data"]
+    assert len(data) == 1
+    assert data[0]["ip"] == "ip_two"
 
 
 def test_query_no_usernames(client, monkeypatch):

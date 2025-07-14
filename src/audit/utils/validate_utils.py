@@ -53,7 +53,7 @@ def validate_login_log(data):
     logger.debug(f"Creating `login` audit log. Received body: {data}")
     handle_timestamp(data)
     if data.get("ip") is None:
-        logger.warning("login log received in legacy format (missing ip)")
+        logger.warning("login log received in deprecated legacy format (missing ip)")
 
 
 def validate_and_normalize_times(start, stop):

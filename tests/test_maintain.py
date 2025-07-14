@@ -1,5 +1,6 @@
 from datetime import datetime
 import time
+import pytest
 
 
 fake_jwt = "1.2.3"
@@ -145,7 +146,8 @@ def test_create_wrong_category(client):
     assert res.status_code == 405, res.text
 
 
-def test_create_login_log(client):
+@pytest.mark.parametrize("include_ip", [True, False])
+def test_create_login_log(client, include_ip):
     """
     Ensure a login log that includes an IP address is posted and correct
     """
@@ -159,8 +161,10 @@ def test_create_login_log(client):
         "sub": 10,
         "timestamp": int(time.time()),
         "username": "audit-service_user",
-        "ip": "my_ip",
     }
+
+    if include_ip:
+        request_data["ip"] = "my_ip"
 
     res = client.post("/log/login", json=request_data)
     assert res.status_code == 201, res.text
@@ -173,6 +177,10 @@ def test_create_login_log(client):
     response_timestamp = response_data.pop("timestamp").replace("T", " ")
     assert response_timestamp == request_timestamp
     del response_data["id"]
+
+    if not include_ip:
+        assert response_data.pop("ip") is None
+
     assert response_data == request_data
 
 

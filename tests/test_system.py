@@ -2,7 +2,23 @@ from datetime import datetime
 import pytest
 from audit.db import get_data_access_layer
 from sqlalchemy import text
+from typing import Union, Optional
 from audit import logger
+from audit.models import CATEGORY_TO_MODEL_CLASS
+from audit.routes.system import CURRENT_SCHEMA_VERSIONS, _pretty_type
+
+
+@pytest.mark.parametrize(
+    "annotation, expected",
+    [
+        (str, "str"),
+        (int, "int"),
+        (list[str], "list"),
+        (Union[str, None], "str?"),
+    ],
+)
+def test_pretty_type(annotation, expected):
+    assert _pretty_type(annotation) == expected
 
 
 def test_status_endpoint(client, db_session):
@@ -29,7 +45,7 @@ def test_schema_endpoint_basic(client):
     assert set(body) == {"login", "presigned_url"}
 
     for category, info in body.items():
-        assert isinstance(info["version"], int)
+        assert isinstance(info["version"], float)
         assert isinstance(info["model"], dict)
 
 
@@ -46,19 +62,39 @@ def test_schema_endpoint_login_details(client):
     login_schema = body["login"]
     presigned_url_schema = body["presigned_url"]
 
-    assert login_schema["version"] == 2
+    assert login_schema["version"] == 2.0
     model = login_schema["model"]
 
+    optional_login_fields = ["fence_idp", "shib_idp", "client_id", "ip"]
     for field in log_fields + login_fields:
         assert field in model
+        if field in optional_login_fields:
+            assert model[field].endswith("?")
 
-    assert model.get("ip", "").endswith("?")
-
-    assert presigned_url_schema["version"] == 1
+    assert presigned_url_schema["version"] == 1.0
     model = presigned_url_schema["model"]
 
     for field in log_fields + presigned_url_fields:
         assert field in model
+
+
+def test_category_version_schema_alignment(client):
+    """
+    Tests that every category declared in CATEGORY_TO_MODEL_CLASS:
+    - Has corresponding entry in CURRENT_SCHEMA_VERSIONS
+    - Appears in the /_schema endpoint response with the same version.
+    """
+    assert set(CATEGORY_TO_MODEL_CLASS) == set(CURRENT_SCHEMA_VERSIONS)
+
+    resp = client.get("/_schema")
+    assert resp.status_code == 200, resp.text
+    schema_body = resp.json()
+
+    assert set(schema_body) == set(CATEGORY_TO_MODEL_CLASS)
+
+    for category in CATEGORY_TO_MODEL_CLASS:
+        expected_version = CURRENT_SCHEMA_VERSIONS[category]
+        assert schema_body[category]["version"] == expected_version
 
 
 @pytest.mark.asyncio
