@@ -149,7 +149,8 @@ def test_create_wrong_category(client):
 @pytest.mark.parametrize("include_ip", [True, False])
 def test_create_login_log(client, include_ip):
     """
-    Ensure a login log that includes an IP address is posted and correct
+    Ensure a login log that includes an IP address is posted and correct,
+    and a login log that doesn't include an IP address is accepted.
     """
     request_data = {
         "client_id": "my_client_id",

@@ -1,3 +1,6 @@
+import json, hashlib
+from pydantic import BaseModel
+from typing import Type
 from fastapi import APIRouter, FastAPI, Request, Depends
 from typing import Union, get_args, get_origin
 
@@ -7,11 +10,26 @@ from ..models import CreateLoginLogInput, CreatePresignedUrlLogInput
 
 router = APIRouter()
 
-# Increment versions on schema/model change.
+# Increment versions and update fingerprints on schema/model change.
 CURRENT_SCHEMA_VERSIONS = {
-    "login": 2.0,
-    "presigned_url": 1.0,
+    "login": {
+        "version": 2.0,
+        "fingerprint": "082c72bdf11e278badb865c5018fdb353caa466619cc9c14de300c092b608273",  # pragma: allowlist-secret
+    },
+    "presigned_url": {
+        "version": 1.0,
+        "fingerprint": "bdd5092da16f39c59a0ce11d3c561ecbb5c2ca59dbba80dd83d409f4b850bcc1",  # pragma: allowlist-secret
+    },
 }
+
+
+def _model_fingerprint(model_cls: Type[BaseModel]) -> str:
+    """
+    Takes a pydantic class model and returns a hash of the model's schema
+    """
+    schema_dict = model_cls.model_json_schema()
+    schema_utf8 = json.dumps(schema_dict, sort_keys=True).encode(encoding="utf-8")
+    return hashlib.sha256(schema_utf8).hexdigest()
 
 
 def _pretty_type(t) -> str:
@@ -26,7 +44,6 @@ def _pretty_type(t) -> str:
 
     # handle Optional types (Union types with None)
     if origin is Union and type(None) in get_args(t):
-        # filter out NoneType and assume first remaining arg as base, or fallback to object
         non_none_args = [a for a in get_args(t) if a is not type(None)]
         if not non_none_args:
             raise TypeError(
@@ -64,11 +81,11 @@ def get_schema() -> dict:
     """
     return {
         "login": {
-            "version": CURRENT_SCHEMA_VERSIONS["login"],
+            "version": CURRENT_SCHEMA_VERSIONS["login"]["version"],
             "model": _get_pydantic_model(CreateLoginLogInput),
         },
         "presigned_url": {
-            "version": CURRENT_SCHEMA_VERSIONS["presigned_url"],
+            "version": CURRENT_SCHEMA_VERSIONS["presigned_url"]["version"],
             "model": _get_pydantic_model(CreatePresignedUrlLogInput),
         },
     }

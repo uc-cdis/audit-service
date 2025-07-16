@@ -2,10 +2,35 @@ from datetime import datetime
 import pytest
 from audit.db import get_data_access_layer
 from sqlalchemy import text
-from typing import Union, Optional
+from typing import Union
 from audit import logger
-from audit.models import CATEGORY_TO_MODEL_CLASS
-from audit.routes.system import CURRENT_SCHEMA_VERSIONS, _pretty_type
+from audit.models import (
+    CATEGORY_TO_MODEL_CLASS,
+    CreateLoginLogInput,
+    CreatePresignedUrlLogInput,
+)
+from audit.routes.system import (
+    CURRENT_SCHEMA_VERSIONS,
+    _pretty_type,
+    _model_fingerprint,
+)
+
+
+@pytest.mark.parametrize(
+    "category, pydantic_class",
+    [
+        ("login", CreateLoginLogInput),
+        ("presigned_url", CreatePresignedUrlLogInput),
+    ],
+)
+def test_model_fingerprint(category, pydantic_class):
+    """
+    Test to enforce that models and CURRENT_SCHEMA_VERSIONS are aligned.
+    Changes to models will trigger a test failure here until fingerprint is updated.
+    """
+    assert CURRENT_SCHEMA_VERSIONS[category]["fingerprint"] == _model_fingerprint(
+        pydantic_class
+    )
 
 
 @pytest.mark.parametrize(
@@ -84,16 +109,20 @@ def test_category_version_schema_alignment(client):
     - Has corresponding entry in CURRENT_SCHEMA_VERSIONS
     - Appears in the /_schema endpoint response with the same version.
     """
-    assert set(CATEGORY_TO_MODEL_CLASS) == set(CURRENT_SCHEMA_VERSIONS)
+    assert set(CATEGORY_TO_MODEL_CLASS) == set(
+        CURRENT_SCHEMA_VERSIONS
+    ), "Expected all categories in CATEGORY_TO_MODEL_CLASS to have an entry in CURRENT_SCHEMA_VERSIONS"
 
     resp = client.get("/_schema")
     assert resp.status_code == 200, resp.text
     schema_body = resp.json()
 
-    assert set(schema_body) == set(CATEGORY_TO_MODEL_CLASS)
+    assert set(schema_body) == set(
+        CATEGORY_TO_MODEL_CLASS
+    ), "Expected all categories in CATEGORY_TO_MODEL_CLASS to appear in /_schema response"
 
     for category in CATEGORY_TO_MODEL_CLASS:
-        expected_version = CURRENT_SCHEMA_VERSIONS[category]
+        expected_version = CURRENT_SCHEMA_VERSIONS[category]["version"]
         assert schema_body[category]["version"] == expected_version
 
 
