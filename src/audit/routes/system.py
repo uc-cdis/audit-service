@@ -10,7 +10,7 @@ from ..models import CreateLoginLogInput, CreatePresignedUrlLogInput
 
 router = APIRouter()
 
-# Increment versions and update fingerprints on schema/model change.
+# BE SURE TO UPDATE BOTH "version" AND "fingerprints" on schema/model change.
 CURRENT_SCHEMA_VERSIONS = {
     "login": {
         "version": 2.0,
