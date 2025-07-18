@@ -1,5 +1,6 @@
 from datetime import datetime
 import time
+import pytest
 
 
 fake_jwt = "1.2.3"
@@ -143,3 +144,64 @@ def test_create_wrong_category(client):
     }
     res = client.post("/log/whatisthis", json=request_data)
     assert res.status_code == 405, res.text
+
+
+@pytest.mark.parametrize("include_ip", [True, False])
+def test_create_login_log(client, include_ip):
+    """
+    Ensure a login log that includes an IP address is posted and correct,
+    and a login log that doesn't include an IP address is accepted.
+    """
+    request_data = {
+        "client_id": "my_client_id",
+        "fence_idp": "my_fence_idp",
+        "idp": "my_idp",
+        "request_url": "/login",
+        "shib_idp": "my_shib_idp",
+        "status_code": 200,
+        "sub": 10,
+        "timestamp": int(time.time()),
+        "username": "audit-service_user",
+    }
+
+    if include_ip:
+        request_data["ip"] = "my_ip"
+
+    res = client.post("/log/login", json=request_data)
+    assert res.status_code == 201, res.text
+    res = client.get("/log/login", headers={"Authorization": f"bearer {fake_jwt}"})
+    assert res.status_code == 200, res.text
+    response_data = res.json()
+    assert response_data.get("data"), response_data
+    response_data = response_data["data"][0]
+    request_timestamp = str(datetime.fromtimestamp(request_data.pop("timestamp")))
+    response_timestamp = response_data.pop("timestamp").replace("T", " ")
+    assert response_timestamp == request_timestamp
+    del response_data["id"]
+
+    if not include_ip:
+        assert response_data.pop("ip") is None
+
+    assert response_data == request_data
+
+
+def test_create_login_log_with_none_values(client):
+    """
+    Fence may send a payload with None values for client_id, fence_idp, and shib_idp
+    Ensure a login log with None values return 201
+    """
+    request_data = {
+        "client_id": None,
+        "fence_idp": None,
+        "idp": "my_idp",
+        "request_url": "/login",
+        "shib_idp": None,
+        "status_code": 200,
+        "sub": 10,
+        "timestamp": int(time.time()),
+        "username": "audit-service_user",
+        "ip": "my_ip",
+    }
+
+    res = client.post("/log/login", json=request_data)
+    assert res.status_code == 201, res.text

@@ -3,20 +3,31 @@ components:
     CreateLoginLogInput:
       properties:
         client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Client Id
-          type: string
         fence_idp:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Fence Idp
-          type: string
         idp:
           title: Idp
           type: string
+        ip:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ip
         request_url:
           title: Request Url
           type: string
         shib_idp:
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Shib Idp
-          type: string
         status_code:
           title: Status Code
           type: integer
@@ -126,6 +137,24 @@ paths:
                 type: object
           description: Successful Response
       summary: Get Status
+      tags:
+      - System
+  /_schema:
+    get:
+      description: 'GET audit service schema model versions and details.
+
+        404s should assume legacy model.'
+      operationId: get_schema__schema_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Schema  Schema Get
+                type: object
+          description: Successful Response
+      summary: Get Schema
       tags:
       - System
   /_status:
