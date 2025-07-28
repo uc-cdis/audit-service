@@ -16,7 +16,7 @@ jobs:
     - name: Skip for docs-only changes
       run: |
         git fetch -q
-        CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -v '@' || true)
+        CHANGED=$(git diff --name-only HEAD^1 HEAD | grep -v '@' || true)
         echo "Changed files:"
         echo "$CHANGED"
         if [ -z "$CHANGED" ]; then
