@@ -1,3 +1,4 @@
+# Dummy change
 # Quick start: run the Audit Service
 
 Create a custom configuration file at `~/.gen3/audit-service/audit-service-config.yaml`. Add the following to your configuration file:
