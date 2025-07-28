@@ -16,7 +16,9 @@ jobs:
     - name: Skip for docs-only changes
       run: |
         git fetch -q
-        CHANGED=$(git diff --name-only HEAD^1 HEAD | grep -v '@' || true)
+        # list of files changed in the last commit; if only 1 commit,
+        # fall back to list of files changed in the whole PR
+        CHANGED=$(git diff --name-only HEAD^1 HEAD | grep -v '@' || git diff --name-only origin/${{ github.base_ref }} HEAD | grep -v '@')
         echo "Changed files:"
         echo "$CHANGED"
         if [ -z "$CHANGED" ]; then
