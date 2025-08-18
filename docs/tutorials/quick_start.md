@@ -11,6 +11,8 @@ Create the database:
 ```bash
 psql -U postgres -c "create database audit_test"
 ```
+Then you can run `poetry run pytest` for testing purposes. For the alembic command below, 
+it expects a db named `audit`, not `audit_test`. 
 
 Run the database schema migration:
 
