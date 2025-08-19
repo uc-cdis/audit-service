@@ -319,3 +319,71 @@ paths:
       summary: Query Logs
       tags:
       - Query
+  /export/{category}:
+    get:
+      description: "Export the logs the current user has access to see. Returned\
+        \ data:\n\n    {\n         
+        \  \"data\": [<entry>, <entry>, ...] OR int if using `count` param,\n    }\n\
+        \nFilters can be added as query strings. Accepted filters include\
+        \ all fields\nfor the queried category, as well as the following special filters:\n\
+        - \"groupby\" to get counts\n- \"count\" to get the number of rows instead\
+        \ of a list\n- \"start\" to specify a starting timestamp (inclusive). Default:\
+        \ none\n- \"stop\" to specify an end timestamp (exclusive). Default: none\n\
+        \nIf queries are time-boxed (depends on the configuration),\n(\"stop\" - \"\
+        start\") must be lower than the configured maximum.\n\nWithout filters, this\
+        \ endpoint will return all data.\nAdd filters as query\
+        \ strings like this:\n\n    GET /log/presigned_url?a=1&b=2\n\nThis will match\
+        \ all records that have values containing all of:\n\n    {\"a\": 1, \"b\"\
+        : 2}\n\nProviding the same key with more than one value filters records whose\n\
+        value of the given key matches any of the given values. But values of\ndifferent\
+        \ keys must all match. For example:\n\n    GET /log/presigned_url?a=1&a=2&b=3\n\
+        \nMatches these:\n\n    {\"a\": 1, \"b\": 3}\n    {\"a\": 2, \"b\": 3}\n\n\
+        But won't match these:\n\n    {\"a\": 1, \"b\": 10}\n    {\"a\": 10, \"b\"\
+        : 3}\n\n`groupby` example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c\n\
+        \n    {\"b\": 1, \"c\": 2, \"count\": 5}\n    {\"b\": 1, \"c\": 3, \"count\"\
+        : 8}\n\n`count` example:\n\n    GET /log/presigned_url?a=1&groupby=b&groupby=c&count\n\
+        \n    Returns: 2 (see previous example returning 2 rows)"
+      operationId: export_logs_log__category__get
+      parameters:
+      - in: path
+        name: category
+        required: true
+        schema:
+          title: Category
+          type: string
+      - description: Start timestamp
+        in: query
+        name: start
+        required: false
+        schema:
+          description: Start timestamp
+          title: Start
+          type: integer
+      - description: Stop timestamp
+        in: query
+        name: stop
+        required: false
+        schema:
+          description: Stop timestamp
+          title: Stop
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Query Logs Log  Category  Get
+                type: object
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Query Logs
+      tags:
+      - Query
