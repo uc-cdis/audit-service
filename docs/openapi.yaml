@@ -41,6 +41,10 @@ components:
         action:
           title: Action
           type: string
+        additional_data:
+          additionalProperties: true
+          title: Additional Data
+          type: object
         guid:
           title: Guid
           type: string
