@@ -18,6 +18,7 @@ def test_create_presigned_url_log_with_timestamp(client):
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
         "protocol": "s3",
+        "additional_data": {"test_key": "test_val"},
     }
     res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
@@ -70,6 +71,7 @@ def test_create_presigned_url_log_without_timestamp(client):
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
         "protocol": "s3",
+        "additional_data": {"test_key": "test_val"},
     }
     res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
@@ -80,6 +82,7 @@ def test_create_presigned_url_log_without_timestamp(client):
     )
     assert res.status_code == 200, res.text
     response_data = res.json()
+    print(f"Response data {response_data}")
     assert response_data.get("data"), response_data
     response_data = response_data["data"][0]
     del response_data["id"]  # auto-incremented id
