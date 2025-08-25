@@ -2,6 +2,10 @@ components:
   schemas:
     CreateLoginLogInput:
       properties:
+        additional_data:
+          additionalProperties: true
+          title: Additional Data
+          type: object
         client_id:
           title: Client Id
           type: string
