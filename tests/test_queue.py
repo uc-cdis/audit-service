@@ -40,6 +40,7 @@ async def test_process_log_success(db_session):
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
         "protocol": "s3",
+        "additional_data": {"test_key": "test_val"},
     }
     await process_log(message_data, timestamp)
 
@@ -57,6 +58,7 @@ async def test_process_log_success(db_session):
         message_data["action"],
         message_data["protocol"],
         1,  # auto-incremented id
+        message_data["additional_data"],
     )
 
 

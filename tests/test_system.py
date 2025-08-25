@@ -87,7 +87,7 @@ def test_schema_endpoint_login_details(client):
     login_schema = body["login"]
     presigned_url_schema = body["presigned_url"]
 
-    assert login_schema["version"] == 2.0
+    assert login_schema["version"] == 2.1
     model = login_schema["model"]
 
     optional_login_fields = ["fence_idp", "shib_idp", "client_id", "ip"]
@@ -96,7 +96,7 @@ def test_schema_endpoint_login_details(client):
         if field in optional_login_fields:
             assert model[field].endswith("?")
 
-    assert presigned_url_schema["version"] == 1.0
+    assert presigned_url_schema["version"] == 1.1
     model = presigned_url_schema["model"]
 
     for field in log_fields + presigned_url_fields:
