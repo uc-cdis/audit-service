@@ -82,7 +82,6 @@ def test_create_presigned_url_log_without_timestamp(client):
     )
     assert res.status_code == 200, res.text
     response_data = res.json()
-    print(f"Response data {response_data}")
     assert response_data.get("data"), response_data
     response_data = response_data["data"][0]
     del response_data["id"]  # auto-incremented id
