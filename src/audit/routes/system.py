@@ -13,12 +13,12 @@ router = APIRouter()
 # BE SURE TO UPDATE BOTH "version" AND "fingerprints" on schema/model change.
 CURRENT_SCHEMA_VERSIONS = {
     "login": {
-        "version": 2.0,
-        "fingerprint": "082c72bdf11e278badb865c5018fdb353caa466619cc9c14de300c092b608273",  # pragma: allowlist-secret
+        "version": 2.1,
+        "fingerprint": "77b3057a8451ea35f0454dfec6e5c39e107c444c9e17b63e12d8a3a4fe1e53e9",  # pragma: allowlist-secret
     },
     "presigned_url": {
-        "version": 1.0,
-        "fingerprint": "bdd5092da16f39c59a0ce11d3c561ecbb5c2ca59dbba80dd83d409f4b850bcc1",  # pragma: allowlist-secret
+        "version": 1.1,
+        "fingerprint": "9acc1cbab580d3d1e073a49e80d62896a2509d4f9f2f1c450d6bbf2b5779c578",  # pragma: allowlist-secret
     },
 }
 
