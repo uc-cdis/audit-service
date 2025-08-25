@@ -121,6 +121,20 @@ def test_create_presigned_url_log_wrong_body(client):
     res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 400, res.text
 
+    # create a log with invalid 'additional_data'
+    request_data = {
+        "request_url": f"/request_data/download/{guid}",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "guid": guid,
+        "resource_paths": ["/my/resource/path1", "/path2"],
+        "action": "download",
+        "additional_data": "not-a-dict",
+    }
+    res = client.post("/log/presigned_url", json=request_data)
+    assert res.status_code == 422, res.text
+
     # create a log with extra fields - should ignore the extra
     # fields and succeed
     request_data = {
