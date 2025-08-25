@@ -62,6 +62,7 @@ class CreateLogInput(BaseModel):
     timestamp: int = None
     username: str
     sub: int = None
+    additional_data: dict = None
 
 
 class CreatePresignedUrlLogInput(CreateLogInput):
@@ -69,7 +70,6 @@ class CreatePresignedUrlLogInput(CreateLogInput):
     resource_paths: list = None
     action: str
     protocol: str = None
-    additional_data: dict = None
 
 
 class CreateLoginLogInput(CreateLogInput):
