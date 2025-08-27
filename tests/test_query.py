@@ -599,6 +599,7 @@ def test_query_login_filter_by_ip(client):
         "sub": 10,
         "timestamp": timestamp_for_date("2020/01/01"),
         "idp": "google",
+        "additional_data": {"test_key": "test_val"},
     }
 
     for ip in ("ip_one", "ip_two"):
