@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import declarative_base
 from typing import Optional
 
@@ -18,6 +18,7 @@ class AuditLog(Base):
     timestamp = Column(DateTime, nullable=False, default=sqlalchemy.func.now())
     username = Column(String, nullable=False)
     sub = Column(Integer, nullable=True)  # can be null for public data
+    additional_data = Column(JSONB(), nullable=True)
 
     # Since declarative_base() has no default to_dict() method,
     def to_dict(self):
@@ -63,6 +64,7 @@ class CreateLogInput(BaseModel):
     timestamp: int = None
     username: str
     sub: int = None
+    additional_data: Optional[dict] = None
 
 
 class CreatePresignedUrlLogInput(CreateLogInput):

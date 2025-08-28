@@ -2,6 +2,12 @@ components:
   schemas:
     CreateLoginLogInput:
       properties:
+        additional_data:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Additional Data
         client_id:
           anyOf:
           - type: string
@@ -52,6 +58,12 @@ components:
         action:
           title: Action
           type: string
+        additional_data:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Additional Data
         guid:
           title: Guid
           type: string

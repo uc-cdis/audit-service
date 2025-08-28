@@ -19,6 +19,7 @@ def test_create_presigned_url_log_with_timestamp(client):
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
         "protocol": "s3",
+        "additional_data": {"test_key": "test_val"},
     }
     res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
@@ -71,6 +72,7 @@ def test_create_presigned_url_log_without_timestamp(client):
         "resource_paths": ["/my/resource/path1", "/path2"],
         "action": "download",
         "protocol": "s3",
+        "additional_data": {"test_key": "test_val"},
     }
     res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 201, res.text
@@ -119,6 +121,20 @@ def test_create_presigned_url_log_wrong_body(client):
     res = client.post("/log/presigned_url", json=request_data)
     assert res.status_code == 400, res.text
 
+    # create a log with invalid 'additional_data' to get 422 response
+    request_data = {
+        "request_url": f"/request_data/download/{guid}",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "guid": guid,
+        "resource_paths": ["/my/resource/path1", "/path2"],
+        "action": "download",
+        "additional_data": "not-a-dict",
+    }
+    res = client.post("/log/presigned_url", json=request_data)
+    assert res.status_code == 422, res.text
+
     # create a log with extra fields - should ignore the extra
     # fields and succeed
     request_data = {
@@ -162,6 +178,7 @@ def test_create_login_log(client, include_ip):
         "sub": 10,
         "timestamp": int(time.time()),
         "username": "audit-service_user",
+        "additional_data": {"test_key": "test_val"},
     }
 
     if include_ip:
@@ -201,6 +218,7 @@ def test_create_login_log_with_none_values(client):
         "timestamp": int(time.time()),
         "username": "audit-service_user",
         "ip": "my_ip",
+        "additional_data": None,
     }
 
     res = client.post("/log/login", json=request_data)
