@@ -11,6 +11,8 @@ WORKDIR /${appname}
 
 # Builder stage
 FROM base AS builder
+USER root
+RUN chown -R gen3:gen3 /venv
 
 USER gen3
 
@@ -30,7 +32,7 @@ ENV  PATH="$(poetry env info --path)/bin:$PATH"
 FROM base
 
 COPY --from=builder /${appname} /${appname}
-COPY --from=builder /venv /venv
+
 
 # Switch to non-root user 'gen3' for the serving process
 
