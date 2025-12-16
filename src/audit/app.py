@@ -32,7 +32,7 @@ from .db import initiate_db, DataAccessLayer, get_data_access_layer
 
 
 def load_modules(app: FastAPI = None) -> None:
-    for ep in entry_points()["audit.modules"]:
+    for ep in entry_points(group="audit.modules"):
         logger.info("Loading module: %s", ep.name)
         mod = ep.load()
         if app:
