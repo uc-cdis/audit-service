@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audit"
-version = "2.1.1"
+version = "2.2.0"
 description = "Gen3 Access Request Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -11,7 +11,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9.2, <4"
+python = ">=3.13, <4"
 alembic = "^1.4.2"
 authutils = ">=7.1.0"
 boto3 = "<1.35"
