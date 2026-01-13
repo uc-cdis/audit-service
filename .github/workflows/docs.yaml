@@ -30,11 +30,11 @@ jobs:
           echo "Only docs/ changed. Skipping workflow."
           echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
         fi
-    - name: Set up Python 3.9
+    - name: Set up Python 3.13
       if: ${{ env.SKIP_BUILD != 'true' }}
       uses: actions/setup-python@v1
       with:
-        python-version: 3.9
+        python-version: 3.13
     - uses: actions/cache@preview
       if: ${{ env.SKIP_BUILD != 'true' }}
       with:

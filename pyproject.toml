@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audit"
-version = "2.1.1"
+version = "2.2.0"
 description = "Gen3 Access Request Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -11,10 +11,11 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9.2, <4"
-alembic = "^1.4.2"
+python = ">=3.13, <4"
+alembic = ">=1.13.2"
 authutils = ">=7.1.0"
-boto3 = "<1.35"
+boto3 = "^1.28"
+botocore="^1.35"
 cdislogging = "<2"
 fastapi = ">=0.121.3, <1"
 starlette = ">=0.49.3,<0.51.0" # Remove when fastapi drops support for starlette <0.49.3
@@ -32,7 +33,7 @@ uvicorn = "^0.18.3"
 markupsafe = "<=2.0.1"
 # urllib3 is a sub-dependency of requests and botocore (dep of boto3). For some reason poetry was not
 # able to resolve deps until we pinned it. TODO remove later
-urllib3 = "^1.26"
+urllib3 = "^2.6.0"
 jinja2 = "^3.1.6"
 sqlalchemy = "^2.0.38"
 asyncpg = "^0.30.0"

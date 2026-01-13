@@ -50,9 +50,6 @@ DB_POOL_MIN_SIZE: 1
 DB_POOL_MAX_SIZE: 16
 DB_ECHO: False
 DB_SSL:
-DB_USE_CONNECTION_FOR_REQUEST: true
-DB_RETRY_LIMIT: 1
-DB_RETRY_INTERVAL: 1
 
 ####################
 # API              #
