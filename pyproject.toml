@@ -33,7 +33,7 @@ uvicorn = "^0.18.3"
 markupsafe = "<=2.0.1"
 # urllib3 is a sub-dependency of requests and botocore (dep of boto3). For some reason poetry was not
 # able to resolve deps until we pinned it. TODO remove later
-urllib3 = "^2.6.0"
+urllib3 = ">=2.6.3, <3"
 jinja2 = "^3.1.6"
 sqlalchemy = "^2.0.38"
 asyncpg = "^0.30.0"
