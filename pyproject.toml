@@ -13,7 +13,7 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.13, <4"
 alembic = ">=1.13.2"
-authutils = ">=7.2.4"
+authutils = {git = "https://github.com/uc-cdis/authutils", branch = "chore/update-werkzeug"}
 boto3 = "^1.28"
 botocore="^1.35"
 cdislogging = "<2"
@@ -26,11 +26,6 @@ gunicorn = "^23.0.0"
 importlib-metadata = {version = "^1.7.0", python = "<3.8"}
 httpx = "^0.23.0"
 uvicorn = "^0.18.3"
-# markupsafe is a jinja dependency. Jinja is used by gen3config.
-# The current version of jinja imports the `soft_unicode` method from markupsafe.
-# soft_unicode has been deprecated from markupsafe versions > 2.0.1.
-# Pin to <=2.0.1 for compatibility with jinja.
-markupsafe = "<=2.0.1"
 # urllib3 is a sub-dependency of requests and botocore (dep of boto3). For some reason poetry was not
 # able to resolve deps until we pinned it. TODO remove later
 urllib3 = ">=2.6.3, <3"
