@@ -22,7 +22,8 @@ async def run_async_migrations() -> None:
 
     """
     conf.set_main_option(
-        "sqlalchemy.url", config["DB_URL"].render_as_string(hide_password=False)
+        "sqlalchemy.url",
+        config["DB_URL"].render_as_string(hide_password=False).replace("%", "%%"),
     )
 
     connectable = async_engine_from_config(
