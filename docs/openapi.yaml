@@ -108,6 +108,11 @@ components:
       type: object
     ValidationError:
       properties:
+        ctx:
+          title: Context
+          type: object
+        input:
+          title: Input
         loc:
           items:
             anyOf:
@@ -133,7 +138,7 @@ components:
       type: http
 info:
   title: Audit Service
-  version: 2.2.2
+  version: 2.2.3
 openapi: 3.1.0
 paths:
   /:
