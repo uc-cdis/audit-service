@@ -27,6 +27,7 @@ What do we do in this file?
   a fresh session from the session maker factory
     - This is what gets injected into endpoint code using FastAPI's dep injections
 """
+
 from contextlib import asynccontextmanager
 from typing import Any, Dict, AsyncGenerator, List, Tuple, Optional
 from datetime import datetime
@@ -39,7 +40,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from audit.config import config
-from audit.models import PresignedUrl, Login
+from audit.models import PresignedUrl, Login, PFBExport, UserDataLibraryEvent
 from audit import logger
 
 engine = None
@@ -234,6 +235,26 @@ class DataAccessLayer:
         )
         data["id"] = result.scalar()
         self.db_session.add(Login(**data))
+
+    async def create_pfb_export_log(self, data: Dict[str, Any]) -> None:
+        """
+        Create a new `pfb_export` audit log.
+        """
+        result = await self.db_session.execute(
+            text("SELECT nextval('global_pfb_export_id_seq')")
+        )
+        data["id"] = result.scalar()
+        self.db_session.add(PFBExport(**data))
+
+    async def create_user_data_library_log(self, data: Dict[str, Any]) -> None:
+        """
+        Create a new `user_data_library` audit log.
+        """
+        result = await self.db_session.execute(
+            text("SELECT nextval('global_user_data_library_id_seq')")
+        )
+        data["id"] = result.scalar()
+        self.db_session.add(UserDataLibraryEvent(**data))
 
 
 async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:

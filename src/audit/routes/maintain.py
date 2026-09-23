@@ -10,11 +10,15 @@ from ..auth import Auth
 from ..utils.validate_utils import (
     validate_login_log,
     validate_presigned_url_log,
+    validate_pfb_export_log,
+    validate_user_data_library_log,
 )
 from ..db import DataAccessLayer, get_data_access_layer
 from ..models import (
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
+    CreatePFBExportLogInput,
+    CreateUserDataLibraryEventLogInput,
 )
 
 router = APIRouter()
@@ -76,6 +80,66 @@ async def create_login_log(
     except Exception as e:
         logger.error(
             f"Failed to insert login audit log for URL {data.get('request_url')} at {data.get('timestamp')}"
+        )
+        raise
+
+
+@router.post("/log/pfb_export", status_code=HTTP_201_CREATED)
+async def create_pfb_export_log(
+    body: CreatePFBExportLogInput,
+    auth=Depends(Auth),
+    data_access_layer: DataAccessLayer = Depends(get_data_access_layer),
+) -> None:
+    """
+    Create a new `pfb_export` audit log.
+
+    This endpoint does not include any authorization checks, but it is not
+    exposed and is only meant for internal use.
+
+    If the timestamp is omitted from the request body, the current date and
+    time will be used.
+
+    The response is returned _before_ inserting the new audit log in the
+    database, so that POSTing audit logs does not impact the performance of
+    the caller and audit-service failures are not visible to users.
+    """
+    data = body.model_dump()
+    validate_pfb_export_log(data)
+    try:
+        await data_access_layer.create_pfb_export_log(data)
+    except Exception as e:
+        logger.error(
+            f"Failed to insert pfb_export audit log for URL {data.get('request_url')} at {data.get('timestamp')}"
+        )
+        raise
+
+
+@router.post("/log/user_data_library", status_code=HTTP_201_CREATED)
+async def create_user_data_library_log(
+    body: CreateUserDataLibraryEventLogInput,
+    auth=Depends(Auth),
+    data_access_layer: DataAccessLayer = Depends(get_data_access_layer),
+) -> None:
+    """
+    Create a new `user_data_library` audit log.
+
+    This endpoint does not include any authorization checks, but it is not
+    exposed and is only meant for internal use.
+
+    If the timestamp is omitted from the request body, the current date and
+    time will be used.
+
+    The response is returned _before_ inserting the new audit log in the
+    database, so that POSTing audit logs does not impact the performance of
+    the caller and audit-service failures are not visible to users.
+    """
+    data = body.model_dump()
+    validate_user_data_library_log(data)
+    try:
+        await data_access_layer.create_user_data_library_log(data)
+    except Exception as e:
+        logger.error(
+            f"Failed to insert user_data_library audit log for URL {data.get('request_url')} at {data.get('timestamp')}"
         )
         raise
 
