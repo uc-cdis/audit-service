@@ -6,7 +6,12 @@ from typing import Union, get_args, get_origin
 
 from ..db import DataAccessLayer, get_data_access_layer
 
-from ..models import CreateLoginLogInput, CreatePresignedUrlLogInput
+from ..models import (
+    CreateLoginLogInput,
+    CreatePresignedUrlLogInput,
+    CreatePFBExportLogInput,
+    CreateUserDataLibraryEventLogInput,
+)
 
 router = APIRouter()
 
@@ -19,6 +24,14 @@ CURRENT_SCHEMA_VERSIONS = {
     "presigned_url": {
         "version": 1.1,
         "fingerprint": "9acc1cbab580d3d1e073a49e80d62896a2509d4f9f2f1c450d6bbf2b5779c578",  # pragma: allowlist-secret
+    },
+    "pfb_export": {
+        "version": 1.0,
+        "fingerprint": "f09480c86b1da8c9c03ee4dbd8fc77164f8794969f60c909605c9285812b7b61",  # pragma: allowlist-secret
+    },
+    "user_data_library": {
+        "version": 1.0,
+        "fingerprint": "a1998901e835fc2351c6c2ac3a7ee98ef4e76fc4f26ee01773f1c01c4e164961",  # pragma: allowlist-secret
     },
 }
 
@@ -87,6 +100,14 @@ def get_schema() -> dict:
         "presigned_url": {
             "version": CURRENT_SCHEMA_VERSIONS["presigned_url"]["version"],
             "model": _get_pydantic_model(CreatePresignedUrlLogInput),
+        },
+        "pfb_export": {
+            "version": CURRENT_SCHEMA_VERSIONS["pfb_export"]["version"],
+            "model": _get_pydantic_model(CreatePFBExportLogInput),
+        },
+        "user_data_library": {
+            "version": CURRENT_SCHEMA_VERSIONS["user_data_library"]["version"],
+            "model": _get_pydantic_model(CreateUserDataLibraryEventLogInput),
         },
     }
 
