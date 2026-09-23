@@ -8,6 +8,7 @@ Create Date: 2026-09-22 08:08:12.587466
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -142,13 +143,25 @@ def upgrade():
     """)
 
 
-def downgrade():
-    op.execute("DROP TRIGGER IF EXISTS insert_pfb_export_trigger ON pfb_export")
-    op.execute(
-        "DROP TRIGGER IF EXISTS insert_user_data_library_trigger ON user_data_library"
+def _drop_table_with_partitions(table_name, trigger_name):
+    op.execute(f"DROP TRIGGER IF EXISTS {trigger_name} ON {table_name}")
+    conn = op.get_bind()
+    res = conn.execute(
+        text(
+            f"SELECT child.relname FROM pg_inherits "
+            f"JOIN pg_class AS child ON (inhrelid=child.oid) "
+            f"JOIN pg_class AS parent ON (inhparent=parent.oid) "
+            f"WHERE parent.relname='{table_name}'"
+        )
     )
-    op.drop_table("pfb_export")
-    op.drop_table("user_data_library")
+    for (partition,) in res.fetchall():
+        op.drop_table(partition)
+    op.drop_table(table_name)
+
+
+def downgrade():
+    _drop_table_with_partitions("pfb_export", "insert_pfb_export_trigger")
+    _drop_table_with_partitions("user_data_library", "insert_user_data_library_trigger")
     op.execute("DROP SEQUENCE IF EXISTS global_pfb_export_id_seq")
     op.execute("DROP SEQUENCE IF EXISTS global_user_data_library_id_seq")
 
