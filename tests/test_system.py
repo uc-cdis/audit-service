@@ -8,8 +8,7 @@ from audit.models import (
     CATEGORY_TO_MODEL_CLASS,
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
-    CreatePFBExportLogInput,
-    CreateUserDataLibraryEventLogInput,
+    CreateExportDataLogInput,
 )
 from audit.routes.system import (
     CURRENT_SCHEMA_VERSIONS,
@@ -23,8 +22,7 @@ from audit.routes.system import (
     [
         ("login", CreateLoginLogInput),
         ("presigned_url", CreatePresignedUrlLogInput),
-        ("pfb_export", CreatePFBExportLogInput),
-        ("user_data_library", CreateUserDataLibraryEventLogInput),
+        ("export_data", CreateExportDataLogInput),
     ],
 )
 def test_model_fingerprint(category, pydantic_class):
@@ -71,7 +69,7 @@ def test_schema_endpoint_basic(client):
     assert resp.status_code == 200, resp.text
 
     body = resp.json()
-    assert set(body) == {"login", "presigned_url", "pfb_export", "user_data_library"}
+    assert set(body) == {"login", "presigned_url", "export_data"}
 
     for category, info in body.items():
         assert isinstance(info["version"], float)

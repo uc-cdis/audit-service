@@ -56,13 +56,8 @@ def validate_login_log(data):
         logger.warning("login log received in deprecated legacy format (missing ip)")
 
 
-def validate_pfb_export_log(data):
-    logger.debug(f"Creating `pfb_export` audit log. Received body: {data}")
-    handle_timestamp(data)
-
-
-def validate_user_data_library_log(data):
-    logger.debug(f"Creating `user_data_library` audit log. Received body: {data}")
+def validate_export_data_log(data):
+    logger.debug(f"Creating `export_data` audit log. Received body: {data}")
     handle_timestamp(data)
 
 

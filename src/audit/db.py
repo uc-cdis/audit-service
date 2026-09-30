@@ -40,7 +40,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from audit.config import config
-from audit.models import PresignedUrl, Login, PFBExport, UserDataLibraryEvent
+from audit.models import PresignedUrl, Login, ExportData
 from audit import logger
 
 engine = None
@@ -236,25 +236,15 @@ class DataAccessLayer:
         data["id"] = result.scalar()
         self.db_session.add(Login(**data))
 
-    async def create_pfb_export_log(self, data: Dict[str, Any]) -> None:
+    async def create_export_data_log(self, data: Dict[str, Any]) -> None:
         """
-        Create a new `pfb_export` audit log.
-        """
-        result = await self.db_session.execute(
-            text("SELECT nextval('global_pfb_export_id_seq')")
-        )
-        data["id"] = result.scalar()
-        self.db_session.add(PFBExport(**data))
-
-    async def create_user_data_library_log(self, data: Dict[str, Any]) -> None:
-        """
-        Create a new `user_data_library` audit log.
+        Create a new `export_data` audit log.
         """
         result = await self.db_session.execute(
-            text("SELECT nextval('global_user_data_library_id_seq')")
+            text("SELECT nextval('global_export_data_id_seq')")
         )
         data["id"] = result.scalar()
-        self.db_session.add(UserDataLibraryEvent(**data))
+        self.db_session.add(ExportData(**data))
 
 
 async def get_data_access_layer() -> AsyncGenerator[DataAccessLayer, Any]:

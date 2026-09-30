@@ -55,25 +55,10 @@ class Login(AuditLog):
     ip = Column(String, nullable=True)
 
 
-class PFBExport(AuditLog):
-    __tablename__ = "pfb_export"
+class ExportData(AuditLog):
+    __tablename__ = "export_data"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    programs = Column(ARRAY(String), nullable=False)
-    projects = Column(ARRAY(String), nullable=False)
-    node_count = Column(Integer, nullable=True)
-    destination = Column(String, nullable=True)
-    export_type = Column(String, nullable=False)
-
-
-class UserDataLibraryEvent(AuditLog):
-    __tablename__ = "user_data_library"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    action = Column(String, nullable=False)
-    target_type = Column(String, nullable=False)
-    list_id = Column(String, nullable=False)
-    item_id = Column(String, nullable=True)
-    item_dataset_ids = Column(ARRAY(String), nullable=False)
-    list_size_after = Column(Integer, nullable=True)
+    type = Column(String, nullable=False)
 
 
 # Pydantic input models for API endpoints
@@ -103,27 +88,13 @@ class CreateLoginLogInput(CreateLogInput):
     ip: Optional[str] = None
 
 
-class CreatePFBExportLogInput(CreateLogInput):
-    programs: list[str]
-    projects: list[str]
-    node_count: Optional[int] = None
-    destination: Optional[str] = None
-    export_type: str
-
-
-class CreateUserDataLibraryEventLogInput(CreateLogInput):
-    action: str
-    target_type: str
-    list_id: str
-    item_id: Optional[str] = None
-    item_dataset_ids: list[str]
-    list_size_after: Optional[int] = None
+class CreateExportDataLogInput(CreateLogInput):
+    type: str
 
 
 # mapping for use by API endpoints
 CATEGORY_TO_MODEL_CLASS = {
     "login": Login,
     "presigned_url": PresignedUrl,
-    "pfb_export": PFBExport,
-    "user_data_library": UserDataLibraryEvent,
+    "export_data": ExportData,
 }
