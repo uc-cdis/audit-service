@@ -1,5 +1,38 @@
 components:
   schemas:
+    CreateExportDataLogInput:
+      properties:
+        additional_data:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Additional Data
+        request_url:
+          title: Request Url
+          type: string
+        status_code:
+          title: Status Code
+          type: integer
+        sub:
+          title: Sub
+          type: integer
+        timestamp:
+          title: Timestamp
+          type: integer
+        type:
+          title: Type
+          type: string
+        username:
+          title: Username
+          type: string
+      required:
+      - request_url
+      - status_code
+      - username
+      - type
+      title: CreateExportDataLogInput
+      type: object
     CreateLoginLogInput:
       properties:
         additional_data:
@@ -53,61 +86,6 @@ components:
       - idp
       title: CreateLoginLogInput
       type: object
-    CreatePFBExportLogInput:
-      properties:
-        additional_data:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Additional Data
-        destination:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Destination
-        export_type:
-          title: Export Type
-          type: string
-        node_count:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Node Count
-        programs:
-          items:
-            type: string
-          title: Programs
-          type: array
-        projects:
-          items:
-            type: string
-          title: Projects
-          type: array
-        request_url:
-          title: Request Url
-          type: string
-        status_code:
-          title: Status Code
-          type: integer
-        sub:
-          title: Sub
-          type: integer
-        timestamp:
-          title: Timestamp
-          type: integer
-        username:
-          title: Username
-          type: string
-      required:
-      - request_url
-      - status_code
-      - username
-      - programs
-      - projects
-      - export_type
-      title: CreatePFBExportLogInput
-      type: object
     CreatePresignedUrlLogInput:
       properties:
         action:
@@ -151,63 +129,6 @@ components:
       - guid
       - action
       title: CreatePresignedUrlLogInput
-      type: object
-    CreateUserDataLibraryEventLogInput:
-      properties:
-        action:
-          title: Action
-          type: string
-        additional_data:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Additional Data
-        item_dataset_ids:
-          items:
-            type: string
-          title: Item Dataset Ids
-          type: array
-        item_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Item Id
-        list_id:
-          title: List Id
-          type: string
-        list_size_after:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: List Size After
-        request_url:
-          title: Request Url
-          type: string
-        status_code:
-          title: Status Code
-          type: integer
-        sub:
-          title: Sub
-          type: integer
-        target_type:
-          title: Target Type
-          type: string
-        timestamp:
-          title: Timestamp
-          type: integer
-        username:
-          title: Username
-          type: string
-      required:
-      - request_url
-      - status_code
-      - username
-      - action
-      - target_type
-      - list_id
-      - item_dataset_ids
-      title: CreateUserDataLibraryEventLogInput
       type: object
     HTTPValidationError:
       properties:
@@ -316,6 +237,50 @@ paths:
       summary: Get Version
       tags:
       - System
+  /log/export_data:
+    post:
+      description: 'Create a new `export_data` audit log.
+
+
+        This endpoint does not include any authorization checks, but it is not
+
+        exposed and is only meant for internal use.
+
+
+        If the timestamp is omitted from the request body, the current date and
+
+        time will be used.
+
+
+        The response is returned _before_ inserting the new audit log in the
+
+        database, so that POSTing audit logs does not impact the performance of
+
+        the caller and audit-service failures are not visible to users.'
+      operationId: create_export_data_log_log_export_data_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExportDataLogInput'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Export Data Log
+      tags:
+      - Maintain
   /log/login:
     post:
       description: 'Create a new `login` audit log.
@@ -360,50 +325,6 @@ paths:
       summary: Create Login Log
       tags:
       - Maintain
-  /log/pfb_export:
-    post:
-      description: 'Create a new `pfb_export` audit log.
-
-
-        This endpoint does not include any authorization checks, but it is not
-
-        exposed and is only meant for internal use.
-
-
-        If the timestamp is omitted from the request body, the current date and
-
-        time will be used.
-
-
-        The response is returned _before_ inserting the new audit log in the
-
-        database, so that POSTing audit logs does not impact the performance of
-
-        the caller and audit-service failures are not visible to users.'
-      operationId: create_pfb_export_log_log_pfb_export_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePFBExportLogInput'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Create Pfb Export Log
-      tags:
-      - Maintain
   /log/presigned_url:
     post:
       description: 'Create a new `presigned_url` audit log.
@@ -446,50 +367,6 @@ paths:
       security:
       - HTTPBearer: []
       summary: Create Presigned Url Log
-      tags:
-      - Maintain
-  /log/user_data_library:
-    post:
-      description: 'Create a new `user_data_library` audit log.
-
-
-        This endpoint does not include any authorization checks, but it is not
-
-        exposed and is only meant for internal use.
-
-
-        If the timestamp is omitted from the request body, the current date and
-
-        time will be used.
-
-
-        The response is returned _before_ inserting the new audit log in the
-
-        database, so that POSTing audit logs does not impact the performance of
-
-        the caller and audit-service failures are not visible to users.'
-      operationId: create_user_data_library_log_log_user_data_library_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateUserDataLibraryEventLogInput'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Create User Data Library Log
       tags:
       - Maintain
   /log/{category}:
