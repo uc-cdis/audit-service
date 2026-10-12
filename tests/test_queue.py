@@ -1,3 +1,4 @@
+import copy
 import json
 import time
 import pytest
@@ -17,8 +18,52 @@ async def get_table_results(db_session, table_name):
     return result.fetchall()
 
 
+LOG_DATA = {
+    "presigned_url": {
+        "request_url": "/request_data/download/dg.hello/abc",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "guid": "dg.hello/abc",
+        "resource_paths": ["/my/resource/path1", "/path2"],
+        "action": "download",
+        "protocol": "s3",
+        "additional_data": {"test_key": "test_val"},
+    },
+    "login": {
+        "request_url": "/login",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "idp": "google",
+        "ip": "1.2.3.4",
+        "additional_data": {"test_key": "test_val"},
+    },
+    "export_data": {
+        "request_url": "/export",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "type": "pfb_export",
+        "additional_data": {"test_key": "test_val"},
+    },
+}
+
+# a NOT NULL column for each category, used to test missing fields
+REQUIRED_FIELD = {"presigned_url": "guid", "login": "idp", "export_data": "type"}
+
+
+async def assert_no_rows_inserted(db_session):
+    for category in CATEGORY_TO_MODEL_CLASS:
+        data = await get_table_results(db_session, table_name=category)
+        assert (
+            len(data) == 0
+        ), f"Nothing should have been inserted in table '{category}'"
+
+
 @pytest.mark.asyncio
-async def test_process_log_success(db_session):
+@pytest.mark.parametrize("category", list(LOG_DATA))
+async def test_process_log_success(db_session, category):
     """
     Test that `process_log` properly inserts audit logs into the DB.
 
@@ -26,93 +71,48 @@ async def test_process_log_success(db_session):
     https://github.com/encode/starlette/issues/440, so querying the DB directly
     instead.
     """
-    # create a log
-    guid = "dg.hello/abc"
-    category = "presigned_url"
-    timestamp = int(time.time())
-    message_data = {
-        "category": category,
-        "request_url": f"/request_data/download/{guid}",
-        "status_code": 200,
-        "username": "audit-service_user",
-        "sub": 10,
-        "guid": guid,
-        "resource_paths": ["/my/resource/path1", "/path2"],
-        "action": "download",
-        "protocol": "s3",
-        "additional_data": {"test_key": "test_val"},
-    }
-    await process_log(message_data, timestamp)
+    message_data = {"category": category, **copy.deepcopy(LOG_DATA[category])}
+    await process_log(message_data, int(time.time()))
 
-    data = await get_table_results(db_session, table_name=category)
-    assert len(data) == 1, f"1 row should have been inserted in table '{category}'"
+    result = await db_session.execute(text(f"select * from {category}"))
+    rows = [dict(row._mapping) for row in result]
+    assert len(rows) == 1, f"1 row should have been inserted in table '{category}'"
+    assert rows[0]["id"] == 1  # auto-incremented id
 
-    assert data[0] == (
-        message_data["request_url"],
-        message_data["status_code"],
-        message_data["timestamp"],
-        message_data["username"],
-        message_data["sub"],
-        guid,
-        message_data["resource_paths"],
-        message_data["action"],
-        message_data["protocol"],
-        1,  # auto-incremented id
-        message_data["additional_data"],
-    )
+    # `process_log` mutates `message_data` (pops category, converts timestamp)
+    for key, value in message_data.items():
+        assert rows[0][key] == value, f"Unexpected value for '{key}'"
 
 
 @pytest.mark.asyncio
-async def test_process_log_failure(db_session):
+@pytest.mark.parametrize(
+    "category_data",
+    [{}, {"category": None}, {"category": "this_does_not_exist"}],
+    ids=["missing", "none", "unknown"],
+)
+async def test_process_log_unknown_category(db_session, category_data):
     """
-    Test that `process_log` properly rejects bad audit logs.
-
-    We can't query logs by using the `client` fixture because of this issue
-    https://github.com/encode/starlette/issues/440, so querying the DB directly
-    instead.
+    Test that `process_log` rejects logs with a missing or unknown category.
     """
-    # attempt to create a log with a bad category
-    guid = "dg.hello/abc"
-    category = "this_does_not_exist"
-    timestamp = int(time.time())
-    message_data = {
-        "category": category,
-        "request_url": f"/request_data/download/{guid}",
-        "status_code": 200,
-        "username": "audit-service_user",
-        "sub": 10,
-        "guid": guid,
-        "resource_paths": ["/my/resource/path1", "/path2"],
-        "action": "download",
-        "protocol": "s3",
-    }
-    with pytest.raises(AssertionError, match=f"Unknown log category {category}"):
-        await process_log(message_data, timestamp)
+    message_data = {**copy.deepcopy(LOG_DATA["login"]), **category_data}
+    with pytest.raises(AssertionError, match="Unknown log category"):
+        await process_log(message_data, int(time.time()))
 
-    for category in CATEGORY_TO_MODEL_CLASS:
-        data = await get_table_results(db_session, table_name=category)
-        assert (
-            len(data) == 0
-        ), f"Nothing should have been inserted in table '{category}'"
+    await assert_no_rows_inserted(db_session)
 
-    # attempt to create a log with missing fields
-    category = "presigned_url"
-    message_data = {
-        "category": category,
-        "request_url": f"/request_data/download/{guid}",
-        "status_code": 200,
-        "username": "audit-service_user",
-        "action": "download",
-    }
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("category", list(LOG_DATA))
+async def test_process_log_missing_fields(db_session, category):
+    """
+    Test that `process_log` rejects logs that are missing required fields.
+    """
+    message_data = {"category": category, **copy.deepcopy(LOG_DATA[category])}
+    del message_data[REQUIRED_FIELD[category]]
     with pytest.raises(Exception, match="null value in column"):
-        await process_log(message_data, timestamp)
+        await process_log(message_data, int(time.time()))
 
-    # make sure `process_log` did not insert any rows
-    for category in CATEGORY_TO_MODEL_CLASS:
-        data = await get_table_results(db_session, table_name=category)
-        assert (
-            len(data) == 0
-        ), f"Nothing should have been inserted in table '{category}'"
+    await assert_no_rows_inserted(db_session)
 
 
 class TestQueue:

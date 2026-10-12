@@ -19,7 +19,7 @@ async def process_log(
     timestamp,
 ):
     # check log category
-    category = data.pop("category")
+    category = data.pop("category", None)
     assert (
         category and category in CATEGORY_TO_MODEL_CLASS
     ), f"Unknown log category {category}"
