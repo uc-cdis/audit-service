@@ -129,7 +129,7 @@ def test_category_version_schema_alignment(client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("category", ["login", "presigned_url"])
+@pytest.mark.parametrize("category", ["login", "presigned_url", "export_data"])
 async def test_table_partitioning(db_session, category):
     """
     We can't create logs by using the `client` fixture because of this issue
@@ -164,6 +164,8 @@ async def test_table_partitioning(db_session, category):
                 await data_access_layer.create_presigned_url_log(record_data)
             elif category == "login":
                 await data_access_layer.create_login_log(record_data)
+            elif category == "export_data":
+                await data_access_layer.create_export_data_log(record_data)
 
     row_data = {
         "presigned_url": {
@@ -186,6 +188,15 @@ async def test_table_partitioning(db_session, category):
             "fence_idp": None,
             "shib_idp": None,
             "client_id": None,
+        },
+        "export_data": {
+            "request_url": "request_url",
+            "status_code": 200,
+            "timestamp": None,
+            "username": "user1",
+            "sub": 10,
+            "additional_data": {"file_count": 2},
+            "type": "pfb_export",
         },
     }
 

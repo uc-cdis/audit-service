@@ -118,7 +118,7 @@ def downgrade():
     _drop_table_with_partitions("export_data", "insert_export_data_trigger")
     op.execute("DROP SEQUENCE IF EXISTS global_export_data_id_seq")
 
-    # revert trigger function to previous version (without pfb_export and user_data_library branches)
+    # revert trigger function to previous version (without data_export branches)
     op.execute("""
     CREATE OR REPLACE FUNCTION create_partition_and_insert() RETURNS trigger AS
     $$

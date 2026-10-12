@@ -6,7 +6,11 @@ import traceback
 from . import logger
 from .config import config
 from .models import CATEGORY_TO_MODEL_CLASS
-from .utils.validate_utils import validate_presigned_url_log, validate_login_log
+from .utils.validate_utils import (
+    validate_presigned_url_log,
+    validate_login_log,
+    validate_export_data_log,
+)
 from .db import get_data_access_layer
 
 
@@ -32,6 +36,11 @@ async def process_log(
         elif category == "login":
             validate_login_log(data)
             await data_access_layer.create_login_log(data)
+        elif category == "export_data":
+            validate_export_data_log(data)
+            await data_access_layer.create_export_data_log(data)
+        else:
+            raise ValueError(f"Unknown log category {category}")
 
 
 async def pull_from_queue(sqs):

@@ -252,3 +252,7 @@ def test_create_export_data_log(client):
     response_timestamp = response_data.pop("timestamp").replace("T", " ")
     assert response_timestamp == request_timestamp
     assert response_data == request_data
+    assert response_data["additional_data"]["programs"] == ["prog1"]
+    assert response_data["additional_data"]["projects"] == ["prog1-proj1"]
+    assert response_data["additional_data"]["node_count"] == 5
+    assert response_data["additional_data"]["destination"] == "terra"
