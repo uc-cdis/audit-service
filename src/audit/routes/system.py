@@ -6,7 +6,11 @@ from typing import Union, get_args, get_origin
 
 from ..db import DataAccessLayer, get_data_access_layer
 
-from ..models import CreateLoginLogInput, CreatePresignedUrlLogInput
+from ..models import (
+    CreateLoginLogInput,
+    CreatePresignedUrlLogInput,
+    CreateExportDataLogInput,
+)
 
 router = APIRouter()
 
@@ -19,6 +23,10 @@ CURRENT_SCHEMA_VERSIONS = {
     "presigned_url": {
         "version": 1.1,
         "fingerprint": "9acc1cbab580d3d1e073a49e80d62896a2509d4f9f2f1c450d6bbf2b5779c578",  # pragma: allowlist-secret
+    },
+    "export_data": {
+        "version": 1.0,
+        "fingerprint": "6b56094af14a656c794470409aef4dd934a1b893e335d7a8efd857071aece03a",  # pragma: allowlist-secret
     },
 }
 
@@ -87,6 +95,10 @@ def get_schema() -> dict:
         "presigned_url": {
             "version": CURRENT_SCHEMA_VERSIONS["presigned_url"]["version"],
             "model": _get_pydantic_model(CreatePresignedUrlLogInput),
+        },
+        "export_data": {
+            "version": CURRENT_SCHEMA_VERSIONS["export_data"]["version"],
+            "model": _get_pydantic_model(CreateExportDataLogInput),
         },
     }
 

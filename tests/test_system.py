@@ -8,6 +8,7 @@ from audit.models import (
     CATEGORY_TO_MODEL_CLASS,
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
+    CreateExportDataLogInput,
 )
 from audit.routes.system import (
     CURRENT_SCHEMA_VERSIONS,
@@ -21,6 +22,7 @@ from audit.routes.system import (
     [
         ("login", CreateLoginLogInput),
         ("presigned_url", CreatePresignedUrlLogInput),
+        ("export_data", CreateExportDataLogInput),
     ],
 )
 def test_model_fingerprint(category, pydantic_class):
@@ -67,7 +69,7 @@ def test_schema_endpoint_basic(client):
     assert resp.status_code == 200, resp.text
 
     body = resp.json()
-    assert set(body) == {"login", "presigned_url"}
+    assert set(body) == {"login", "presigned_url", "export_data"}
 
     for category, info in body.items():
         assert isinstance(info["version"], float)
@@ -127,7 +129,7 @@ def test_category_version_schema_alignment(client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("category", ["login", "presigned_url"])
+@pytest.mark.parametrize("category", ["login", "presigned_url", "export_data"])
 async def test_table_partitioning(db_session, category):
     """
     We can't create logs by using the `client` fixture because of this issue
@@ -162,6 +164,8 @@ async def test_table_partitioning(db_session, category):
                 await data_access_layer.create_presigned_url_log(record_data)
             elif category == "login":
                 await data_access_layer.create_login_log(record_data)
+            elif category == "export_data":
+                await data_access_layer.create_export_data_log(record_data)
 
     row_data = {
         "presigned_url": {
@@ -184,6 +188,15 @@ async def test_table_partitioning(db_session, category):
             "fence_idp": None,
             "shib_idp": None,
             "client_id": None,
+        },
+        "export_data": {
+            "request_url": "request_url",
+            "status_code": 200,
+            "timestamp": None,
+            "username": "user1",
+            "sub": 10,
+            "additional_data": {"file_count": 2},
+            "type": "pfb_export",
         },
     }
 

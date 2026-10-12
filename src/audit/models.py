@@ -55,6 +55,12 @@ class Login(AuditLog):
     ip = Column(String, nullable=True)
 
 
+class ExportData(AuditLog):
+    __tablename__ = "export_data"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(String, nullable=False)
+
+
 # Pydantic input models for API endpoints
 class CreateLogInput(BaseModel):
     request_url: str
@@ -82,8 +88,13 @@ class CreateLoginLogInput(CreateLogInput):
     ip: Optional[str] = None
 
 
+class CreateExportDataLogInput(CreateLogInput):
+    type: str
+
+
 # mapping for use by API endpoints
 CATEGORY_TO_MODEL_CLASS = {
     "login": Login,
     "presigned_url": PresignedUrl,
+    "export_data": ExportData,
 }
