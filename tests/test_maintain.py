@@ -232,12 +232,11 @@ def test_create_export_data_log(client):
         "username": "audit-service_user",
         "sub": 10,
         "additional_data": {
-            "programs": ["prog1"],
-            "projects": ["prog1-proj1"],
             "node_count": 5,
-            "destination": "terra",
         },
         "type": "pfb_export",
+        "resource_paths": ["/programs/prog1/projects/proj1"],
+        "destination": "terra",
     }
     res = client.post("/log/export_data", json=request_data)
     assert res.status_code == 201, res.text
@@ -252,7 +251,6 @@ def test_create_export_data_log(client):
     response_timestamp = response_data.pop("timestamp").replace("T", " ")
     assert response_timestamp == request_timestamp
     assert response_data == request_data
-    assert response_data["additional_data"]["programs"] == ["prog1"]
-    assert response_data["additional_data"]["projects"] == ["prog1-proj1"]
+    assert response_data["resource_paths"] == ["/programs/prog1/projects/proj1"]
+    assert response_data["destination"] == "terra"
     assert response_data["additional_data"]["node_count"] == 5
-    assert response_data["additional_data"]["destination"] == "terra"

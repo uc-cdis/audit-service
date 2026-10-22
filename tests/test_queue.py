@@ -45,6 +45,8 @@ LOG_DATA = {
         "username": "audit-service_user",
         "sub": 10,
         "type": "pfb_export",
+        "resource_paths": ["/programs/prog1/projects/proj1", "/programs/prog2"],
+        "destination": "terra",
         "additional_data": {"test_key": "test_val"},
     },
 }

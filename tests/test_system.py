@@ -83,11 +83,13 @@ def test_schema_endpoint_login_details(client):
     log_fields = ["request_url", "status_code", "timestamp", "username", "sub"]
     login_fields = ["idp", "fence_idp", "shib_idp", "client_id", "ip"]
     presigned_url_fields = ["guid", "resource_paths", "action", "protocol"]
+    export_data_fields = ["type", "resource_paths", "destination"]
 
     resp = client.get("/_schema")
     body = resp.json()
     login_schema = body["login"]
     presigned_url_schema = body["presigned_url"]
+    export_data_schema = body["export_data"]
 
     assert login_schema["version"] == 2.1
     model = login_schema["model"]
@@ -103,6 +105,15 @@ def test_schema_endpoint_login_details(client):
 
     for field in log_fields + presigned_url_fields:
         assert field in model
+
+    assert export_data_schema["version"] == 1.0
+    model = export_data_schema["model"]
+
+    optional_export_data_fields = ["destination"]
+    for field in log_fields + export_data_fields:
+        assert field in model
+        if field in optional_export_data_fields:
+            assert model[field].endswith("?")
 
 
 def test_category_version_schema_alignment(client):
@@ -197,6 +208,8 @@ async def test_table_partitioning(db_session, category):
             "sub": 10,
             "additional_data": {"file_count": 2},
             "type": "pfb_export",
+            "resource_paths": ["/programs/prog1/projects/proj1"],
+            "destination": "terra",
         },
     }
 

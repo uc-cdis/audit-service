@@ -33,6 +33,8 @@ def upgrade():
             "additional_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True
         ),
         sa.Column("type", sa.String, nullable=False),
+        sa.Column("resource_paths", sa.ARRAY(sa.String()), nullable=True),
+        sa.Column("destination", sa.String, nullable=True),
     )
 
     op.execute("""
@@ -76,11 +78,12 @@ def upgrade():
         ELSIF TG_TABLE_NAME = 'export_data' THEN
             EXECUTE format(
                 'INSERT INTO %I (id, request_url, status_code, timestamp, username,
-                                 sub, additional_data, type)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+                                 sub, additional_data, type, resource_paths, destination)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
                 partition)
             USING NEW.id, NEW.request_url, NEW.status_code, NEW.timestamp,
-                  NEW.username, NEW.sub, NEW.additional_data, NEW.type;
+                  NEW.username, NEW.sub, NEW.additional_data, NEW.type,
+                  NEW.resource_paths, NEW.destination;
 
         ELSE
             RAISE EXCEPTION 'Unsupported table for partitioning: %', TG_TABLE_NAME;

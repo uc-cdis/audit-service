@@ -8,9 +8,18 @@ components:
             type: object
           - type: 'null'
           title: Additional Data
+        destination:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination
         request_url:
           title: Request Url
           type: string
+        resource_paths:
+          items: {}
+          title: Resource Paths
+          type: array
         status_code:
           title: Status Code
           type: integer

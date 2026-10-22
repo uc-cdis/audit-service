@@ -26,7 +26,7 @@ CURRENT_SCHEMA_VERSIONS = {
     },
     "export_data": {
         "version": 1.0,
-        "fingerprint": "6b56094af14a656c794470409aef4dd934a1b893e335d7a8efd857071aece03a",  # pragma: allowlist-secret
+        "fingerprint": "0a2d83ec731cd034f1c8109a1e288a7487d4899d7f47be6a420472408cb10ea7",  # pragma: allowlist-secret
     },
 }
 

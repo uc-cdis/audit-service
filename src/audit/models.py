@@ -56,9 +56,18 @@ class Login(AuditLog):
 
 
 class ExportData(AuditLog):
+    """
+    `resource_paths` can be null for exports that are not scoped to specific
+    studies.
+    `destination` can be null when the export is not sent anywhere external,
+    for example a direct download.
+    """
+
     __tablename__ = "export_data"
     id = Column(Integer, primary_key=True, autoincrement=True)
     type = Column(String, nullable=False)
+    resource_paths = Column(ARRAY(String), nullable=True)
+    destination = Column(String, nullable=True)
 
 
 # Pydantic input models for API endpoints
@@ -90,6 +99,8 @@ class CreateLoginLogInput(CreateLogInput):
 
 class CreateExportDataLogInput(CreateLogInput):
     type: str
+    resource_paths: list = None
+    destination: Optional[str] = None
 
 
 # mapping for use by API endpoints
