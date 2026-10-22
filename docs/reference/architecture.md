@@ -24,6 +24,11 @@ Each log category contains additional fields. For example, the `presigned_url` t
 - action
 - protocol
 
+and the `export_data` table includes:
+- type
+- resource_paths
+- destination
+
 For query performance and scalability as data accumulates, the tables are partitioned by month. We could also add indexes in the future if needed.
 
 ## API
@@ -59,6 +64,7 @@ authz:
     subresources:
     - name: presigned_url
     - name: login
+    - name: export_data
 
   roles:
   - id: audit_reader
@@ -84,6 +90,11 @@ authz:
     - audit_reader
     resource_paths:
     - /services/audit/login
+  - id: export_data_audit_reader
+    role_ids:
+    - audit_reader
+    resource_paths:
+    - /services/audit/export_data
 
   groups:
   - name: login_audit_readers

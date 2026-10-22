@@ -2,11 +2,18 @@
 
 - In `src/audit/models.py`, create a new audit log class. It should inherit from base class `AuditLog`. Also create a new input class. It should inherit from base class `CreateLogInput`. The properties of these 2 new classes should match.
 - In `src/audit/models.py`, add the new category to `CATEGORY_TO_MODEL_CLASS` mapping.
+- In `src/audit/utils/validate_utils.py`, add a `validate_<category>_log()` function. It must call `handle_timestamp(data)` to convert the input timestamp to a datetime.
+- In `src/audit/db.py`, add a new function to DataAccessLayer
+- In `src/audit/pull_from_queue.py`, add a new elif block in process_log in the for loop that calls the new validator and DataAccessLayer function
 - In `src/audit/routes/system.py`, Bump schema metadata
     - Add an entry for the new category in `CURRENT_SCHEMA_VERSIONS` (start at 1.0), and include model fingerprint using `_model_fingerprint()`
     - Add category model to `tests/test_system.py` in the parameters for `test_model_fingerprint()`
     - Extend the `get_schema()` response to include the new model and its version, mirroring the existing pattern.
-- Use `alembic` to create a new migration. Edit the new migration file to create a new table for this category. The new table should be partitioned like the other audit log tables.
+- Use `alembic` to create a new migration. Edit the new migration file to create a new table for this category. The new table should be partitioned like the other audit log tables. See [39d94c2bea56_add_data_export.py](../../migrations/versions/39d94c2bea56_add_data_export.py) for an example.
+    - Create a `global_<category>_id_seq` sequence (used by the DataAccessLayer function to assign IDs).
+    - Add an `ELSIF TG_TABLE_NAME = '<category>'` branch to the `create_partition_and_insert()` trigger function, or inserts will fail with "Unsupported table for partitioning".
+    - Create a `BEFORE INSERT` trigger on the new table that executes `create_partition_and_insert()`.
+    - In `downgrade()`, drop the trigger, partitions, table, and sequence, and restore the previous trigger function.
 - Adding columns to tables `login` or `presigned_url` may require upgrading the existing trigger function. See Step 5 of migration [7a838ea48eea_add_pk_to_login_and_presigned_url.py](https://github.com/uc-cdis/audit-service/blob/287488874b27790090aeca8ec0b4a6cab1169a55/migrations/versions/7a838ea48eea_add_pk_to_login_and_presigned_url.py#L110) for an example of updating the trigger function.
-- In `src/audit/routes/maintain.py`, import the newly created input class and create a new route endpoint that takes the input class as parameter.
+- In `src/audit/routes/maintain.py`, import the newly created input class and create a new route endpoint that takes the input class as parameter. The endpoint should call the new validator before the DataAccessLayer function.
 - Run `python run.py openapi` to update the API documentation.

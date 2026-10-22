@@ -2,7 +2,6 @@ from datetime import datetime
 import time
 import pytest
 
-
 fake_jwt = "1.2.3"
 
 
@@ -223,3 +222,35 @@ def test_create_login_log_with_none_values(client):
 
     res = client.post("/log/login", json=request_data)
     assert res.status_code == 201, res.text
+
+
+def test_create_export_data_log(client):
+    request_data = {
+        "request_url": "/export",
+        "status_code": 200,
+        "timestamp": int(time.time()),
+        "username": "audit-service_user",
+        "sub": 10,
+        "additional_data": {
+            "node_count": 5,
+        },
+        "type": "pfb_export",
+        "resource_paths": ["/programs/prog1/projects/proj1"],
+        "destination": "terra",
+    }
+    res = client.post("/log/export_data", json=request_data)
+    assert res.status_code == 201, res.text
+
+    res = client.get(
+        "/log/export_data", headers={"Authorization": f"bearer {fake_jwt}"}
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"][0]
+    del response_data["id"]
+    request_timestamp = str(datetime.fromtimestamp(request_data.pop("timestamp")))
+    response_timestamp = response_data.pop("timestamp").replace("T", " ")
+    assert response_timestamp == request_timestamp
+    assert response_data == request_data
+    assert response_data["resource_paths"] == ["/programs/prog1/projects/proj1"]
+    assert response_data["destination"] == "terra"
+    assert response_data["additional_data"]["node_count"] == 5

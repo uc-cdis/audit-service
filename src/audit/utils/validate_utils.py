@@ -56,6 +56,11 @@ def validate_login_log(data):
         logger.warning("login log received in deprecated legacy format (missing ip)")
 
 
+def validate_export_data_log(data):
+    logger.debug(f"Creating `export_data` audit log. Received body: {data}")
+    handle_timestamp(data)
+
+
 def validate_and_normalize_times(start, stop):
     """
     Validate the `start` and `stop` parameters, raise exceptions if the
