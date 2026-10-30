@@ -58,6 +58,15 @@ def validate_login_log(data):
 
 def validate_export_data_log(data):
     logger.debug(f"Creating `export_data` audit log. Received body: {data}")
+
+    allowed_types = ["pfb_export"]
+    # `type` is a required field, but that's checked during the DB insert
+    if "type" in data and data["type"] not in allowed_types:
+        raise HTTPException(
+            HTTP_400_BAD_REQUEST,
+            f"Type '{data['type']}' is not allowed ({allowed_types})",
+        )
+
     handle_timestamp(data)
 
 

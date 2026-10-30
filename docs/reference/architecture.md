@@ -25,7 +25,7 @@ Each log category contains additional fields. For example, the `presigned_url` t
 - protocol
 
 and the `export_data` table includes:
-- type
+- type (allowed values: `pfb_export`)
 - resource_paths
 - destination
 

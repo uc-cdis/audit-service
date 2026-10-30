@@ -254,3 +254,17 @@ def test_create_export_data_log(client):
     assert response_data["resource_paths"] == ["/programs/prog1/projects/proj1"]
     assert response_data["destination"] == "terra"
     assert response_data["additional_data"]["node_count"] == 5
+
+
+@pytest.mark.parametrize("export_type", ["", "PFB", "pfb-export", "not_a_type"])
+def test_create_export_data_log_with_bad_type(client, export_type):
+    """An export_data log whose `type` is not an allowed value is rejected."""
+    request_data = {
+        "request_url": "/export",
+        "status_code": 200,
+        "username": "audit-service_user",
+        "sub": 10,
+        "type": export_type,
+    }
+    res = client.post("/log/export_data", json=request_data)
+    assert res.status_code == 400, res.text
