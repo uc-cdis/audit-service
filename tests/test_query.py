@@ -760,3 +760,114 @@ def test_query_authz(client, mock_arborist_requests):
         "/log/presigned_url", headers={"Authorization": f"bearer {fake_jwt}"}
     )
     assert res.status_code == 200, res.text
+
+
+EXPORT_DATA_TEST_DATA = {
+    "terra_proj1": {
+        "resource_paths": ["/programs/prog1/projects/proj1"],
+        "destination": "terra",
+    },
+    "terra_proj1_proj2": {
+        "resource_paths": [
+            "/programs/prog1/projects/proj1",
+            "/programs/prog1/projects/proj2",
+        ],
+        "destination": "terra",
+    },
+    "s3_proj2": {
+        "resource_paths": ["/programs/prog1/projects/proj2"],
+        "destination": "s3",
+    },
+    "no_destination": {
+        "resource_paths": ["/programs/prog1/projects/proj1"],
+        "destination": None,
+    },
+}
+
+
+def submit_export_data_test_data(client):
+    """
+    Submit a set of export_data audit logs
+    """
+    for test_data in EXPORT_DATA_TEST_DATA.values():
+        request_data = {
+            "request_url": "/export",
+            "status_code": 200,
+            "username": "audit-service_user",
+            "sub": 10,
+            "type": "pfb_export",
+        }
+        request_data.update(test_data)
+        res = client.post("/log/export_data", json=request_data)
+        assert res.status_code == 201, res.text
+
+
+def test_query_export_data_filter_by_destination(client):
+    """
+    `destination` is a real column, so it can be used as a query filter.
+    """
+    submit_export_data_test_data(client)
+
+    res = client.get(
+        "/log/export_data?destination=terra",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 2
+    for item in response_data:
+        assert item["destination"] == "terra"
+
+
+def test_query_export_data_filter_by_resource_paths(client):
+    """
+    `resource_paths` is an ARRAY column, so filtering matches logs whose
+    paths overlap with any of the requested values.
+    """
+    submit_export_data_test_data(client)
+
+    res = client.get(
+        "/log/export_data?resource_paths=/programs/prog1/projects/proj2",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 2  # terra_proj1_proj2 and s3_proj2
+    for item in response_data:
+        assert "/programs/prog1/projects/proj2" in item["resource_paths"]
+
+    # combining both filters: values of different keys must all match
+    res = client.get(
+        "/log/export_data?resource_paths=/programs/prog1/projects/proj2&destination=s3",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert len(response_data) == 1
+    assert response_data[0]["destination"] == "s3"
+
+
+def test_query_export_data_groupby_destination(client):
+    submit_export_data_test_data(client)
+
+    res = client.get(
+        "/log/export_data?groupby=destination",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    expected = [
+        {"destination": None, "count": 1},
+        {"destination": "s3", "count": 1},
+        {"destination": "terra", "count": 2},
+    ]
+    assert sorted(response_data, key=lambda e: (e["destination"] or "")) == expected
+
+    # grouping by type and destination together
+    res = client.get(
+        "/log/export_data?groupby=type&groupby=destination&destination=terra",
+        headers={"Authorization": f"bearer {fake_jwt}"},
+    )
+    assert res.status_code == 200, res.text
+    response_data = res.json()["data"]
+    assert response_data == [{"type": "pfb_export", "destination": "terra", "count": 2}]

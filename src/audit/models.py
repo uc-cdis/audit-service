@@ -55,6 +55,21 @@ class Login(AuditLog):
     ip = Column(String, nullable=True)
 
 
+class ExportData(AuditLog):
+    """
+    `resource_paths` can be null for exports that are not scoped to specific
+    studies.
+    `destination` can be null when the export is not sent anywhere external,
+    for example a direct download.
+    """
+
+    __tablename__ = "export_data"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(String, nullable=False)
+    resource_paths = Column(ARRAY(String), nullable=True)
+    destination = Column(String, nullable=True)
+
+
 # Pydantic input models for API endpoints
 class CreateLogInput(BaseModel):
     request_url: str
@@ -82,8 +97,15 @@ class CreateLoginLogInput(CreateLogInput):
     ip: Optional[str] = None
 
 
+class CreateExportDataLogInput(CreateLogInput):
+    type: str
+    resource_paths: list = None
+    destination: Optional[str] = None
+
+
 # mapping for use by API endpoints
 CATEGORY_TO_MODEL_CLASS = {
     "login": Login,
     "presigned_url": PresignedUrl,
+    "export_data": ExportData,
 }
