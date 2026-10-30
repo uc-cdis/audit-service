@@ -23,10 +23,15 @@ def upgrade():
 
     op.create_table(
         "export_data",
-        sa.Column("id", sa.Integer, primary_key=True),
+        # Without autoincrement=False, SQLAlchemy makes `id` a SERIAL with its
+        # own sequence, which hands out ids that collide with the ones from
+        # global_export_data_id_seq.
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=False),
         sa.Column("request_url", sa.String, nullable=False),
         sa.Column("status_code", sa.Integer, nullable=False),
-        sa.Column("timestamp", sa.DateTime, nullable=False),
+        sa.Column(
+            "timestamp", sa.DateTime, nullable=False, server_default=sa.func.now()
+        ),
         sa.Column("username", sa.String, nullable=False),
         sa.Column("sub", sa.Integer, nullable=True),
         sa.Column(

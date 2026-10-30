@@ -257,3 +257,31 @@ async def test_table_partitioning(db_session, category):
 
     data = await _get_records_from_table(f"{category}_2021_01")
     assert data == [("user1", datetime(2021, 1, 5))]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("category", list(CATEGORY_TO_MODEL_CLASS))
+async def test_id_column_has_no_default(db_session, category):
+    """`id` has no column default, so every id comes from the global sequence."""
+    result = await db_session.execute(
+        text(
+            "select column_default from information_schema.columns "
+            "where table_name = :table_name and column_name = 'id'"
+        ),
+        {"table_name": category},
+    )
+    assert result.scalar_one() is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("category", list(CATEGORY_TO_MODEL_CLASS))
+async def test_timestamp_column_defaults_to_now(db_session, category):
+    """`timestamp` defaults to now(), so a row inserted without one still finds its partition."""
+    result = await db_session.execute(
+        text(
+            "select column_default from information_schema.columns "
+            "where table_name = :table_name and column_name = 'timestamp'"
+        ),
+        {"table_name": category},
+    )
+    assert result.scalar_one() == "now()"

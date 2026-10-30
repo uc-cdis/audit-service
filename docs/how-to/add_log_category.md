@@ -11,6 +11,8 @@
     - Extend the `get_schema()` response to include the new model and its version, mirroring the existing pattern.
 - Use `alembic` to create a new migration. Edit the new migration file to create a new table for this category. The new table should be partitioned like the other audit log tables. See [39d94c2bea56_add_data_export.py](../../migrations/versions/39d94c2bea56_add_data_export.py) for an example.
     - Create a `global_<category>_id_seq` sequence (used by the DataAccessLayer function to assign IDs).
+    - Create the `id` column with `autoincrement=False`. Otherwise it gets its own SERIAL sequence, which hands out IDs that collide with the global sequence.
+    - Create the `timestamp` column with `server_default=sa.func.now()`. The trigger needs a timestamp to choose the partition.
     - Add an `ELSIF TG_TABLE_NAME = '<category>'` branch to the `create_partition_and_insert()` trigger function, or inserts will fail with "Unsupported table for partitioning".
     - Create a `BEFORE INSERT` trigger on the new table that executes `create_partition_and_insert()`.
     - In `downgrade()`, drop the trigger, partitions, table, and sequence, and restore the previous trigger function.
