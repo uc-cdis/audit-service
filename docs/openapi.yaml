@@ -1,5 +1,47 @@
 components:
   schemas:
+    CreateExportDataLogInput:
+      properties:
+        additional_data:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Additional Data
+        destination:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Destination
+        request_url:
+          title: Request Url
+          type: string
+        resource_paths:
+          items: {}
+          title: Resource Paths
+          type: array
+        status_code:
+          title: Status Code
+          type: integer
+        sub:
+          title: Sub
+          type: integer
+        timestamp:
+          title: Timestamp
+          type: integer
+        type:
+          title: Type
+          type: string
+        username:
+          title: Username
+          type: string
+      required:
+      - request_url
+      - status_code
+      - username
+      - type
+      title: CreateExportDataLogInput
+      type: object
     CreateLoginLogInput:
       properties:
         additional_data:
@@ -204,6 +246,50 @@ paths:
       summary: Get Version
       tags:
       - System
+  /log/export_data:
+    post:
+      description: 'Create a new `export_data` audit log.
+
+
+        This endpoint does not include any authorization checks, but it is not
+
+        exposed and is only meant for internal use.
+
+
+        If the timestamp is omitted from the request body, the current date and
+
+        time will be used.
+
+
+        The response is returned _before_ inserting the new audit log in the
+
+        database, so that POSTing audit logs does not impact the performance of
+
+        the caller and audit-service failures are not visible to users.'
+      operationId: create_export_data_log_log_export_data_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExportDataLogInput'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Export Data Log
+      tags:
+      - Maintain
   /log/login:
     post:
       description: 'Create a new `login` audit log.

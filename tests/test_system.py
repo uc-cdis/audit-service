@@ -8,6 +8,7 @@ from audit.models import (
     CATEGORY_TO_MODEL_CLASS,
     CreateLoginLogInput,
     CreatePresignedUrlLogInput,
+    CreateExportDataLogInput,
 )
 from audit.routes.system import (
     CURRENT_SCHEMA_VERSIONS,
@@ -21,6 +22,7 @@ from audit.routes.system import (
     [
         ("login", CreateLoginLogInput),
         ("presigned_url", CreatePresignedUrlLogInput),
+        ("export_data", CreateExportDataLogInput),
     ],
 )
 def test_model_fingerprint(category, pydantic_class):
@@ -67,7 +69,7 @@ def test_schema_endpoint_basic(client):
     assert resp.status_code == 200, resp.text
 
     body = resp.json()
-    assert set(body) == {"login", "presigned_url"}
+    assert set(body) == {"login", "presigned_url", "export_data"}
 
     for category, info in body.items():
         assert isinstance(info["version"], float)
@@ -81,11 +83,13 @@ def test_schema_endpoint_login_details(client):
     log_fields = ["request_url", "status_code", "timestamp", "username", "sub"]
     login_fields = ["idp", "fence_idp", "shib_idp", "client_id", "ip"]
     presigned_url_fields = ["guid", "resource_paths", "action", "protocol"]
+    export_data_fields = ["type", "resource_paths", "destination"]
 
     resp = client.get("/_schema")
     body = resp.json()
     login_schema = body["login"]
     presigned_url_schema = body["presigned_url"]
+    export_data_schema = body["export_data"]
 
     assert login_schema["version"] == 2.1
     model = login_schema["model"]
@@ -101,6 +105,15 @@ def test_schema_endpoint_login_details(client):
 
     for field in log_fields + presigned_url_fields:
         assert field in model
+
+    assert export_data_schema["version"] == 1.0
+    model = export_data_schema["model"]
+
+    optional_export_data_fields = ["destination"]
+    for field in log_fields + export_data_fields:
+        assert field in model
+        if field in optional_export_data_fields:
+            assert model[field].endswith("?")
 
 
 def test_category_version_schema_alignment(client):
@@ -127,7 +140,7 @@ def test_category_version_schema_alignment(client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("category", ["login", "presigned_url"])
+@pytest.mark.parametrize("category", ["login", "presigned_url", "export_data"])
 async def test_table_partitioning(db_session, category):
     """
     We can't create logs by using the `client` fixture because of this issue
@@ -162,6 +175,8 @@ async def test_table_partitioning(db_session, category):
                 await data_access_layer.create_presigned_url_log(record_data)
             elif category == "login":
                 await data_access_layer.create_login_log(record_data)
+            elif category == "export_data":
+                await data_access_layer.create_export_data_log(record_data)
 
     row_data = {
         "presigned_url": {
@@ -184,6 +199,17 @@ async def test_table_partitioning(db_session, category):
             "fence_idp": None,
             "shib_idp": None,
             "client_id": None,
+        },
+        "export_data": {
+            "request_url": "request_url",
+            "status_code": 200,
+            "timestamp": None,
+            "username": "user1",
+            "sub": 10,
+            "additional_data": {"file_count": 2},
+            "type": "pfb_export",
+            "resource_paths": ["/programs/prog1/projects/proj1"],
+            "destination": "terra",
         },
     }
 
@@ -231,3 +257,31 @@ async def test_table_partitioning(db_session, category):
 
     data = await _get_records_from_table(f"{category}_2021_01")
     assert data == [("user1", datetime(2021, 1, 5))]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("category", list(CATEGORY_TO_MODEL_CLASS))
+async def test_id_column_has_no_default(db_session, category):
+    """`id` has no column default, so every id comes from the global sequence."""
+    result = await db_session.execute(
+        text(
+            "select column_default from information_schema.columns "
+            "where table_name = :table_name and column_name = 'id'"
+        ),
+        {"table_name": category},
+    )
+    assert result.scalar_one() is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("category", list(CATEGORY_TO_MODEL_CLASS))
+async def test_timestamp_column_defaults_to_now(db_session, category):
+    """`timestamp` defaults to now(), so a row inserted without one still finds its partition."""
+    result = await db_session.execute(
+        text(
+            "select column_default from information_schema.columns "
+            "where table_name = :table_name and column_name = 'timestamp'"
+        ),
+        {"table_name": category},
+    )
+    assert result.scalar_one() == "now()"
